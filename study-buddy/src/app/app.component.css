@@ -1,0 +1,30 @@
+.sidenav-main {
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    height: 100%;
+    background: #ADBBDA;
+    position: relative;
+  }
+  
+.sidenav-drawer {
+
+  background-color: #7a95d9;
+  border-radius: 0px !important;
+}
+.mat-header {
+
+    background-color: #8697C4;
+}
+
+.example-spacer {
+  flex: 1 1 auto;
+}
+
+.custom-prompt-form {
+  min-width: 150px;
+  max-width: 500px;
+  width: 100%;
+}

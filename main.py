@@ -1,31 +1,15 @@
-from fastapi import FastAPI
-from fastapi import status, Form, Request
-from fastapi.param_functions import Depends
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi import status, Form
+from fastapi.param_functions import Depends
 from pydantic import BaseModel
-from fastapi.templating import Jinja2Templates
-from starlette.responses import RedirectResponse
-from ai import * 
+from funcs import *
 
 app = FastAPI()
-app.mount("/ui", StaticFiles(directory = "ui"), name = "ui")
+app.mount("/static", StaticFiles(directory="/"), name="static")
 
-responses = []
+@app.post("/custom_prompt")
+def post_custom_prompt(prompt: str = Form(...)):
 
-@app.get("/")
-def get_home(request: Request):
-
-    return RedirectResponse("/ui/index.html", status.HTTP_302_FOUND)   
-
-@app.post("/")
-def get_prompt(request: Request, prompt: str = Form(...)):
-
-    responses.append(prompt)
-    response = chat_session.send_message(prompt)
-    responses.append(response.text)
-    return RedirectResponse("/ui/index.html", status.HTTP_302_FOUND)   
-
-@app.get("/messages")
-def get_message_arr(request: Request):
-
-    return responses
+    return custom_prompt(prompt)

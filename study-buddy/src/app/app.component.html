@@ -1,0 +1,30 @@
+<router-outlet>
+	
+	<mat-toolbar class="mat-header">
+
+		<span>Study Buddy</span>
+	  </mat-toolbar>
+	<mat-sidenav-container class="sidenav-main">
+		<mat-sidenav mode="side" opened class="sidenav-drawer">
+
+			<h1>
+				DRAWER
+			</h1>
+		</mat-sidenav>
+		<mat-sidenav-content>
+
+			<h1>
+				<form class="custom-prompt-form" [formGroup] = "customPromptForm" (ngSubmit)="onSubmit()">
+					<mat-form-field class="example-full-width">
+					  <input matInput #message maxlength="500" placeholder="Type your prompt here" formControlName="customPrompt">
+					</mat-form-field>
+					<br/>
+					<button mat-raised-button type="submit">Submit</button>
+				</form>
+
+
+
+			</h1>
+		</mat-sidenav-content>
+	  </mat-sidenav-container>
+</router-outlet>

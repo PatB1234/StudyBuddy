@@ -1,81 +1,55 @@
 # Imports
-import os
-import google.generativeai as genai
-from dotenv import load_dotenv
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
+from funcs import *
 
-load_dotenv()
-genai.configure(api_key=os.getenv("API_KEY"))
+opt = -1
 
-# Create the model
-generation_config = {
-  "temperature": 1,
-  "top_p": 0.95,
-  "top_k": 64,
-  "max_output_tokens": 8192,
-  "response_mime_type": "text/plain",
-}
+while opt != 10:
 
-model = genai.GenerativeModel(
-  model_name="gemini-1.5-flash",
-  generation_config=generation_config,
+    print("What do you want to do with this data?\n")
+    print(" 1. Quiz back & forth with the AI\n") # Completed
+    print(" 2. Make flashcards with your notes\n") # Completed
+    print(" 3. Upload notes via device camera or file upload\n")
+    print(" 4. Summarise notes\n") # Completed
+    print(" 5. Create a number of questions & answers\n")
+    print(" 6. Analayse weak areas\n") # Later
+    print(" 7. View quiz history\n") # Later
+    print(" 8. Download generated content\n") # Later
+    print(" 9. Custom prompt\n") # Completed
+    print(" 10. Exit\n") # Completed
+    opt = int(input("User: "))
 
-)
+    if opt == 1:
 
-chat_session = model.start_chat(
-  history=[
-  ]
-)
-
-def quiz():
-
-    for i in range(1):
-
-        q = (model.generate_content([notes, "I am conducting a quiz. Give me a unique question about this topic. Make them simple questions only short response questions. DO NOT INCLUDE THE ANSWER"])).text
-        print("\n\n\n" + q)
-        a = input("User:___ \n")
-
-        r = (model.generate_content([notes, f"Is the answer {a} correct for the question {q} Tell me explicitly whetehr it is right or wrong"])).text
-        print("\n\n\n" + r)
-# Import File (RE Notes)
-notes = genai.upload_file(path="Data/RE.pdf", display_name="RE Notes PDF")
-print(f'File {notes.display_name} Uploaded to Gemini AI as {notes.uri}')
-
-print("What do you want to do with this data?\n")
-opt = input("")
-
-if opt == "quiz":
-
-    quiz()
-elif opt
-# response = model.generate_content([notes, opt])
-# print(response.text)
-# # Different potential fuctions to do w/ Data
-
-# choice = input("What do you want to do?\n 1. Summarise notes\n 2. Make questions and answers\n 3. Make flashcards\n 4. Quit")
-
-# while choice != 4: 
-#     if choice == 1:
-
-#         lineNum = input("Into how many bullet points?")
-
-#         # Send to AI and ask Q
-#         response = model.generate_content([notes, f"Can you summarize this document as a list of {lineNum} bullet points"])
-#         print(response.text)
-
-#     elif choice == 2:
-
-#         qNum = input("How many questions?")
-
-#         # Send to AI and ask Q
-#         response = model.generate_content([notes, f"Can you make {qNum} questions & answers about this topic to test me. Separate the questions and answers so as to not accidentally view the answers"])
-#         print(response.text)
-#     elif choice == 3:
-
-#         fNum = input("How many flashcards")
+        quiz()
+    elif opt == 2:
         
-#         # Send to AI and ask Q
-#         response = model.generate_content([notes, f"Make {fNum} flashcards with this data"])
-#         print(response.text)
-#     choice = input("What do you want to do?\n 1. Summarise notes\n 2. Make questions and answers\n 3. Make flashcards\n 4. Quit")
+        print(flashcards())
 
+    elif opt == 3:
+        
+        pass
+
+    elif opt == 4:
+        
+        print(summariser())
+
+    elif opt == 5:
+        
+        pass
+
+    elif opt == 6:
+        
+        pass
+
+    elif opt == 7:
+        
+        pass
+    elif opt == 8:
+        
+        pass
+
+    elif opt == 9:
+        
+        print(custom_prompt(input("Please enter your prompt for the AI:\n")))
+
+    input("Press enter to continue")
