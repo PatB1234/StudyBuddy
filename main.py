@@ -5,11 +5,22 @@ from fastapi import status, Form
 from fastapi.param_functions import Depends
 from pydantic import BaseModel
 from funcs import *
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="/"), name="static")
 
-@app.post("/custom_prompt")
-def post_custom_prompt(prompt: str = Form(...)):
+origins = ['null']
 
-    return custom_prompt(prompt)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.post("/custom_prompt")
+def post_custom_prompt(prompt: str):
+    print("test?")
+    print(custom_prompt(prompt))

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -7,6 +7,11 @@ import {MatInputModule} from '@angular/material/input';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
+import { Observable } from 'rxjs';
+import { HttpHeaders } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import { stringify } from 'querystring';
 
 @Component({
 	selector: 'app-root',
@@ -19,22 +24,43 @@ import {MatButtonModule} from '@angular/material/button';
 		MatFormFieldModule, 
 		MatInputModule,
 		ReactiveFormsModule,
-		MatButtonModule
+		MatButtonModule,
+		HttpClientModule
 			
 	],
 	templateUrl: './app.component.html',	
 	styleUrl: './app.component.css'
 })
-export class AppComponent {
+
+export class AppComponent{
 	title = 'study-buddy';
 
 	customPromptForm = new FormGroup({
 		customPrompt: new FormControl(''),
 	});
-   
+
+	constructor(private http: HttpClient) { }
+	submitItem(prompt: string){
+		const headers = new HttpHeaders({
+			'Content-Type': 'application/json'
+		});
+		// Sending POST request with the item data to the FastAPI endpoint
+		this.http.post<any>('http://localhost:8000/custom_prompt', prompt, { headers }).subscribe(
+			(response) => {
+			  console.log('Item created:', response);
+			},
+			(error) => {
+			  console.error('Error creating item:', error);
+			})
+		};
+
+
 	onSubmit() {
 		// Send data to FastAPI backend
-		console.log(this.customPromptForm.value.customPrompt);
+		// Function to submit item data to FastAPI backend
+		let data = (this.customPromptForm.value.customPrompt!);
+		this.submitItem(data)
+		console.log(data);
 	}
 }
 
@@ -48,8 +74,8 @@ export class AppComponent {
 //     // Sending POST request with the item data to the FastAPI endpoint
 //     return this.http.post<any>(this.apiUrl, item, { headers });
 //   }
-// Ananthi Balakrishnan
-// 12:59 PM
+
+  
 // // Function to submit item data to FastAPI backend
 //   submitItem(item: { name: string, description: string }): Observable<any> {
 //     const headers = new HttpHeaders({
@@ -59,6 +85,15 @@ export class AppComponent {
 //     // Sending POST request with the item data to the FastAPI endpoint
 //     return this.http.post<any>(this.apiUrl, item, { headers });
 //   }
+
+
+
+
+
+
+
+
+
 // import { FormControl, FormGroup } from '@angular/forms';
 
 //    @Component({
