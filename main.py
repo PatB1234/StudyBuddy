@@ -14,13 +14,16 @@ origins = ['null']
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=['*'],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+class Prompt(BaseModel):
+
+    customPrompt: str
+    
 @app.post("/custom_prompt")
-def post_custom_prompt(prompt: str):
-    print("test?")
-    print(custom_prompt(prompt))
+def post_custom_prompt(prompt: Prompt):
+    print(custom_prompt(prompt.customPrompt))
