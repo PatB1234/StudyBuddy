@@ -24,6 +24,7 @@ model = genai.GenerativeModel(
 
 chat_session = model.start_chat(
   history=[
+      
   ]
 )
 
@@ -56,14 +57,16 @@ def flashcards():
                                                      using the dict() function in python to convert it into a readable manner. 
                                                   return it as a python dictionary without any additional formatting or rich text backticks/identifiers""")).text)
 
-def summariser():
+def summariser(): # Done
 
     return (run_prompt(notes, "Summarise the notes"))
 
-def custom_prompt(prompt):
+def custom_prompt(prompt): # Done
     
     return run_prompt(notes, prompt)
 
 def make_questions():
     
-    num = int(input("How many questions? "))
+    res = ast.literal_eval((model.generate_content([notes, f"Generate questions on these notes. Return the data as a python dictionary without any additional formatting or rich text backticks/identifiers. ONLY GIVE THE QUESTIONS AND NO ANSWERS. Set the value of the key to the string 'questions' nothing more nothing less"])).text)
+    return res
+

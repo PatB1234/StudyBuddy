@@ -13,18 +13,44 @@
 		</mat-sidenav>
 		<mat-sidenav-content>
 
-			<h1>
-				<form class="custom-prompt-form" [formGroup] = "customPromptForm" (ngSubmit)="onSubmit()">
+			
+	
+			<div class="custom-prompt">
+					<h2>Result</h2>
+						<p style="color: #000000;">{{result}}</p>
+
+
+				  <form class="custom-prompt-form" [formGroup] = "customPromptForm" (ngSubmit)="onSubmit()">
 					<mat-form-field class="example-full-width">
 					  <input matInput #message maxlength="500" placeholder="Type your prompt here" formControlName="customPrompt">
 					</mat-form-field>
 					<br/>
 					<button mat-raised-button type="submit">Submit</button>
 				</form>
+			</div>
+
+			<div class="summariser">
+
+				<h2>Summariser</h2>
+				<button mat-raised-button (click)="summarise_button()">Summarise</button>
+				<p style="color:#000000;">{{summary}}</p>
+			</div>
+
+			<div class="question_and_answer"> 
+
+				<h2>Question & Answer</h2>
+				<button mat-raised-button (click)="generate_questions()">Generate Questions</button>
+				<form class="question-answer-form" [formGroup] = "questionAnswerForm" (ngSubmit)="onQuestionSubmit()">
+
+					<div #question_area>
 
 
-
-			</h1>
+					</div>
+				<br/>
+				<button mat-raised-button type="submit">Submit</button>
+			</form>
+			</div>
+				  
 		</mat-sidenav-content>
 	  </mat-sidenav-container>
 </router-outlet>

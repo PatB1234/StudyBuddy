@@ -28,3 +28,10 @@
   max-width: 500px;
   width: 100%;
 }
+
+.custom-prompt, .summariser, .question_and_answer{
+
+  margin: 10px;
+  white-space: pre-wrap;
+
+}

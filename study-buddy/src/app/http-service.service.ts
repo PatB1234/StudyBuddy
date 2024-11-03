@@ -33,5 +33,13 @@ post_custom_prompt(data: any) {
         return res
     }))
 }
-  
+summarise() {
+
+  this.http.get(this.URL + "/summarise").pipe(map((res: any) => {
+
+    return res
+  }))
 }
+}
+
+

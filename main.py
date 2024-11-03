@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import status, Form
 from fastapi.param_functions import Depends
-from pydantic import BaseModel
+from classes import *
 from funcs import *
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -19,11 +19,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-class Prompt(BaseModel):
-
-    customPrompt: str
     
 @app.post("/custom_prompt")
-def post_custom_prompt(prompt: Prompt):
-    print(custom_prompt(prompt.customPrompt))
+def post_custom_prompt(prompt: PostCustomPromptModel):
+    return custom_prompt(prompt.customPrompt)
+
+
+@app.get("/summarise")
+def post_summarise():
+
+    return summariser()
+
+@app.get("/get_questions")
+def get_questions():
+
+    return make_questions()
