@@ -39,16 +39,18 @@
 			<div class="question_and_answer"> 
 
 				<h2>Question & Answer</h2>
-				<button mat-raised-button (click)="generate_questions()">Generate Questions</button>
 				<form class="question-answer-form" [formGroup] = "questionAnswerForm" (ngSubmit)="onQuestionSubmit()">
-
-					<div #question_area>
-
-
-					</div>
-				<br/>
+					<h6>{{questionBox}}</h6>
+					<mat-form-field class="example-full-width">
+						<input matInput #message maxlength="500" placeholder="Type your answer here" formControlName="questionAnswer">
+					</mat-form-field>
+					<br/>
+					<p>{{correctOrNot}}</p>
 				<button mat-raised-button type="submit">Submit</button>
+	
 			</form>
+			<br/>
+			<button mat-raised-button (click)="nextQuestion()">Next Question</button>
 			</div>
 				  
 		</mat-sidenav-content>

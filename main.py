@@ -34,3 +34,8 @@ def post_summarise():
 def get_questions():
 
     return make_questions()
+
+@app.post("/check_question")
+def post_check_questions(res: PostCheckAnswersModel):
+
+    return check_question(res.question, res.answer)

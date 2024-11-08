@@ -62,34 +62,29 @@ export class AppComponent{
 	@ViewChild('question_area') div!: ElementRef;
 
 	questionAnswerForm = new FormGroup({
-		questionAnswerForm: new FormControl(''),
+		questionAnswer: new FormControl(''),
 	});
-	generate_questions(): void {
 
-		this.http.get(this.URL + "/get_questions").subscribe((res: any) => {
+	question: any;
 
-			console.log(res['questions'])
-			res = res['questions']
-
-			for(let i = 0; i < 1; i++) {
-				
-				var p: HTMLParagraphElement = this.renderer.createElement('p');
-				var textbox = document.createElement('input');
-				
-				textbox.className = `Question${i}`
-				textbox.innerHTML = `<input matInput placeholder="Enter answer here">`
-
-				p.innerHTML = res[i]
-				this.renderer.appendChild(this.div.nativeElement, p)
-				this.renderer.appendChild(this.div.nativeElement, textbox)
-			}
-		})
-	}
+	correctOrNot: any;
+	questionBox: any;
 
 	onQuestionSubmit(): void {
 
-		// finish this pls
-		console.log("Submitted")
+		this.http.post(this.URL + "/check_question", {question: this.question, answer: this.questionAnswerForm.value.questionAnswer}).subscribe((res: any) => {
+
+			this.correctOrNot = res;
+		}) 
 	}
+
+	nextQuestion(): void {
+		this.correctOrNot = ""
+		this.http.get(this.URL + "/get_questions").subscribe((res: any) => {
+			console.log(res)
+
+			this.question = res;
+			this.questionBox = res;
+		})	}
 	
 }

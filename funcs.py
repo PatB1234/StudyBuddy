@@ -37,17 +37,6 @@ def run_prompt(files, prompt):
 
     return (model.generate_content([files, prompt])).text
 
-def quiz():
-
-    for i in range(1):
-
-        q = (model.generate_content([notes, "I am conducting a quiz. Give me a unique question about this topic. Make them simple questions only short response questions. DO NOT INCLUDE THE ANSWER"])).text
-        print("\n\n\n" + q)
-        a = input("User: ")
-
-        r = (model.generate_content([notes, f"Is the answer {a} correct for the question {q} Tell me explicitly whetehr it is right or wrong"])).text
-        print("\n\n\n" + r)
-
 def flashcards():
 
     num = input("How many flashcards?\nUser: ")
@@ -65,8 +54,13 @@ def custom_prompt(prompt): # Done
     
     return run_prompt(notes, prompt)
 
-def make_questions():
+def make_questions(): # Done
     
-    res = ast.literal_eval((model.generate_content([notes, f"Generate questions on these notes. Return the data as a python dictionary without any additional formatting or rich text backticks/identifiers. ONLY GIVE THE QUESTIONS AND NO ANSWERS. Set the value of the key to the string 'questions' nothing more nothing less"])).text)
+    res = str((model.generate_content([notes, f"Generate 1 questions on these notes. Return the data as a python string without any additional formatting or rich text backticks/identifiers. ONLY GIVE THE QUESTIONS AND NO ANSWERS. DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION"])).text)
+    return res
+
+def check_question(question, answer): # Done
+    
+    res = (model.generate_content([notes, f"is the answer {answer} correct for the question {question}"])).text
     return res
 
