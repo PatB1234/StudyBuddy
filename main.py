@@ -39,3 +39,8 @@ def get_questions():
 def post_check_questions(res: PostCheckAnswersModel):
 
     return check_question(res.question, res.answer)
+
+@app.get("/get_flashcards")
+def get_flashcards():
+
+    return flashcards() 
