@@ -1,1 +1,13 @@
-<p>custom-prompt works!</p>
+<div class="custom-prompt">
+    <h2>Result</h2>
+        <p style="color: #000000;">{{result}}</p>
+
+
+  <form class="custom-prompt-form" [formGroup] = "customPromptForm" (ngSubmit)="onSubmit()">
+    <mat-form-field class="example-full-width">
+      <input matInput #message maxlength="500" placeholder="Type your prompt here" formControlName="customPrompt">
+    </mat-form-field>
+    <br/>
+    <button mat-raised-button type="submit">Submit</button>
+</form>
+</div>

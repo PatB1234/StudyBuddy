@@ -1,12 +1,53 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, Renderer2, ViewChild, ElementRef } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatToolbarModule} from '@angular/material/toolbar';
+import {MatIconModule} from '@angular/material/icon';
+import {MatInputModule} from '@angular/material/input';
+import {MatFormFieldModule} from '@angular/material/form-field';
+import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {MatButtonModule} from '@angular/material/button';
+import { HttpSerivceService } from './http-service.service';
+import { HttpClient } from '@angular/common/http';
+import {MatCardModule} from '@angular/material/card';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-custom-prompt',
   standalone: true,
-  imports: [],
+  imports: [
+    RouterOutlet, 
+		MatSidenavModule,
+		MatToolbarModule,
+		MatIconModule,
+		MatFormFieldModule, 
+		MatInputModule,
+		ReactiveFormsModule,
+		MatButtonModule,
+		MatCardModule
+  ],
   templateUrl: './custom-prompt.component.html',
   styleUrl: './custom-prompt.component.css'
 })
 export class CustomPromptComponent {
 
+
+
+	constructor(private http: HttpClient, private renderer: Renderer2) { }
+
+	URL: any = 'http://127.0.0.1:8000'
+
+  	//Custom Prompt Funcs
+	customPromptForm = new FormGroup({
+		customPrompt: new FormControl(''),
+	});
+	result: any = '';
+
+	onSubmit() {
+		this.http.post(this.URL + "/custom_prompt", this.customPromptForm.value).subscribe((res: any) => {
+			
+
+			this.result = res + "\n-----------------------------------------------------------------\n" + this.result;
+		})	
+	}
 }

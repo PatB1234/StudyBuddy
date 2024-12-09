@@ -1,4 +1,3 @@
-<router-outlet>
 	
 	<mat-toolbar class="mat-header">
 
@@ -7,74 +6,19 @@
 	<mat-sidenav-container class="sidenav-main">
 		<mat-sidenav mode="side" opened class="sidenav-drawer">
 
-			<h1>
-				DRAWER
-			</h1>
+			<h1 style="margin: 10px;">Services</h1>
+			<a routerLink="/custom-prompt" routerLinkActive="active">Custom Prompt</a>
+			<br/>
+			<a routerLink="/flashcards" routerLinkActive="active">Flashcards</a>
+			<br/>
+			<a routerLink="/question-answer" routerLinkActive="active">Question & Answer</a>
+			<br/>
+			<a routerLink="/summariser" routerLinkActive="active">Summariser</a>
 		</mat-sidenav>
 		<mat-sidenav-content>
 
-			
-	
-			<div class="custom-prompt">
-					<h2>Result</h2>
-						<p style="color: #000000;">{{result}}</p>
-
-
-				  <form class="custom-prompt-form" [formGroup] = "customPromptForm" (ngSubmit)="onSubmit()">
-					<mat-form-field class="example-full-width">
-					  <input matInput #message maxlength="500" placeholder="Type your prompt here" formControlName="customPrompt">
-					</mat-form-field>
-					<br/>
-					<button mat-raised-button type="submit">Submit</button>
-				</form>
-			</div>
-
-			<div class="summariser">
-
-				<h2>Summariser</h2>
-				<button mat-raised-button (click)="summarise_button()">Summarise</button>
-				<p style="color:#000000;">{{summary}}</p>
-			</div>
-
-			<div class="question_and_answer"> 
-
-				<h2>Question & Answer</h2>
-				<form class="question-answer-form" [formGroup] = "questionAnswerForm" (ngSubmit)="onQuestionSubmit()">
-					<h6>{{questionBox}}</h6>
-					<mat-form-field class="example-full-width">
-						<input matInput #message maxlength="500" placeholder="Type your answer here" formControlName="questionAnswer">
-					</mat-form-field>
-					<br/>
-					<p>{{correctOrNot}}</p>
-				<button mat-raised-button type="submit">Submit</button>
-	
-			</form>
-			<br/>
-			<button mat-raised-button (click)="nextQuestion()">Next Question</button>
-			</div>
-
-			<div class="flashcards">
-				
-				<h2>Flashcards</h2>
-
-				<div class="tp-wrapper">
-					<div class="tp-box" (click)="toggleFlip()" [@flipState]="flip">
-						<div class="tp-box__side tp-box__front">{{front}}</div>
-						<div class="tp-box__side tp-box__back">{{back}}</div>
-						
-					</div>
-					<div align="center">
-	
-						<p>{{card_num}}</p>
-						<button mat-icon-button aria-label="Example icon button with a vertical three dot icon" (click)="flashcardBack()">
-							<mat-icon>arrow_back</mat-icon>
-							</button>
-							<button mat-icon-button  aria-label="Example icon button with a open in new tab icon" (click)="flashcardNext()">
-							<mat-icon>arrow_forward</mat-icon>
-							</button>
-					</div>
-				</div></div>
+			<router-outlet>
+			</router-outlet>
 				  
 		</mat-sidenav-content>
 	  </mat-sidenav-container>
-</router-outlet>
