@@ -69,11 +69,19 @@ def get_last_id_students():
 # Create
 def create_user(student: Student):
 
+    students = get_all_students()
+    for studen in students:
+
+        if studen.email == student.email:
+
+            return 0
+
     id = get_last_id_students() + 1
     cursor_func(f"INSERT INTO STUDENTS (name, email, password, id) VALUES ('{student.name}', '{student.email}', '{hash_password(student.password)}', {id});", False)
+    return 1
 
 # Read
-def get_all_users():
+def get_all_students():
 
     rawStudents = cursor_func("SELECT * FROM STUDENTS", True)
     studentArr = []
@@ -85,7 +93,7 @@ def get_all_users():
 
 def get_user_by_id(id):
     
-    students = get_all_users()
+    students = get_all_students()
     for student in students:
 
         if student.id == id:
@@ -96,7 +104,7 @@ def get_user_by_id(id):
 
 def get_user_by_name(name):
     
-    students = get_all_users()
+    students = get_all_students()
     for student in students:
 
         if student.name == name:
@@ -107,7 +115,7 @@ def get_user_by_name(name):
 
 def get_user_by_email(email):
     
-    students = get_all_users()
+    students = get_all_students()
     for student in students:
 
         if student.email == email:
@@ -116,7 +124,25 @@ def get_user_by_email(email):
         
     return ""
 
+def does_student_exist(student: Student):
 
+    students = get_all_students()
+    if student in students:
+
+        return 1
+    
+    return 0
+
+def check_student_login(name: str, email: str, password: str):
+
+    students = get_all_students()
+    for student in students:
+
+        if student.name == name and student.email == email and verify_password(password, student.password):
+
+            return 1
+        
+    return 0
 
 # Update
 def change_name(email, name):

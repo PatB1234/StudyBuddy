@@ -6,7 +6,7 @@ from fastapi.param_functions import Depends
 from classes import *
 from funcs import *
 from fastapi.middleware.cors import CORSMiddleware
-
+from db import *
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="/"), name="static")
 
@@ -44,3 +44,14 @@ def post_check_questions(res: PostCheckAnswersModel):
 def get_flashcards():
 
     return flashcards() 
+
+
+@app.post("/create_student")
+def create_user_post(user: PostStudentModel):
+
+    return create_user(Student(name=user.name, email=user.email, password=user.password))
+
+@app.post("/check_student_login")
+def check_student_login_post(user: PostStudentModel):
+
+    return check_student_login(user.name, user.email, user.password)

@@ -1,0 +1,49 @@
+<div align="center">
+
+    <mat-card class="sign-up-card">
+        <mat-card-content class="sign-up-card-content">
+
+
+            <form class="form flex flex-center" [formGroup]="signUpForm">
+                <h3>Sign Up</h3>
+                <mat-form-field class="form-field" appearance="outline">
+                    <mat-label>Name</mat-label>
+                    <input type="name" matInput formControlName="name">
+                    @if (signUpForm.get('email')?.hasError('required')) {
+                    <mat-error>Name is required</mat-error>
+                    }
+
+                </mat-form-field>
+                <br />
+                <mat-form-field class="form-field" appearance="outline">
+                    <mat-label>Email</mat-label>
+                    <input type="email" matInput formControlName="email">
+                    @if (signUpForm.get('email')?.hasError('required')) {
+                    <mat-error>Email is required</mat-error>
+                    }
+                    @if (signUpForm.get('email')?.hasError('email')) {
+                    <mat-error>Invalid email</mat-error>
+                    }
+                </mat-form-field>
+                <br />
+
+                <mat-form-field class="form-field" appearance="outline">
+                    <mat-label>Password</mat-label>
+                    <input type="password" matInput formControlName="password">
+                    @if (signUpForm.get('password')?.hasError('required')) {
+                    <mat-error>Password is required</mat-error>
+                    }
+                </mat-form-field>
+                <br />
+                <p style="color: #86440a;">{{error}}</p>
+                <br/>
+                <button mat-stroked-button (click)="submit()" [disabled]="signUpForm.invalid">Sign Up</button>
+                <br/>
+                <br/>
+                <a href="/login" routerLinkActive="active">Have an account? Log in!</a>
+            </form>
+
+        </mat-card-content>
+    </mat-card>
+
+</div>

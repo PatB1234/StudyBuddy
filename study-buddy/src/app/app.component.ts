@@ -20,6 +20,7 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 })
 
 export class AppComponent {
+	
 	title = 'study-buddy';
-
+	static URL = 'http://127.0.0.1:8000'; // Global URL Path
 }

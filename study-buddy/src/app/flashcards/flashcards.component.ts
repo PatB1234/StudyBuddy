@@ -5,12 +5,12 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatIconModule} from '@angular/material/icon';
 import {MatInputModule} from '@angular/material/input';
 import {MatFormFieldModule} from '@angular/material/form-field';
-import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {ReactiveFormsModule} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
-import { HttpSerivceService } from './http-service.service';
 import { HttpClient } from '@angular/common/http';
 import {MatCardModule} from '@angular/material/card';
 import { trigger, state, style, transition, animate } from '@angular/animations';
+import { AppComponent } from '../app.component';
 
 @Component({
   selector: 'app-flashcards',
@@ -46,7 +46,7 @@ export class FlashcardsComponent implements OnInit{
 
   constructor(private http: HttpClient, private renderer: Renderer2) { }
 
-	URL: any = 'http://127.0.0.1:8000'
+	URL: any = AppComponent.URL;
 
 	ngOnInit(): void {
 		
@@ -80,6 +80,7 @@ export class FlashcardsComponent implements OnInit{
 			this.curr_card = 0;
 			this.front = this.flashcards[this.curr_card]['Front']
 			this.back = this.flashcards[this.curr_card]['Back']
+			this.card_num = `1/${this.total_card}`;
 
 		})
 
@@ -91,7 +92,7 @@ export class FlashcardsComponent implements OnInit{
 
 			this.curr_card -= 1
 			this.updateCardStatus()
-
+			this.card_num = `${this.curr_card + 1}/${this.total_card}`;
 		}
 	}
 
@@ -101,6 +102,7 @@ export class FlashcardsComponent implements OnInit{
 
 			this.curr_card += 1
 			this.updateCardStatus()
+			this.card_num = `${this.curr_card + 1}/${this.total_card}`;
 		}
 	}
 }

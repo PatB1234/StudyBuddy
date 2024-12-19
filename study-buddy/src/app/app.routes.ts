@@ -3,6 +3,9 @@ import { CustomPromptComponent } from './custom-prompt/custom-prompt.component';
 import { FlashcardsComponent } from './flashcards/flashcards.component';
 import { QuestionAnswerComponent } from './question-answer/question-answer.component';
 import { SummariserComponent } from './summariser/summariser.component';
+import { LoginComponent } from './login/login.component';
+import { SignUpComponent } from './sign-up/sign-up.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
 
 export const routes: Routes = [
 
@@ -21,5 +24,17 @@ export const routes: Routes = [
     {
         path: 'summariser',
         component: SummariserComponent
+    },
+    {
+        path: 'login',
+        component: LoginComponent
+    },
+    {
+        path: 'sign-up',
+        component: SignUpComponent
+    },
+    {
+        path: '',
+        component: DashboardComponent
     }
 ];
