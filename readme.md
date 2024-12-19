@@ -5,10 +5,10 @@ StudyBuddy is an AI-powered application designed to help students with their stu
 ## Features
 
 - AI-generated learning resources
-    >> Flashcards
-    >> Questions & Answers
-    >> Summarisers
-    >> A custom, private, personal method to manioulate your notes via Google's powerful AI
+    - Flashcards
+    - Questions & Answers
+    - Summarisers
+    - A custom, private, personal method to manipulate your notes via Google's powerful AI
 - Progress tracking (In Development)
 - Interactive quizzes
 
@@ -38,7 +38,7 @@ StudyBuddy is an AI-powered application designed to help students with their stu
     ```bash
     pip3 install -r requirements.txt
     ```
-7. Create a .env file and add your google Gemini API Key and your 256-bit secret key for your own unique encryption environment:
+7. Create a .env file and add your Google Gemini API Key and your 256-bit secret key for your unique encryption environment:
 
     API_KEY=...
     <br/>
