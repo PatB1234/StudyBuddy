@@ -9,4 +9,5 @@ import { Component } from '@angular/core';
 })
 export class DashboardComponent {
 
+	name: any = "name_var_here"
 }

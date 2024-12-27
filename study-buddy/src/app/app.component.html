@@ -1,24 +1,23 @@
-	
-	<mat-toolbar class="mat-header">
+<mat-toolbar class="mat-header">
 
-		<span>Study Buddy</span>
-	  </mat-toolbar>
-	<mat-sidenav-container class="sidenav-main">
-		<mat-sidenav mode="side" opened class="sidenav-drawer">
+	<span>Study Buddy</span>
+</mat-toolbar>
+<mat-sidenav-container class="sidenav-main">
+	<mat-sidenav mode="side" opened class="sidenav-drawer">
 
-			<h1 style="margin: 10px;">Services</h1>
-			<a href="/custom-prompt" routerLinkActive="active">Custom Prompt</a>
-			<br/>
-			<a href="/flashcards" routerLinkActive="active">Flashcards</a>
-			<br/>
-			<a href="/question-answer" routerLinkActive="active">Question & Answer</a>
-			<br/>
-			<a href="/summariser" routerLinkActive="active">Summariser</a>
-		</mat-sidenav>
-		<mat-sidenav-content>
+		<h1 style="margin: 10px;">Services</h1>
+		<a href="/custom-prompt" routerLinkActive="active">Custom Prompt</a>
+		<br />
+		<a href="/flashcards" routerLinkActive="active">Flashcards</a>
+		<br />
+		<a href="/question-answer" routerLinkActive="active">Question & Answer</a>
+		<br />
+		<a href="/summariser" routerLinkActive="active">Summariser</a>
+	</mat-sidenav>
+	<mat-sidenav-content>
 
-			<router-outlet>
-			</router-outlet>
-				  
-		</mat-sidenav-content>
-	  </mat-sidenav-container>
+		<router-outlet>
+		</router-outlet>
+
+	</mat-sidenav-content>
+</mat-sidenav-container>
