@@ -1,11 +1,15 @@
 import sqlite3 as driver
 from sqlite3.dbapi2 import Cursor
-from pydantic import BaseModel
-from jose import jwt, JWTError
-from passlib.context import CryptContext
 from typing import Optional
-import logging, os
+import logging, os, jwt
 from dotenv import load_dotenv
+from datetime import datetime, timedelta, timezone
+from typing import Annotated
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jwt.exceptions import InvalidTokenError
+from passlib.context import CryptContext
+from pydantic import BaseModel
 
 load_dotenv()
 logging.getLogger('passlib').setLevel(logging.ERROR)
@@ -13,7 +17,10 @@ logging.getLogger('passlib').setLevel(logging.ERROR)
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 DATABASE_URL = 'db/users.db'
+ACCESS_TOKEN_EXPIRE_MINUTES = 10080 # 7 Days
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # JWT functions
 def hash_password(password):
@@ -140,7 +147,9 @@ def check_student_login(name: str, email: str, password: str):
 
         if student.name == name and student.email == email and verify_password(password, student.password):
 
-            return 1
+            # Create JWT Token
+            token = get_user_token(student)
+            return token
         
     return 0
 
@@ -168,3 +177,26 @@ def delete_user_email(email):
 
     cursor_func(f"DELETE FROM STUDENTS WHERE email='{email}';", False)
 
+
+
+### JWT Functions
+def get_user_token(student: Student):
+
+    to_encode = {
+
+        'details' : {'name': student.name, 'email': student.email, 'id': student.id},
+        'expiry' : str(datetime.utcnow() + timedelta(minutes = ACCESS_TOKEN_EXPIRE_MINUTES))
+    }
+
+    return jwt.encode(to_encode, SECRET_KEY, algorithm = ALGORITHM)
+
+
+def get_student_from_token(token):
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms = [ALGORITHM])
+    expiry = payload.get('expiry')
+    if datetime.utcnow() >= datetime.strptime(expiry, '%Y-%m-%d %H:%M:%S.%f'):
+
+        return "Token Expired"
+    else: 
+        return payload.get('details')

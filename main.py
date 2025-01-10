@@ -1,20 +1,21 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import status, Form
 from fastapi.param_functions import Depends
 from classes import *
 from funcs import *
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import RedirectResponse
 from db import *
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="/"), name="static")
 
 origins = ['null']
-
+path = 'http://localhost:4200'
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=[path],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

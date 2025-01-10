@@ -41,16 +41,15 @@ export class LoginComponent {
 		}
 
 		this.http.post(this.URL + "/check_student_login", this.loginForm.value ).subscribe((res: any) => {
-			console.log(res);
-			// RES = 1 Means login was successful
 			// RES = 0 Means login was unsuccessful
-			if (res == 1) {
-
-				this.error = "Login Successful";
-				this.router.navigate(['/']); // Goes to dashboard, blank path
-			} else if (res == 0) {
+			console.log(res)
+			document.cookie = `token=${res}; SameSite=None; Secure;`;
+ 			if (res == 0) {
 
 				this.error = "Login Unsuccessful";
+			} else {
+
+				this.error = "Login Successful";
 			}
 
 		})

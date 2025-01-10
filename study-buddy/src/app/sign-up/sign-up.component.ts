@@ -49,7 +49,7 @@ export class SignUpComponent {
 			if (res == 1) {
 
 				this.error = "User created"
-				this.router.navigate(['/']); // Goes to dashboard, blank path
+				this.router.navigate(['/login']); // Goes to login, blank path
 			} else if (res == 0) {
 
 				this.error = "User with this email already exists"
