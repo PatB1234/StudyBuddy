@@ -20,39 +20,71 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-    
+'''
+Token Validation is standardised accross the functions. If a token is valid, the function will return data as normal. If not, a False is returned by the token validator, resulting in a 401 error in the frontend
+'''
+
 @app.post("/custom_prompt")
-def post_custom_prompt(prompt: PostCustomPromptModel):
-    return custom_prompt(prompt.customPrompt)
+def post_custom_prompt(prompt: PostCustomPromptModel, request: Request):
+        
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+        return custom_prompt(prompt.customPrompt)
 
 
 @app.get("/summarise")
-def post_summarise():
+def post_summarise(request: Request):
 
-    return summariser()
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+        return summariser()
 
 @app.get("/get_questions")
-def get_questions():
+def get_questions(request: Request):
 
-    return make_questions()
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+        return make_questions()
 
 @app.post("/check_question")
-def post_check_questions(res: PostCheckAnswersModel):
+def post_check_questions(res: PostCheckAnswersModel, request: Request):
 
-    return check_question(res.question, res.answer)
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+        return check_question(res.question, res.answer)
 
 @app.get("/get_flashcards")
-def get_flashcards():
+def get_flashcards(request: Request):
 
-    return flashcards() 
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+        return flashcards() 
 
 
 @app.post("/create_student")
-def create_user_post(user: PostStudentModel):
+def create_user_post(user: PostStudentModel, request: Request):
 
-    return create_user(Student(name=user.name, email=user.email, password=user.password))
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+        return create_user(Student(name=user.name, email=user.email, password=user.password))
 
 @app.post("/check_student_login")
-def check_student_login_post(user: PostStudentModel):
+def check_student_login_post(user: PostStudentModel, request: Request):
 
-    return check_student_login(user.name, user.email, user.password)
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+        return check_student_login(user.name, user.email, user.password)

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jwt.exceptions import InvalidTokenError
+from jwt.exceptions import InvalidTokenError, InvalidSignatureError
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
@@ -180,6 +180,7 @@ def delete_user_email(email):
 
 
 ### JWT Functions
+# Creates a user token from a student Basemodel with an expiry time of 1 week (check const ACCESS_TOKEN_EXPIRE_MINUTES)
 def get_user_token(student: Student):
 
     to_encode = {
@@ -190,7 +191,7 @@ def get_user_token(student: Student):
 
     return jwt.encode(to_encode, SECRET_KEY, algorithm = ALGORITHM)
 
-
+# Retrieves the payload from a given token
 def get_student_from_token(token):
 
     payload = jwt.decode(token, SECRET_KEY, algorithms = [ALGORITHM])
@@ -200,3 +201,27 @@ def get_student_from_token(token):
         return "Token Expired"
     else: 
         return payload.get('details')
+    
+# Validates the user's token and returns the details if it is.
+def validate_student(token):
+    try: 
+        res = get_student_from_token(token)
+        if res == "Token Expired":
+
+            return False
+        
+        else:
+
+            # Returns details in the form of a list
+            return [res['name'], res['email'], res['id']]
+    
+    # If the token is invalid, return False
+    except InvalidTokenError:
+
+        return False
+    # If the token cannot be decoded, return False 
+    except InvalidSignatureError:
+
+        return False
+    
+
