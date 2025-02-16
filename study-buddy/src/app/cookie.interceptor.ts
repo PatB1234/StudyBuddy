@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   HttpRequest,
   HttpHandler,
@@ -6,16 +6,24 @@ import {
   HttpInterceptor
 } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable()
 export class CookieInterceptor implements HttpInterceptor {
+  private platformId = inject(PLATFORM_ID);
+
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    // Clone the request and add the cookie header
-    const token = document.cookie.split("; ")
-      .find((row) => row.startsWith("token="))
-      ?.split("=")[1]; // Extract the token from document.cookie
+    let token: string | undefined;
+    
+    if (isPlatformBrowser(this.platformId)) {
+      token = document.cookie.split("; ")
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
+    }
+
     const modifiedRequest = request.clone({
-      withCredentials: true,  // This ensures cookies are sent with cross-origin requests
+      withCredentials: true,
       setHeaders: token ? { 'token': token } : {}
     });
 

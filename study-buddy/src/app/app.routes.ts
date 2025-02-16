@@ -6,9 +6,12 @@ import { SummariserComponent } from './summariser/summariser.component';
 import { LoginComponent } from './login/login.component';
 import { SignUpComponent } from './sign-up/sign-up.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
-
+import { ViewStudentProfileComponent } from './view-student-profile/view-student-profile.component';
 export const routes: Routes = [
-
+    {
+        path: '',
+        component: DashboardComponent  // DASHBOARD COMPONENT
+    },
     {
         path: 'custom-prompt', 
         component: CustomPromptComponent
@@ -34,7 +37,7 @@ export const routes: Routes = [
         component: SignUpComponent
     },
     {
-        path: '',
-        component: DashboardComponent
+        path: 'student-profile',
+        component: ViewStudentProfileComponent
     }
 ];

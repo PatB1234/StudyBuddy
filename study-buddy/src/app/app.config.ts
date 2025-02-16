@@ -7,7 +7,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CookieInterceptor } from './cookie.interceptor';
-
+import { ErrorInterceptor } from './error.interceptor';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }), 
@@ -19,6 +19,12 @@ export const appConfig: ApplicationConfig = {
 		  provide: HTTP_INTERCEPTORS,
 		  useClass: CookieInterceptor,
 		  multi: true
-		}
+		},
+    {
+
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorInterceptor,
+      multi: true
+    }
   ]
 };

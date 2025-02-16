@@ -72,19 +72,32 @@ def get_flashcards(request: Request):
 
 
 @app.post("/create_student")
-def create_user_post(user: PostStudentModel, request: Request):
+def create_user_post(user: PostStudentModel):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
-        return create_user(Student(name=user.name, email=user.email, password=user.password))
+    return create_user(Student(name=user.name, email=user.email, password=user.password))
 
 @app.post("/check_student_login")
-def check_student_login_post(user: PostStudentModel, request: Request):
+def check_student_login_post(user: PostLoginCheckStudentModel):
+
+
+    return check_student_login(user.email, user.password)
+
+@app.get("/get_student_credentials")
+def get_student_by_token(request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
     else:
-        return check_student_login(user.name, user.email, user.password)
+        name, email, id = token_res  # Unpack the validated data
+        return {"name": name, "email": email, "id": id}
+    
+@app.post("/edit_user")
+def edit_user(newDetails: editUserModel, request: Request):
+
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+        
+        return editUser(newDetails.newName, newDetails.email, newDetails.oldPassword, newDetails.newPassword)

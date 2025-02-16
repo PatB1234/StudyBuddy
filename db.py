@@ -140,12 +140,12 @@ def does_student_exist(student: Student):
     
     return 0
 
-def check_student_login(name: str, email: str, password: str):
+def check_student_login(email: str, password: str):
 
     students = get_all_students()
     for student in students:
 
-        if student.name == name and student.email == email and verify_password(password, student.password):
+        if student.email == email and verify_password(password, student.password):
 
             # Create JWT Token
             token = get_user_token(student)
@@ -167,6 +167,25 @@ def change_pwd(email, pwd):
     
     cursor_func(f"UPDATE STUDENTS SET password='{hash_password(pwd)}' WHERE email='{email}'")
 
+def editUser(newName, email, oldPwd:str , newPwd: str):
+
+    student = get_all_students()
+    print(newName, email, newPwd, oldPwd)
+    for studen in student:
+        print(verify_password(oldPwd, studen.password))
+        if check_student_login(email, oldPwd) != 0:
+
+            if newName != "":
+
+                change_name(email, newName)
+                print(newName)
+            if newPwd != "":
+
+                change_pwd(email, newPwd)
+                print(newPwd)
+            return 1
+        
+    return 0
 
 # Delete
 def delete_user_id(id):

@@ -5,7 +5,9 @@
 <mat-sidenav-container class="sidenav-main">
 	<mat-sidenav mode="side" opened class="sidenav-drawer">
 
-		<h1 style="margin: 10px;">Services</h1>
+		<h1 style="margin: 10px;">Services <button mat-icon-button aria-label="View accounts page" (click)="accountsMenu()"><mat-icon>account_box</mat-icon></button></h1>
+		 
+		<br/>
 		<a href="/custom-prompt" routerLinkActive="active">Custom Prompt</a>
 		<br />
 		<a href="/flashcards" routerLinkActive="active">Flashcards</a>
