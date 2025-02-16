@@ -39,3 +39,7 @@ mat-icon {
 
   transform: scale(2);
 }
+
+.mat-tab-group {
+  margin-bottom: 48px;
+}

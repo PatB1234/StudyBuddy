@@ -5,6 +5,13 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import { MatIcon } from '@angular/material/icon';
 import { MatIconButton } from '@angular/material/button';
 import { Router } from '@angular/router';
+import {MatTabsModule} from '@angular/material/tabs';
+
+
+interface ILink {
+    path: string;
+    label: string;
+}
 
 @Component({
 	selector: 'app-root',
@@ -15,7 +22,8 @@ import { Router } from '@angular/router';
 		MatToolbarModule,
 		RouterLink,
 		MatIconButton,
-		MatIcon
+		MatIcon,
+		MatTabsModule
 			
 	],
 	templateUrl: './app.component.html',	
@@ -33,4 +41,17 @@ export class AppComponent {
 
 		this.router.navigate(['/student-profile']);
 	}
+
+	links: ILink[] = [
+        { path: 'custom-prompt', label: 'Custom Prompt' },
+        { path: 'flashcards', label: 'Flashcards' },
+        { path: 'question-answer', label: 'Question & Answer' },
+		{ path: 'summariser', label: 'Summariser' },
+    ];
+
+    activePath = this.links[0].path;
+
+    onActivate(path: string) {
+        this.activePath = path;
+    }
 }
