@@ -31,7 +31,7 @@ def post_custom_prompt(prompt: PostCustomPromptModel, request: Request):
     if token_res == False:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
     else:
-        return custom_prompt(prompt.customPrompt)
+        return custom_prompt(prompt.customPrompt, db.getCurrentNotesByToken(request.headers.get('token')))
 
 
 @app.get("/summarise")
@@ -41,7 +41,7 @@ def post_summarise(request: Request):
     if token_res == False:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
     else:
-        return summariser()
+        return summariser(db.getCurrentNotesByToken(request.headers.get('token')))
 
 @app.get("/get_questions")
 def get_questions(request: Request):
@@ -50,7 +50,7 @@ def get_questions(request: Request):
     if token_res == False:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
     else:
-        return make_questions()
+        return make_questions(db.getCurrentNotesByToken(request.headers.get('token')))
 
 @app.post("/check_question")
 def post_check_questions(res: PostCheckAnswersModel, request: Request):
@@ -59,7 +59,7 @@ def post_check_questions(res: PostCheckAnswersModel, request: Request):
     if token_res == False:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
     else:
-        return check_question(res.question, res.answer)
+        return check_question(res.question, res.answer, db.getCurrentNotesByToken(request.headers.get('token')))
 
 @app.get("/get_flashcards")
 def get_flashcards(request: Request):
@@ -68,7 +68,7 @@ def get_flashcards(request: Request):
     if token_res == False:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
     else:
-        return flashcards() 
+        return flashcards(db.getCurrentNotesByToken(request.headers.get('token'))) 
 
 
 @app.post("/create_student")
@@ -101,3 +101,15 @@ def edit_user(newDetails: editUserModel, request: Request):
     else:
         
         return editUser(newDetails.newName, newDetails.email, newDetails.oldPassword, newDetails.newPassword)
+    
+
+@app.post("/change_current_notes")
+def change_current_notes(newID: classes.PostChangeNotes, request: Request):
+
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+
+        db.changeCurrentNotes(request.headers.get('token'), newID.newFileID)

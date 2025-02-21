@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError, InvalidSignatureError
 from passlib.context import CryptContext
 from pydantic import BaseModel
-
+import classes
 load_dotenv()
 logging.getLogger('passlib').setLevel(logging.ERROR)
 
@@ -59,6 +59,7 @@ def cursor_func(function, fetch: bool = False):
 def create_tables():
 
     cursor_func("CREATE TABLE IF NOT EXISTS STUDENTS (name TEXT, email TEXT, password TEXT, id INTEGER);", False)
+    cursor_func("CREATE TABLE IF NOT EXISTS NOTES (fileID INTEGER, fileName TEXT, ownerEmail TEXT, sectionName TEXT);", False)
 
 ### Student Functions
 def get_last_id_students(): 
@@ -244,3 +245,61 @@ def validate_student(token):
         return False
     
 
+
+### Notes functions
+currentNotes = [] # BIG VOLATILE ARRAY that stores all of the currently used notes by a user based on a token.
+##CRUD Functions for notes
+# Add notes to the database
+def addNotes(): pass
+
+# Change the section name
+def changeNotesSection(): pass
+
+# Change the notes name
+def changeNotesName(): pass
+
+# Update owner email
+def updateOwnerEmail(): pass
+
+# Get all notes from an email
+def getNotesByEmail(): pass
+
+# Get all notes within a specific section
+def getNotesBySectionName(): pass
+
+# Get notes by noteID
+def getNoteByID(noteID: int) -> classes.notes:
+
+    notes = cursor_func(f"SELECT * FROM NOTES WHERE fileID={noteID}")
+    return classes.notes(fileID=int(notes[0]), fileName=notes[1], ownerEmail=notes[2], sectionName=notes[3])
+
+# Get current notes by token
+def getCurrentNotesByToken(token):
+
+    for i in currentNotes: # Gets the note that is currently being used by a user based on their token
+
+        if i[0] == token:
+
+            return i[1]
+        
+    return -1
+
+# Change currently examined notes
+def changeCurrentNotes(token: str, newNoteID: int):
+
+    for i in currentNotes:
+
+        if i[0] == token:
+
+            i[1] == newNoteID
+            return 1
+        
+    return 0
+# Delete notes by ID pass
+def deleteNotesByID(): pass
+
+# Delete notes by section name
+def deleteNotesBySectionName(): pass
+
+# Delete notes by email
+def deleteNotesByEmail(): pass

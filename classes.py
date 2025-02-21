@@ -28,3 +28,14 @@ class editUserModel(BaseModel):
     email: str 
     oldPassword: str
     newPassword: str = ""
+
+class notes(BaseModel):
+
+    fileID: int
+    fileName: str
+    ownerEmail: str
+    sectionName: str
+
+class PostChangeNotes(BaseModel):
+
+    newFileID: int
