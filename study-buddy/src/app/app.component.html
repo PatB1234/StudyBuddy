@@ -7,26 +7,23 @@
 	<mat-sidenav mode="side" opened class="sidenav-drawer">
 
 		<h1 style="margin: 10px;">Your Notes <button mat-icon-button aria-label="View accounts page" (click)="accountsMenu()"><mat-icon>account_box</mat-icon></button><button mat-icon-button aria-label="Add section" (click)="addSection()"><mat-icon>add</mat-icon></button></h1>
-		<mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" style="background-color: #7a95d9;">
-			<!-- This is the tree node template for leaf nodes -->
+
+		  
+		  <mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" style="background-color: #7a95d9;">
 			<mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
-			  <!-- use a disabled button to provide padding for tree leaf -->
 			  <button mat-icon-button disabled></button>
-			  {{node.name}}
+			  <a (click)="nodePress(node.name)" style="cursor: pointer;">{{node.name}}</a>
 			</mat-tree-node>
-			<!-- This is the tree node template for expandable nodes -->
-			<mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding matTreeNodeToggle
-						   [cdkTreeNodeTypeaheadLabel]="node.name">
+			<mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding matTreeNodeToggle>
 			  <button mat-icon-button matTreeNodeToggle
 					  [attr.aria-label]="'Toggle ' + node.name">
 				<mat-icon class="mat-icon-rtl-mirror">
 				  {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
 				</mat-icon>
 			  </button>
-			  {{node.name}}
+			  <a (click)="nodePress(node.name)" style="cursor: pointer;">{{node.name}}</a>
 			</mat-tree-node>
 		  </mat-tree>
-		  
 		<br/>
 	</mat-sidenav>
 	<mat-sidenav-content>

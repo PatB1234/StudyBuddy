@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, File, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import status, Form
@@ -8,6 +8,7 @@ from funcs import *
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from db import *
+import os, shutil
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="/"), name="static")
 
@@ -113,3 +114,39 @@ def change_current_notes(newID: classes.PostChangeNotes, request: Request):
     else:
 
         db.changeCurrentNotes(request.headers.get('token'), newID.newFileID)
+
+
+@app.post("/add_notes")
+def post_add_notes(request: Request, sectionName: str = Form(...), file: UploadFile = File(...), ):
+
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+        
+        if '.pdf' in file.filename:
+
+
+            file_path = os.path.join("Data", str(getLastNoteID() + 1) + ".pdf")
+            with open(file_path, "wb") as buff:
+
+                shutil.copyfileobj(file.file, buff)
+            addNotes(request.headers.get('token'), file.filename, getLastNoteID() + 1, sectionName)
+            return {"message": "Upload successful"}
+        else:
+
+            return {"message": "Incorrect filetype, must be PDF"}
+        
+
+@app.post("/get_all_user_notes_tree")
+def get_user_notes_in_tree(request: Request):
+
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+
+        print(getAllNotesTree(token_res[1]))
+        return getAllNotesTree(token_res[1])

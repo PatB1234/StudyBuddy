@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -7,38 +7,18 @@ import { MatIconButton } from '@angular/material/button';
 import { Router } from '@angular/router';
 import {MatTabsModule} from '@angular/material/tabs';
 import {MatTreeModule} from '@angular/material/tree';
-
+import { HttpClient } from '@angular/common/http';
+import { NestedTreeControl } from '@angular/cdk/tree';
 
 interface ILink {
     path: string;
     label: string;
 }
-
-interface FoodNode {
+interface TreeNode {
 	name: string;
-	children?: FoodNode[];
+	children?: TreeNode[];
   }
   
-  const TREE_DATA: FoodNode[] = [
-	{
-	  name: 'Fruit',
-	  children: [{name: 'Apple'}, {name: 'Banana'}, {name: 'Fruit loops'}],
-	},
-	
-	{
-	  name: 'Vegetables',
-	  children: [
-		{
-		  name: 'Green',
-		  children: [{name: 'Broccoli'}, {name: 'Brussels sprouts'}],
-		},
-		{
-		  name: 'Orange',
-		  children: [{name: 'Pumpkins'}, {name: 'Carrots'}],
-		},
-	  ],
-	},
-  ];
 
 @Component({
 	selector: 'app-root',
@@ -59,17 +39,34 @@ interface FoodNode {
 	
 })
 
-export class AppComponent {
+export class AppComponent implements OnInit{
 
-	constructor(private router: Router) { }
+	constructor(private router: Router, private http: HttpClient) { }
+	ngOnInit(): void {
+		this.getTree()
+	}
 
 	title = 'study-buddy';
 	static URL = 'http://127.0.0.1:8000'; // Global URL Path
 
-	dataSource = TREE_DATA;
+	childrenAccessor = (node: TreeNode) => node.children ?? [];
+	hasChild = (_: number, node: TreeNode) => !!node.children && node.children.length > 0;
+	dataSource: any = [];
+	getTree(): void {
+		this.http.post(AppComponent.URL + "/get_all_user_notes_tree", {}).subscribe(
+			(res: any) => {
+				this.dataSource = res;
+			},
+			(error: any) => {
+				console.error("Error fetching tree data:", error);
+			}
+		);
+	}
 
-	childrenAccessor = (node: FoodNode) => node.children ?? [];
-	hasChild = (_: number, node: FoodNode) => !!node.children && node.children.length > 0;
+	nodePress(nodeName: string): void {
+		console.log("Node clicked:", nodeName);
+		// Add any additional logic here, such as navigation or data fetching
+	}
 
 	accountsMenu(): void {
 

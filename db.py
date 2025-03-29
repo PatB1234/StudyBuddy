@@ -2,8 +2,8 @@ import sqlite3 as driver
 from sqlite3.dbapi2 import Cursor
 from typing import Optional
 import logging, os, jwt
-from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
 from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -21,6 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 10080 # 7 Days
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+currentNotes = [] # BIG VOLATILE ARRAY that stores all of the currently used notes by a user based on a token.
 
 # JWT functions
 def hash_password(password):
@@ -247,10 +248,11 @@ def validate_student(token):
 
 
 ### Notes functions
-currentNotes = [] # BIG VOLATILE ARRAY that stores all of the currently used notes by a user based on a token.
 ##CRUD Functions for notes
 # Add notes to the database
-def addNotes(): pass
+def addNotes(token, fileName, fileID, sectionName): 
+    print(token, fileName, fileID, sectionName)
+    cursor_func(f"INSERT INTO NOTES (fileID, fileName, ownerEmail, sectionName) VALUES ({int(fileID)}, '{fileName}', '{get_student_from_token(token)['email']}', '{sectionName}');", False)
 
 # Change the section name
 def changeNotesSection(): pass
@@ -262,16 +264,21 @@ def changeNotesName(): pass
 def updateOwnerEmail(): pass
 
 # Get all notes from an email
-def getNotesByEmail(): pass
-
+def getNotesByEmail(ownerEmail: str): 
+    
+    return cursor_func(f"SELECT * FROM NOTES WHERE ownerEmail='{ownerEmail}'", True)
 # Get all notes within a specific section
 def getNotesBySectionName(): pass
 
 # Get notes by noteID
 def getNoteByID(noteID: int) -> classes.notes:
+    notes = cursor_func(f"SELECT * FROM NOTES WHERE fileID={noteID}", True)
+    if (notes == []):
 
-    notes = cursor_func(f"SELECT * FROM NOTES WHERE fileID={noteID}")
-    return classes.notes(fileID=int(notes[0]), fileName=notes[1], ownerEmail=notes[2], sectionName=notes[3])
+        return classes.notes(fileID=-1, fileName="-1.txt", ownerEmail="", sectionName = "")
+    else:
+        notes = notes[0]
+        return classes.notes(fileID=int(notes[0]), fileName=notes[1], ownerEmail=notes[2], sectionName=notes[3])
 
 # Get current notes by token
 def getCurrentNotesByToken(token):
@@ -286,20 +293,77 @@ def getCurrentNotesByToken(token):
 
 # Change currently examined notes
 def changeCurrentNotes(token: str, newNoteID: int):
-
+    found = False
     for i in currentNotes:
 
         if i[0] == token:
 
             i[1] == newNoteID
+            found = True
             return 1
         
+    if (found == False): # Add to array incase the user's notes are not in the volatile array for some odd reason
+
+        i.append([token, newNoteID])
+
+        
     return 0
+
 # Delete notes by ID pass
-def deleteNotesByID(): pass
+def deleteNotesByID(id: int):
+
+    cursor_func(f"DELETE FROM NOTES WHERE fileID={id}", False)
+
 
 # Delete notes by section name
 def deleteNotesBySectionName(): pass
 
 # Delete notes by email
 def deleteNotesByEmail(): pass
+
+#Get Last note ID:
+def getLastNoteID():
+
+    currLargest = -1
+    notes = cursor_func("SELECT * FROM NOTES", True)
+    for note in notes:
+        if note[0] > currLargest:
+
+            currLargest = note[0]
+
+    return currLargest
+
+
+# Get all the notes in an acceptable tree fashion for a specific user
+def getAllNotesTree(ownerEmail: str):
+    sections = getNotesByEmail(ownerEmail)  # Fetch notes by email
+
+    # Transform the data into the desired tree structure
+    def transform_to_tree(section_list):
+        tree = []
+        for section in section_list:
+            tree.append({
+                "name": section[3],  # Section name (index 3 corresponds to sectionName in the NOTES table)
+                "children": [{"name": section[1]}]  # Child nodes (index 1 corresponds to fileName in the NOTES table)
+            })
+        return tree
+
+    # Group sections by their names
+    grouped_sections = {}
+    for section in sections:
+        section_name = section[3]  # Section name
+        if section_name not in grouped_sections:
+            grouped_sections[section_name] = []
+        grouped_sections[section_name].append(section)
+
+    # Build the tree structure
+    tree_structure = []
+    for section_name, notes in grouped_sections.items():
+        tree_structure.append({
+            "name": section_name,
+            "children": [{"name": note[1]} for note in notes]  # Add notes as children
+        })
+
+    return tree_structure
+
+

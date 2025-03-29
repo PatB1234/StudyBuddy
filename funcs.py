@@ -16,7 +16,7 @@ generation_config = {
 }
 
 model = genai.GenerativeModel(
-  model_name="gemini-1.5-flash",
+    model_name = "gemini-2.0-flash-lite",
   generation_config=generation_config,
 
 )
@@ -43,42 +43,41 @@ def data_cleaner(value, remove_new_line: bool, isJson: bool): # Just cleans the 
 	return value
 
 # Import File (RE Notes)
-notes = genai.upload_file(path="Data/RE.pdf", display_name="RE Notes PDF")
+notes =  genai.upload_file(path=f"Data/-1.pdf", display_name=str("forgor"))
 
 def upload_notes(notesID: int):
 	
-	genai.upload_file(path=f"Data/{notesID}.pdf", display_name=str(db.getNoteByID(notesID).fileName))
+	return genai.upload_file(path=f"Data/{notesID}.pdf", display_name=str(db.getNoteByID(notesID).fileName))
 
 
-def run_prompt(files, prompt, noteID): # Base Function
-	upload_notes(noteID)
+def run_prompt(files, prompt): # Base Function
 	return (model.generate_content([files, prompt])).text
 
 def flashcards(noteID):
 
-	upload_notes(noteID)
+	notes = upload_notes(noteID)
 	cards = str((model.generate_content([notes, "Make flashcards for the notes given. Make these short flashcards witha back of no more than 20 words. Return the data as a  json object without any additional formatting or rich text backticks/identifiers LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier"])).text)
 	return data_cleaner(cards, True, True)
 
 def summariser(noteID): # Done
 
-	upload_notes(noteID)
+	notes = upload_notes(noteID)
 	return (run_prompt(notes, "Summarise the notes"))
 
 def custom_prompt(prompt, noteID): # Done
 	
-	upload_notes(noteID)
+	notes = upload_notes(noteID)
 	return run_prompt(notes, prompt)
 
 def make_questions(noteID): # Done
 	
-	upload_notes(noteID)
+	notes = upload_notes(noteID)
 	res = str((model.generate_content([notes, f"Generate 1 questions on these notes. Return the data as a python string without any additional formatting or rich text backticks/identifiers. ONLY GIVE THE QUESTIONS AND NO ANSWERS. DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION"])).text)
 	return data_cleaner(res, True, False)
 
 def check_question(question, answer, noteID): # Done
 	
-	upload_notes(noteID)
+	notes = upload_notes(noteID)
 	res = (model.generate_content([notes, f"is the answer {answer} correct for the question {question}"])).text
 	return res
 

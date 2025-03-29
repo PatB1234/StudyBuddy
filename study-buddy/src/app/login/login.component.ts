@@ -7,6 +7,7 @@ import {MatCardModule} from '@angular/material/card';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AppComponent } from '../app.component';
+import { MatIcon } from '@angular/material/icon';
 @Component({
 	selector: 'app-login',
 	standalone: true,
@@ -16,6 +17,7 @@ import { AppComponent } from '../app.component';
 		MatFormFieldModule,
 		MatInputModule,
 		MatCardModule,
+		MatIcon
 	],
 	templateUrl: './login.component.html',
 	styleUrl: './login.component.scss'
