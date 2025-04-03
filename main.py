@@ -105,7 +105,7 @@ def edit_user(newDetails: editUserModel, request: Request):
     
 
 @app.post("/change_current_notes")
-def change_current_notes(newID: classes.PostChangeNotes, request: Request):
+def change_current_notes(newNoteName: classes.PostChangeNotes, request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -113,7 +113,7 @@ def change_current_notes(newID: classes.PostChangeNotes, request: Request):
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
     else:
 
-        db.changeCurrentNotes(request.headers.get('token'), newID.newFileID)
+        db.changeCurrentNotes(request.headers.get('token'), newNoteName.newNoteName)
 
 
 @app.post("/add_notes")
@@ -148,5 +148,4 @@ def get_user_notes_in_tree(request: Request):
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
     else:
 
-        print(getAllNotesTree(token_res[1]))
         return getAllNotesTree(token_res[1])

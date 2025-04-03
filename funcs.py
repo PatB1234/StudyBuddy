@@ -16,7 +16,7 @@ generation_config = {
 }
 
 model = genai.GenerativeModel(
-    model_name = "gemini-2.0-flash-lite",
+    model_name = "gemini-2.0-flash",
   generation_config=generation_config,
 
 )
@@ -46,7 +46,6 @@ def data_cleaner(value, remove_new_line: bool, isJson: bool): # Just cleans the 
 notes =  genai.upload_file(path=f"Data/-1.pdf", display_name=str("forgor"))
 
 def upload_notes(notesID: int):
-	
 	return genai.upload_file(path=f"Data/{notesID}.pdf", display_name=str(db.getNoteByID(notesID).fileName))
 
 
@@ -56,7 +55,8 @@ def run_prompt(files, prompt): # Base Function
 def flashcards(noteID):
 
 	notes = upload_notes(noteID)
-	cards = str((model.generate_content([notes, "Make flashcards for the notes given. Make these short flashcards witha back of no more than 20 words. Return the data as a  json object without any additional formatting or rich text backticks/identifiers LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier"])).text)
+	cards = str((model.generate_content([notes, "Make flashcards for the notes given. Make these short flashcards witha back of no more than 20 words. Return the data as a  json object without any additional formatting or rich text backticks/identifiers LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier. A good example of how you should do it is this: [{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, {'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}d]"])).text)
+	print(data_cleaner(cards, True, True))
 	return data_cleaner(cards, True, True)
 
 def summariser(noteID): # Done

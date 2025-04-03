@@ -65,7 +65,15 @@ export class AppComponent implements OnInit{
 
 	nodePress(nodeName: string): void {
 		console.log("Node clicked:", nodeName);
-		// Add any additional logic here, such as navigation or data fetching
+		this.http.post(AppComponent.URL + "/change_current_notes", { newNoteName: nodeName }).subscribe(
+			(res: any) => {
+				console.log("Node press action completed successfully:", res);
+				// Perform any additional actions here if needed
+			},	
+			(error: any) => {
+				console.error("Error updating current notes:", error);
+			}
+		);
 	}
 
 	accountsMenu(): void {

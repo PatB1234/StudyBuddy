@@ -38,5 +38,5 @@ class notes(BaseModel):
 
 class PostChangeNotes(BaseModel):
 
-    newFileID: int
+    newNoteName: str
 

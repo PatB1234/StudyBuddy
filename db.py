@@ -172,19 +172,15 @@ def change_pwd(email, pwd):
 def editUser(newName, email, oldPwd:str , newPwd: str):
 
     student = get_all_students()
-    print(newName, email, newPwd, oldPwd)
     for studen in student:
-        print(verify_password(oldPwd, studen.password))
         if check_student_login(email, oldPwd) != 0:
 
             if newName != "":
 
                 change_name(email, newName)
-                print(newName)
             if newPwd != "":
 
                 change_pwd(email, newPwd)
-                print(newPwd)
             return 1
         
     return 0
@@ -251,7 +247,6 @@ def validate_student(token):
 ##CRUD Functions for notes
 # Add notes to the database
 def addNotes(token, fileName, fileID, sectionName): 
-    print(token, fileName, fileID, sectionName)
     cursor_func(f"INSERT INTO NOTES (fileID, fileName, ownerEmail, sectionName) VALUES ({int(fileID)}, '{fileName}', '{get_student_from_token(token)['email']}', '{sectionName}');", False)
 
 # Change the section name
@@ -291,23 +286,36 @@ def getCurrentNotesByToken(token):
         
     return -1
 
+#Get the noteID based on the token and the note's name
+def getNoteIDByNoteName(token: str, noteName: str):
+
+    email = validate_student(token)[1]
+    res = cursor_func(f"SELECT * FROM NOTES WHERE ownerEmail='{email}' AND fileName='{noteName}';", True)
+
+    if len(res) != 0:
+        return int(res[0][0])
+    else: 
+        return -1
+
+
 # Change currently examined notes
-def changeCurrentNotes(token: str, newNoteID: int):
+def changeCurrentNotes(token: str, noteName: str):
+    newNoteID = getNoteIDByNoteName(token, noteName)
     found = False
-    for i in currentNotes:
+    for i in range(len(currentNotes)):
 
-        if i[0] == token:
+        if currentNotes[i][0] == token:
 
-            i[1] == newNoteID
+            currentNotes[i][1] = newNoteID
             found = True
             return 1
         
     if (found == False): # Add to array incase the user's notes are not in the volatile array for some odd reason
 
-        i.append([token, newNoteID])
+        currentNotes.append([token, newNoteID])
 
         
-    return 0
+    return 0 
 
 # Delete notes by ID pass
 def deleteNotesByID(id: int):
@@ -337,16 +345,6 @@ def getLastNoteID():
 # Get all the notes in an acceptable tree fashion for a specific user
 def getAllNotesTree(ownerEmail: str):
     sections = getNotesByEmail(ownerEmail)  # Fetch notes by email
-
-    # Transform the data into the desired tree structure
-    def transform_to_tree(section_list):
-        tree = []
-        for section in section_list:
-            tree.append({
-                "name": section[3],  # Section name (index 3 corresponds to sectionName in the NOTES table)
-                "children": [{"name": section[1]}]  # Child nodes (index 1 corresponds to fileName in the NOTES table)
-            })
-        return tree
 
     # Group sections by their names
     grouped_sections = {}

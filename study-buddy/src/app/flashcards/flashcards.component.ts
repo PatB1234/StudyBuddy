@@ -74,7 +74,7 @@ export class FlashcardsComponent implements OnInit{
 
 	getFlashcards(): void {
 		this.http.get(this.URL + "/get_flashcards").subscribe((res: any) => {
-
+			console.log(res)
 			this.flashcards = res;
 			this.total_card = this.flashcards.length;
 			this.curr_card = 0;
