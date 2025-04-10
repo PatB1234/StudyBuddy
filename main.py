@@ -80,8 +80,11 @@ def create_user_post(user: PostStudentModel):
 @app.post("/check_student_login")
 def check_student_login_post(user: PostLoginCheckStudentModel):
 
+    if (user.signUp):
 
-    return check_student_login(user.email, user.password)
+        return create_user(Student(name=user.name, email=user.email, password=user.password))
+    else:
+        return check_student_login(user.email, user.password)
 
 @app.get("/get_student_credentials")
 def get_student_by_token(request: Request):
@@ -132,8 +135,21 @@ def post_add_notes(request: Request, sectionName: str = Form(...), file: UploadF
             with open(file_path, "wb") as buff:
 
                 shutil.copyfileobj(file.file, buff)
-            addNotes(request.headers.get('token'), file.filename, getLastNoteID() + 1, sectionName)
-            return {"message": "Upload successful"}
+
+            # Check if the file size is ok (i.e. number of tokens)    
+            if (check_token_no(file_path)): 
+
+                addNotes(request.headers.get('token'), file.filename.replace(".pdf", ""), getLastNoteID() + 1, sectionName)
+                return {"message": "Upload successful"}
+            
+            else:
+                
+                # Remove the file if it is too large
+                if os.path.exists(file_path):
+
+                    os.remove(file_path) 
+
+                return {"message": "File is too large, please try with a different file or a non-handwritten file"}
         else:
 
             return {"message": "Incorrect filetype, must be PDF"}
@@ -149,3 +165,5 @@ def get_user_notes_in_tree(request: Request):
     else:
 
         return getAllNotesTree(token_res[1])
+    
+

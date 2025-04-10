@@ -4,7 +4,7 @@
     <form class="question-answer-form" [formGroup] = "questionAnswerForm" (ngSubmit)="onQuestionSubmit()">
         <h6>{{questionBox}}</h6>
         <mat-form-field class="example-full-width">
-            <input matInput #message maxlength="500" placeholder="Type your answer here" formControlName="questionAnswer">
+            <textarea matInput placeholder="Type your answer here" formControlName="questionAnswer"></textarea>
         </mat-form-field>
         <br/>
         <p>{{correctOrNot}}</p>

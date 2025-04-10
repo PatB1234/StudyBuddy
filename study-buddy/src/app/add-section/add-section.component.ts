@@ -38,10 +38,11 @@ export class AddSectionComponent {
 		const formData = new FormData()
 		formData.append('file', file)
 		formData.append('sectionName', sectionName)
+		this._snackBar.open("Please wait while file processes, this can take a few minutes", "Dismiss")
 		return this.http.post(this.url + "/add_notes", formData)
 	}
-	openSnackBar(message: string) {
-		this._snackBar.open(message);
+	openSnackBar(message: string, action: string) {
+		this._snackBar.open(message, action);
 	  }	
 	  constructor(private http: HttpClient) {}
 	  
@@ -51,13 +52,7 @@ export class AddSectionComponent {
 		if (this.selectedFile && this.sectionName.trim()) {
 
 			this.uploadFile(this.selectedFile, this.sectionName).subscribe(response => {
-
-				if (response.message != "Upload successful") {
-					this._snackBar.open("Upload failed, try again");
-				} else {
-					this._snackBar.open(response.message);
-
-				}
+				this._snackBar.open(response.message, "Dismiss")
 			}, error => {
 
 				console.log( error)

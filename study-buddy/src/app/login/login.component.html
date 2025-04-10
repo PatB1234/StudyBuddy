@@ -6,7 +6,16 @@
 
             <form class="form flex flex-center" [formGroup]="loginForm">
                 <h3>Login</h3>
-                
+                <mat-form-field class="form-field" appearance="outline">
+                    <mat-label>Name</mat-label>
+                    <input type="name" matInput formControlName="name">
+                    @if (loginForm.get('name')?.hasError('required')) {
+                    <mat-error>Name is required</mat-error>
+                    }
+
+                </mat-form-field>
+                <br />
+
                 <mat-form-field class="form-field" appearance="outline">
                     <mat-label>Email</mat-label>
                     <input type="email" matInput formControlName="email">
@@ -32,8 +41,9 @@
                 <button mat-stroked-button (click)="submit()" [disabled]="loginForm.invalid">Login</button>
                 <br/>
                 <br/>
-                <a href="/sign-up" routerLinkActive="active">Don't have an account? Sign Up!</a>
-         </form>
+                <label>Don't have an account? Click here to sign up:</label>
+                <mat-checkbox  [checked]="task().completed" (change)="update($event.checked)"></mat-checkbox>
+            </form>
 
         </mat-card-content>
     </mat-card>

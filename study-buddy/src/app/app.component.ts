@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { RouterOutlet, RouterLink, ActivatedRoute, NavigationEnd } from '@angular/router';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import { MatIcon } from '@angular/material/icon';
@@ -8,7 +8,8 @@ import { Router } from '@angular/router';
 import {MatTabsModule} from '@angular/material/tabs';
 import {MatTreeModule} from '@angular/material/tree';
 import { HttpClient } from '@angular/common/http';
-import { NestedTreeControl } from '@angular/cdk/tree';
+import {MatSnackBar} from '@angular/material/snack-bar';
+import { filter } from 'rxjs/operators';
 
 interface ILink {
     path: string;
@@ -41,13 +42,20 @@ interface TreeNode {
 
 export class AppComponent implements OnInit{
 
-	constructor(private router: Router, private http: HttpClient) { }
+	constructor(private router: Router, private http: HttpClient, private route: ActivatedRoute) { }
 	ngOnInit(): void {
-		this.getTree()
-	}
+		
+			this.getTree()
+
+		}
+
 
 	title = 'study-buddy';
 	static URL = 'http://127.0.0.1:8000'; // Global URL Path
+	private _snackBar = inject(MatSnackBar);
+	openSnackBar(message: string, action: string) {
+		this._snackBar.open(message, action);
+	  }	
 
 	childrenAccessor = (node: TreeNode) => node.children ?? [];
 	hasChild = (_: number, node: TreeNode) => !!node.children && node.children.length > 0;
@@ -68,6 +76,7 @@ export class AppComponent implements OnInit{
 		this.http.post(AppComponent.URL + "/change_current_notes", { newNoteName: nodeName }).subscribe(
 			(res: any) => {
 				console.log("Node press action completed successfully:", res);
+				this._snackBar.open(`Selected notes: ${nodeName}`, "Dismiss")
 				// Perform any additional actions here if needed
 			},	
 			(error: any) => {

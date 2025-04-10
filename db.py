@@ -83,11 +83,11 @@ def create_user(student: Student):
 
         if studen.email == student.email:
 
-            return 0
+            return "New user creation failed"
 
     id = get_last_id_students() + 1
     cursor_func(f"INSERT INTO STUDENTS (name, email, password, id) VALUES ('{student.name}', '{student.email}', '{hash_password(student.password)}', {id});", False)
-    return 1
+    return "New user created, please login with your new account for verification purposes"
 
 # Read
 def get_all_students():
@@ -224,10 +224,11 @@ def validate_student(token):
     try: 
         res = get_student_from_token(token)
         if res == "Token Expired":
-
+            
             return False
         
         else:
+
 
             # Returns details in the form of a list
             return [res['name'], res['email'], res['id']]
@@ -363,5 +364,4 @@ def getAllNotesTree(ownerEmail: str):
         })
 
     return tree_structure
-
 
