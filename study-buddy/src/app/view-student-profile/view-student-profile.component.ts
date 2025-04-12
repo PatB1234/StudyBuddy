@@ -1,4 +1,4 @@
-import { Component, Renderer2, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -45,7 +45,6 @@ export class ViewStudentProfileComponent implements OnInit{
 		} else {
       let formDetails = this.studentProfileForm.value;
       this.http.post(this.URL + "/edit_user",  {newName: formDetails.name, email: this.emailView, oldPassword: formDetails.oldPassword, newPassword: formDetails.newPassword} ).subscribe((res: any) => {
-        console.log(res);
         // RES = 1 Means that user edit was successful
         // RES = 0 Either the user was not found or the details entered did not match
         if (res == 0) {

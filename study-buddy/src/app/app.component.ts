@@ -9,7 +9,6 @@ import {MatTabsModule} from '@angular/material/tabs';
 import {MatTreeModule} from '@angular/material/tree';
 import { HttpClient } from '@angular/common/http';
 import {MatSnackBar} from '@angular/material/snack-bar';
-import { filter } from 'rxjs/operators';
 
 interface ILink {
     path: string;

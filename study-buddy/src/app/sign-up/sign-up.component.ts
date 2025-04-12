@@ -43,7 +43,6 @@ export class SignUpComponent {
 		}
 
 		this.http.post(this.URL + "/create_student", this.signUpForm.value ).subscribe((res: any) => {
-			console.log(res);
 			// RES = 1 Means that user was created
 			// RES = 0 Means that user already exists
 			if (res == 1) {

@@ -1,15 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AppComponent } from '../app.component';
-import { response } from 'express';
 import {MatCardModule} from '@angular/material/card';
 import { MatLabel } from '@angular/material/form-field';
 import { MatFormField } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';  
 import { MatIcon } from '@angular/material/icon';
-import {MatDialog, MatDialogModule} from '@angular/material/dialog';
 import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({

@@ -9,7 +9,6 @@ import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
 import { HttpClient } from '@angular/common/http';
 import {MatCardModule} from '@angular/material/card';
-import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AppComponent } from '../app.component';
 
 @Component({

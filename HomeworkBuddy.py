@@ -20,7 +20,6 @@ while opt != 10:
 
     if opt == 1:
 
-        quiz()
     elif opt == 2:
         
         print(flashcards())

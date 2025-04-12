@@ -2,13 +2,8 @@
 import google.genai
 import google.generativeai as generativeai
 from dotenv import load_dotenv
-import os
-import json
-import ast
-import re
-import db
-import google
-from PyPDF2 import PdfReader
+import os, json, re, db, google
+
 load_dotenv()
 generativeai.configure(api_key=os.getenv("API_KEY"))
 # Create the model

@@ -1,12 +1,10 @@
-from fastapi import FastAPI, Request, Response, File, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request, File, UploadFile
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi import status, Form
-from fastapi.param_functions import Depends
+from fastapi import Form
 from classes import *
 from funcs import *
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.responses import RedirectResponse
 from db import *
 import os, shutil
 app = FastAPI()

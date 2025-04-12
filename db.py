@@ -1,12 +1,9 @@
 import sqlite3 as driver
-from sqlite3.dbapi2 import Cursor
 from typing import Optional
 import logging, os, jwt
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from typing import Annotated
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError, InvalidSignatureError
 from passlib.context import CryptContext
 from pydantic import BaseModel
@@ -81,13 +78,13 @@ def create_user(student: Student):
     students = get_all_students()
     for studen in students:
 
-        if studen.email == student.email:
+        if studen.email == student.email: # Checks if the user already exists
 
             return "New user creation failed"
 
     id = get_last_id_students() + 1
     cursor_func(f"INSERT INTO STUDENTS (name, email, password, id) VALUES ('{student.name}', '{student.email}', '{hash_password(student.password)}', {id});", False)
-    return "New user created, please login with your new account for verification purposes"
+    return "New user created, please login with your new account for verification purposes. Make sure to uncheck the box"
 
 # Read
 def get_all_students():
