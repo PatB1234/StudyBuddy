@@ -80,11 +80,11 @@ def create_user(student: Student):
 
         if studen.email == student.email: # Checks if the user already exists
 
-            return "New user creation failed"
+            return "User with this email already exists, please login instead"
 
     id = get_last_id_students() + 1
     cursor_func(f"INSERT INTO STUDENTS (name, email, password, id) VALUES ('{student.name}', '{student.email}', '{hash_password(student.password)}', {id});", False)
-    return "New user created, please login with your new account for verification purposes. Make sure to uncheck the box"
+    return "New user created, please login with your account"
 
 # Read
 def get_all_students():

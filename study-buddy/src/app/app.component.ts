@@ -51,6 +51,7 @@ export class AppComponent implements OnInit{
 
 	title = 'study-buddy';
 	static URL = 'http://127.0.0.1:8000'; // Global URL Path
+	curr_selected = "None";
 	private _snackBar = inject(MatSnackBar);
 	openSnackBar(message: string, action: string) {
 		this._snackBar.open(message, action);
@@ -76,6 +77,17 @@ export class AppComponent implements OnInit{
 			(res: any) => {
 				console.log("Node press action completed successfully:", res);
 				this._snackBar.open(`Selected notes: ${nodeName}`, "Dismiss")
+				this.http.post(AppComponent.URL + "/get_currently_selected_note", {}).subscribe((res: any) => {
+
+					if (res  == -1 || res == "-1.txt") {
+
+						this.curr_selected = "Unselected"
+					} else {
+
+						this.curr_selected = res
+					}
+				})
+
 				// Perform any additional actions here if needed
 			},	
 			(error: any) => {

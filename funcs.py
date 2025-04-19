@@ -3,9 +3,12 @@ import google.genai
 import google.generativeai as generativeai
 from dotenv import load_dotenv
 import os, json, re, db, google
+from google.genai.types import Content, CreateCachedContentConfig, HttpOptions, Part
 
 load_dotenv()
 generativeai.configure(api_key=os.getenv("API_KEY"))
+CACHED_FLASHCARDS = [] # [FILEID, CACHEDATA]
+
 # Create the model
 client = google.genai.Client(api_key=os.getenv("API_KEY"))
 
@@ -67,12 +70,18 @@ def run_prompt(files, prompt):  # Base Function
 
 
 def flashcards(noteID):
+    for i in range(len(CACHED_FLASHCARDS)):
 
+        if CACHED_FLASHCARDS[i][0] == noteID:
+            return CACHED_FLASHCARDS[i][1]
+        
+    
     notes = upload_notes(noteID)
     cards = str((model.generate_content(
         [notes, "Make flashcards for the notes given. Make these short flashcards witha back of no more than 20 words. Return the data as a  json object without any additional formatting or rich text backticks/identifiers LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier. A good example of how you should do it is this: [{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, {'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}d]"])).text)
-    return data_cleaner(cards, True, True)
-
+    flashcards = data_cleaner(cards, True, True)
+    CACHED_FLASHCARDS.append([noteID, flashcards])
+    return flashcards
 
 def summariser(noteID):  # Done
 

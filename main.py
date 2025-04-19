@@ -78,11 +78,7 @@ def create_user_post(user: PostStudentModel):
 @app.post("/check_student_login")
 def check_student_login_post(user: PostLoginCheckStudentModel):
 
-    if (user.signUp):
-
-        return create_user(Student(name=user.name, email=user.email, password=user.password))
-    else:
-        return check_student_login(user.email, user.password)
+    return check_student_login(user.email, user.password)
 
 @app.get("/get_student_credentials")
 def get_student_by_token(request: Request):
@@ -165,3 +161,13 @@ def get_user_notes_in_tree(request: Request):
         return getAllNotesTree(token_res[1])
     
 
+@app.post("/get_currently_selected_note")
+def getCurrentlySelectedNotesByToken(request: Request):
+    
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+
+        return getNoteByID(getCurrentNotesByToken(request.headers.get('token'))).fileName

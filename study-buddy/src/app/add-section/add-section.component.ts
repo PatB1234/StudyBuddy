@@ -50,6 +50,7 @@ export class AddSectionComponent {
 
 			this.uploadFile(this.selectedFile, this.sectionName).subscribe(response => {
 				this._snackBar.open(response.message, "Dismiss")
+				location.reload()
 			}, error => {
 
 				console.log( error)

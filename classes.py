@@ -21,7 +21,6 @@ class PostLoginCheckStudentModel(BaseModel):
     name: str
     email: str
     password: str
-    signUp: bool
 
 class editUserModel(BaseModel):
     
