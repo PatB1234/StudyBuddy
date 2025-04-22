@@ -5,3 +5,5 @@
 # windsurf rules
 .windsurfrules
 inDevelopment.py
+Backend/env
+Backend/.env

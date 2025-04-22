@@ -171,3 +171,8 @@ def getCurrentlySelectedNotesByToken(request: Request):
     else:
 
         return getNoteByID(getCurrentNotesByToken(request.headers.get('token'))).fileName
+    
+@app.get("/cloud_check") # Cloud hoster calls this to ensure the server is responding
+def cloud_check():
+
+    return True
