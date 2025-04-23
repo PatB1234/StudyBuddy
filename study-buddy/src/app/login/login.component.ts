@@ -92,7 +92,7 @@ export class LoginComponent {
 		if (this.currState == 0) {
 			this.http.post(this.URL + "/check_student_login", this.loginForm.value).subscribe((res: any) => {
 				if (typeof (res) == 'string') {
-					document.cookie = `token=${res}; SameSite=None; Secure;`;
+					document.cookie = `token=${res}; SameSite=Lax;`;
 					this._snackBar.open("Login Successful, redirecting", "Dismiss");
 					this.router.navigate(['/'])
 				} else {

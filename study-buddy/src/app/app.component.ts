@@ -50,7 +50,7 @@ export class AppComponent implements OnInit{
 
 
 	title = 'study-buddy';
-	static URL = 'http://127.0.0.1:8000'; // Global URL Path
+	static URL = 'http://50.116.35.223:8000'; // Global URL Path Prod Path: http://50.116.35.223:8000
 	curr_selected = "None";
 	private _snackBar = inject(MatSnackBar);
 	openSnackBar(message: string, action: string) {
