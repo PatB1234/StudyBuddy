@@ -185,7 +185,12 @@ def editUser(newName, email, oldPwd:str , newPwd: str):
 # Delete
 def delete_user_id(id):
 
-    cursor_func(f"DELETE FROM STUDENTS WHERE id={id}", False)
+    try:
+        deleteAllNotesByUserID(id)
+        cursor_func(f"DELETE FROM STUDENTS WHERE id={id}", False)
+    except:
+        return "Error deleting user"
+    return "Successfully deleted user"
 
 def delete_user_email(email):
 
@@ -315,10 +320,22 @@ def changeCurrentNotes(token: str, noteName: str):
         
     return 0 
 
+# Delete all notes for a specific user
+def deleteAllNotesByUserID(id: int):
+    
+    res = cursor_func(f"SELECT fileID FROM NOTES WHERE ownerEmail=(SELECT email FROM STUDENTS WHERE id={id})", True)
+    for id in res:
+        
+        deleteNotesByID(int(id[0]))
 # Delete notes by ID pass
 def deleteNotesByID(id: int):
+    # Delete the actual file with the id
+    try:
+        cursor_func(f"DELETE FROM NOTES WHERE fileID={id}", False)
+        os.remove(f"Data/{id}.pdf")
+    except FileNotFoundError:
+        logging.error(f"File with ID {id} does not exist.")
 
-    cursor_func(f"DELETE FROM NOTES WHERE fileID={id}", False)
 
 
 # Delete notes by section name

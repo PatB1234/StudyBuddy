@@ -176,3 +176,14 @@ def getCurrentlySelectedNotesByToken(request: Request):
 def cloud_check():
 
     return True
+
+@app.post("/api/delete_user")
+def post_delete_user(request: Request):
+
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+
+        return delete_user_id(token_res[2])  

@@ -9,6 +9,7 @@ import {MatTabsModule} from '@angular/material/tabs';
 import {MatTreeModule} from '@angular/material/tree';
 import { HttpClient } from '@angular/common/http';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import { filter } from 'rxjs/operators';
 
 interface ILink {
     path: string;
@@ -43,14 +44,17 @@ export class AppComponent implements OnInit{
 
 	constructor(private router: Router, private http: HttpClient, private route: ActivatedRoute) { }
 	ngOnInit(): void {
-		
-			this.getTree()
-
-		}
-
+		console.log("AppComponent initialized");
+		this.getTree()
+		this.router.events
+         .pipe(filter(event => event instanceof NavigationEnd))
+         .subscribe(() => {
+           this.getTree();
+         });
+	}
 
 	title = 'study-buddy';
-	static URL = 'https://studdybuddy.app/api'; // Global URL Path Prod Path: http://45.79.253.48:8000
+	static URL = 'http://localhost:8000/api'; // Global URL Path Prod Path: https://studdybuddy.app/api
 	curr_selected = "None";
 	private _snackBar = inject(MatSnackBar);
 	openSnackBar(message: string, action: string) {
@@ -120,4 +124,28 @@ export class AppComponent implements OnInit{
     onActivate(path: string) {
         this.activePath = path;
     }
+	logout(): void {
+
+		console.log("logout")
+		document.cookie = `token=INVALIDATED; SameSite=Lax;`;
+		this.router.navigate(['/login'])
+
+	}
+	delete_user(): void {
+
+		var res = prompt("Are you sure you want to delete your account? This action cannot be undone. Type DELETE to confirm.");
+		if (res == "DELETE") {
+
+			this._snackBar.open("Account deleted", "Dismiss");
+			this.http.post(AppComponent.URL + "/delete_user", {}).subscribe((res: any) => {
+				console.log("Account deletion response:", res);
+			}, (error: any) => {
+				console.error("Error deleting account:", error);
+			});
+			document.cookie = `token=INVALIDATED; SameSite=Lax;`;
+			this.router.navigate(['/login'])
+		} else {
+			this._snackBar.open("Account deletion cancelled", "Dismiss");
+		}
+	}
 }

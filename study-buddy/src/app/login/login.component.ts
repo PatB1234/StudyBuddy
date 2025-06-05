@@ -95,6 +95,7 @@ export class LoginComponent {
 					document.cookie = `token=${res}; SameSite=Lax;`;
 					this._snackBar.open("Login Successful, redirecting", "Dismiss");
 					this.router.navigate(['/'])
+					
 				} else {
 
 					this._snackBar.open("Incorrect details, try again or create an account", "Dismiss");

@@ -13,6 +13,7 @@
 
   background-color: #7a95d9;
   border-radius: 0px !important;
+  width: 25%;
 }
 .mat-header {
 
@@ -38,6 +39,7 @@ a {
 mat-icon {
 
   transform: scale(2);
+  
 }
 
 .mat-tab-group {
@@ -47,4 +49,9 @@ mat-icon {
 h1 {
 
   font-size: 45px;
+}
+
+
+.icon-button {
+  padding: 25px;
 }

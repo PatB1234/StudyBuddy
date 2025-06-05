@@ -1,7 +1,8 @@
 server {
     listen 80;
     server_name studdybuddy.app;
-client_max_body_size 100M;
+    client_max_body_size 100M;
+    
     # Redirect HTTP to HTTPS
     location / {
     return 301 https://$host$request_uri;
@@ -17,7 +18,8 @@ client_max_body_size 100M;
 server {
     listen 443 ssl;
     server_name studdybuddy.app;
-client_max_body_size 100M;
+    client_max_body_size 100M;
+
     # SSL Certificate and Key
     ssl_certificate /etc/letsencrypt/live/studdybuddy.app/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/studdybuddy.app/privkey.pem;

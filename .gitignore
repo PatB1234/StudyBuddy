@@ -8,3 +8,5 @@ inDevelopment.py
 Backend/env
 Backend/.env
 linode.txt
+Backend/db/users.db
+Backend/db/users.db
