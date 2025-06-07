@@ -24,7 +24,7 @@ Token Validation is standardised accross the functions. If a token is valid, the
 '''
 
 @app.post("/api/custom_prompt")
-def post_custom_prompt(prompt: PostCustomPromptModel, request: Request):
+async def post_custom_prompt(prompt: PostCustomPromptModel, request: Request):
         
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -34,7 +34,7 @@ def post_custom_prompt(prompt: PostCustomPromptModel, request: Request):
 
 
 @app.get("/api/summarise")
-def post_summarise(request: Request):
+async def post_summarise(request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -43,7 +43,7 @@ def post_summarise(request: Request):
         return summariser(db.getCurrentNotesByToken(request.headers.get('token')))
 
 @app.get("/api/get_questions")
-def get_questions(request: Request):
+async def get_questions(request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -52,7 +52,7 @@ def get_questions(request: Request):
         return make_questions(db.getCurrentNotesByToken(request.headers.get('token')))
 
 @app.post("/api/check_question")
-def post_check_questions(res: PostCheckAnswersModel, request: Request):
+async def post_check_questions(res: PostCheckAnswersModel, request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -61,7 +61,7 @@ def post_check_questions(res: PostCheckAnswersModel, request: Request):
         return check_question(res.question, res.answer, db.getCurrentNotesByToken(request.headers.get('token')))
 
 @app.get("/api/get_flashcards")
-def get_flashcards(request: Request):
+async def get_flashcards(request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -71,17 +71,17 @@ def get_flashcards(request: Request):
 
 
 @app.post("/api/create_student")
-def create_user_post(user: PostStudentModel):
+async def create_user_post(user: PostStudentModel):
 
     return create_user(Student(name=user.name, email=user.email, password=user.password))
 
 @app.post("/api/check_student_login")
-def check_student_login_post(user: PostLoginCheckStudentModel):
+async def check_student_login_post(user: PostLoginCheckStudentModel):
 
     return check_student_login(user.email, user.password)
 
 @app.get("/api/get_student_credentials")
-def get_student_by_token(request: Request):
+async def get_student_by_token(request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -91,7 +91,7 @@ def get_student_by_token(request: Request):
         return {"name": name, "email": email, "id": id}
     
 @app.post("/api/edit_user")
-def edit_user(newDetails: editUserModel, request: Request):
+async def edit_user(newDetails: editUserModel, request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -102,7 +102,7 @@ def edit_user(newDetails: editUserModel, request: Request):
     
 
 @app.post("/api/change_current_notes")
-def change_current_notes(newNoteName: classes.PostChangeNotes, request: Request):
+async def change_current_notes(newNoteName: classes.PostChangeNotes, request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -114,7 +114,7 @@ def change_current_notes(newNoteName: classes.PostChangeNotes, request: Request)
 
 
 @app.post("/api/add_notes")
-def post_add_notes(request: Request, sectionName: str = Form(...), file: UploadFile = File(...), ):
+async def post_add_notes(request: Request, sectionName: str = Form(...), file: UploadFile = File(...), ):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -150,7 +150,7 @@ def post_add_notes(request: Request, sectionName: str = Form(...), file: UploadF
         
 
 @app.post("/api/get_all_user_notes_tree")
-def get_user_notes_in_tree(request: Request):
+async def get_user_notes_in_tree(request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -162,7 +162,7 @@ def get_user_notes_in_tree(request: Request):
     
 
 @app.post("/api/get_currently_selected_note")
-def getCurrentlySelectedNotesByToken(request: Request):
+async def getCurrentlySelectedNotesByToken(request: Request):
     
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -173,12 +173,12 @@ def getCurrentlySelectedNotesByToken(request: Request):
         return getNoteByID(getCurrentNotesByToken(request.headers.get('token'))).fileName
     
 @app.get("/api/cloud_check") # Cloud hoster calls this to ensure the server is responding
-def cloud_check():
+async def cloud_check():
 
     return True
 
 @app.post("/api/delete_user")
-def post_delete_user(request: Request):
+async def post_delete_user(request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -190,7 +190,7 @@ def post_delete_user(request: Request):
     
 
 @app.post("/api/delete_note_by_name")
-def post_delete_note_by_name(noteName: PostDeleteNoteModel, request: Request):
+async def post_delete_note_by_name(noteName: PostDeleteNoteModel, request: Request):
     
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:

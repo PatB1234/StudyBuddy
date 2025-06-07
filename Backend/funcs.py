@@ -57,8 +57,12 @@ def data_cleaner(value, remove_new_line: bool, isJson: bool):  # Just cleans the
     return value
 
 
-# Import File (RE Notes)
-notes = generativeai.upload_file(path=f"Data/-1.pdf", display_name=str("forgor"))
+# Import File 
+try: 
+    notes = generativeai.upload_file(path=f"Data/-1.pdf", display_name=str("forgor"))
+except:
+
+    print("Cannot call default notes")
 
 
 def upload_notes(notesID: int):
