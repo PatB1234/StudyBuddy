@@ -187,3 +187,15 @@ def post_delete_user(request: Request):
     else:
 
         return delete_user_id(token_res[2])  
+    
+
+@app.post("/api/delete_note_by_name")
+def post_delete_note_by_name(noteName: PostDeleteNoteModel, request: Request):
+    
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+
+        return deleteNoteByName(noteName.noteName, request.headers.get('token'))

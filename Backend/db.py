@@ -337,9 +337,17 @@ def deleteNotesByID(id: int):
         logging.error(f"File with ID {id} does not exist.")
 
 
+# Delete a user's notes by the name & user token
+def deleteNoteByName(noteName: str, token: str):
 
-# Delete notes by section name
-def deleteNotesBySectionName(): pass
+    email = validate_student(token)[1]
+    noteID = getNoteIDByNoteName(token, noteName)
+
+    if noteID == -1:
+        return "Note not found"
+
+    cursor_func(f"DELETE FROM NOTES WHERE fileID={noteID} AND ownerEmail='{email}'", False)
+    return "Note deleted successfully"
 
 # Delete notes by email
 def deleteNotesByEmail(): pass
@@ -378,4 +386,3 @@ def getAllNotesTree(ownerEmail: str):
         })
 
     return tree_structure
-

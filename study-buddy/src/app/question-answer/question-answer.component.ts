@@ -1,4 +1,4 @@
-import { Component, Renderer2, ViewChild, ElementRef } from '@angular/core';
+import { Component, Renderer2, ViewChild, ElementRef, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -10,7 +10,7 @@ import {MatButtonModule} from '@angular/material/button';
 import { HttpClient } from '@angular/common/http';
 import {MatCardModule} from '@angular/material/card';
 import { AppComponent } from '../app.component';
-
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-question-answer',
@@ -35,7 +35,10 @@ export class QuestionAnswerComponent {
   constructor(private http: HttpClient, private renderer: Renderer2) { }
 
 	URL: any = AppComponent.URL;
-
+	private _snackBar = inject(MatSnackBar);
+	openSnackBar(message: string, action: string) {
+		this._snackBar.open(message, action);
+	  }	
 
 	//Q&A funcs
 	@ViewChild('question_area') div!: ElementRef;
@@ -59,6 +62,7 @@ export class QuestionAnswerComponent {
 
 	nextQuestion(): void {
 		this.correctOrNot = ""
+		this._snackBar.open("Please wait a few minutes while we generate a bank of questions", "Dismiss")
 		this.http.get(this.URL + "/get_questions").subscribe((res: any) => {
 
 			this.question = res;

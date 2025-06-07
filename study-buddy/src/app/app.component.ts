@@ -54,7 +54,7 @@ export class AppComponent implements OnInit{
 	}
 
 	title = 'study-buddy';
-	static URL = 'https://studdybuddy.app/api'; // Global URL Path Prod Path: https://studdybuddy.app/api
+	static URL = 'https://studdybuddy.app/api'; // Global URL Path Prod Path: https://studdybuddy.app/api Dev Path: http://localhost:8000/api
 	curr_selected = "None";
 	private _snackBar = inject(MatSnackBar);
 	openSnackBar(message: string, action: string) {
@@ -100,6 +100,21 @@ export class AppComponent implements OnInit{
 		);
 	}
 
+	deleteNode(nodeName: string): void {
+		var res = prompt("Are you sure you want to delete this note? This action cannot be undone. Type DELETE to confirm.");
+		if (res == "DELETE") {
+			this.http.post(AppComponent.URL + "/delete_note_by_name", { noteName: nodeName }).subscribe(
+				(res: any) => {
+					console.log("Note delete action completed successfully:", res);
+					this._snackBar.open(res)
+					setTimeout(() => location.reload(), 1500)
+				}
+			);
+		} else {
+			this._snackBar.open("Note deletion cancelled", "Dismiss");
+		}
+	}
+
 	accountsMenu(): void {
 
 		this.router.navigate(['/student-profile']);
@@ -128,8 +143,8 @@ export class AppComponent implements OnInit{
 
 		console.log("logout")
 		document.cookie = `token=INVALIDATED; SameSite=Lax;`;
-		this.router.navigate(['/login'])
-
+		this._snackBar.open("Logged out", "Dismiss");
+		location.reload()
 	}
 	delete_user(): void {
 
@@ -143,7 +158,9 @@ export class AppComponent implements OnInit{
 				console.error("Error deleting account:", error);
 			});
 			document.cookie = `token=INVALIDATED; SameSite=Lax;`;
-			this.router.navigate(['/login'])
+			// Snackbar message
+			this._snackBar.open("Account deleted", "Dismiss");
+			location.reload()
 		} else {
 			this._snackBar.open("Account deletion cancelled", "Dismiss");
 		}

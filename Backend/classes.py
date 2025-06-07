@@ -40,3 +40,6 @@ class PostChangeNotes(BaseModel):
 
     newNoteName: str
 
+class PostDeleteNoteModel(BaseModel):
+
+    noteName: str

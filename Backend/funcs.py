@@ -2,13 +2,13 @@
 import google.genai
 import google.generativeai as generativeai
 from dotenv import load_dotenv
-import os, json, re, db, google
+import os, json, re, db, google, random, ast
 from google.genai.types import Content, CreateCachedContentConfig, HttpOptions, Part
 
 load_dotenv()
 generativeai.configure(api_key=os.getenv("API_KEY"))
 CACHED_FLASHCARDS = [] # [FILEID, CACHEDATA]
-
+CACHED_QUESTIONS = [] # [FILEID, CACHEDATA]
 # Create the model
 client = google.genai.Client(api_key=os.getenv("API_KEY"))
 
@@ -96,11 +96,37 @@ def custom_prompt(prompt, noteID):  # Done
 
 
 def make_questions(noteID):  # Done
+    curr_questions  = []    
+    iter = -1
+    for i in range(len(CACHED_QUESTIONS)):
 
-    notes = upload_notes(noteID)
-    res = str((model.generate_content(
-        [notes, f"Generate 1 questions on these notes. Return the data as a python string without any additional formatting or rich text backticks/identifiers. ONLY GIVE THE QUESTIONS AND NO ANSWERS. DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION"])).text)
-    return data_cleaner(res, True, False)
+        if CACHED_QUESTIONS[i][0] == noteID:
+            curr_questions = CACHED_QUESTIONS[i][1]
+            iter = i
+            break
+        
+    if iter == -1:
+
+        CACHED_QUESTIONS.append([noteID, []])
+        iter = len(CACHED_QUESTIONS) - 1
+    if curr_questions == [] or len(curr_questions) < 3: 
+
+        notes = upload_notes(noteID)
+        try: 
+            res = str((model.generate_content(
+                [notes, f"Generate 10 questions on these notes. Return the data as a python array without any additional formatting or rich text backticks/identifiers. ONLY GIVE THE QUESTIONS AND NO ANSWERS. DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION"])).text)
+            res = ast.literal_eval(data_cleaner(res, True, False))
+            CACHED_QUESTIONS[iter][1] = res
+            CACHED_QUESTIONS[iter][1].pop(0)
+            return curr_questions[0]
+        except:
+
+            return "Error generating questions, please try again in a few minutes"
+    else:
+
+        CACHED_QUESTIONS[iter][1].pop(0)
+        return curr_questions[0]
+        
 
 
 def check_question(question, answer, noteID):  # Done
@@ -109,5 +135,4 @@ def check_question(question, answer, noteID):  # Done
     res = (model.generate_content(
         [notes, f"is the answer {answer} correct for the question {question}"])).text
     return res
-
 

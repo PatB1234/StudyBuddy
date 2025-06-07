@@ -36,7 +36,7 @@ a {
 }
 
 
-mat-icon {
+.large_buttons {
 
   transform: scale(2);
   
@@ -54,4 +54,8 @@ h1 {
 
 .icon-button {
   padding: 25px;
+}
+.delete-notes-icon {
+
+  padding: 0px
 }
