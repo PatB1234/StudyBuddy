@@ -10,7 +10,7 @@ import os, shutil
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="/"), name="static")
 
-origins = ['http://localhost:4200', 'http://45.79.253.48:4200', 'http://45.79.253.48:8000', 'http://45.79.253.25:4200', 'http://45.79.253.25:8000', 'https://studdybuddy.app/', 'http://studdybuddy.app/']
+origins = ['http://localhost:4200', 'http://localhost:3001', 'http://45.79.253.48:3001', 'http://45.79.253.48:3000', 'http://localhost:3000', 'http://45.79.253.48:4200', 'http://45.79.253.48:8000', 'http://45.79.253.25:4200', 'http://45.79.253.25:8000', 'https://studdybuddy.app/', 'http://studdybuddy.app/']
 
 app.add_middleware(
     CORSMiddleware,
