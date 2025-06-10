@@ -53,7 +53,7 @@ export class QuestionAnswerComponent {
 	questionBox: any;
 
 	onQuestionSubmit(): void {
-
+		this._snackBar.open("Please wait a few minutes while we check your answer to this question", "Dismiss")
 		this.http.post(this.URL + "/check_question", {question: this.question, answer: this.questionAnswerForm.value.questionAnswer}).subscribe((res: any) => {
 
 			this.correctOrNot = res;
