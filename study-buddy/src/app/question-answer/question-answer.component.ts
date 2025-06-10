@@ -11,6 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import {MatCardModule} from '@angular/material/card';
 import { AppComponent } from '../app.component';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import { MarkdownModule } from 'ngx-markdown';
 
 @Component({
   selector: 'app-question-answer',
@@ -24,7 +25,8 @@ import {MatSnackBar} from '@angular/material/snack-bar';
 		MatInputModule,
 		ReactiveFormsModule,
 		MatButtonModule,
-		MatCardModule
+		MatCardModule,
+		MarkdownModule
   ],
   templateUrl: './question-answer.component.html',
   styleUrl: './question-answer.component.css'

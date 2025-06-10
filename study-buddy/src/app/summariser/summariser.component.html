@@ -2,5 +2,5 @@
 
     <h2>Summariser</h2>
     <button mat-raised-button (click)="summarise_button()">Summarise</button>
-    <p style="color:#000000;">{{summary}}</p>
+    <markdown [data]="summary" style="color:#000000;"></markdown>
 </div>

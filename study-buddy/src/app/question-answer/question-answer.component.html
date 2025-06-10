@@ -7,7 +7,7 @@
             <textarea matInput placeholder="Type your answer here" formControlName="questionAnswer"></textarea>
         </mat-form-field>
         <br/>
-        <p>{{correctOrNot}}</p>
+        <markdown [data]="correctOrNot" style="color:#000000;"></markdown>
     <button mat-raised-button type="submit">Submit</button>
 
 </form>
