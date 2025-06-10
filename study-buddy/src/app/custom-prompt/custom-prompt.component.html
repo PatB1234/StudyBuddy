@@ -1,6 +1,6 @@
 <div class="custom-prompt">
     <h2>Result</h2>
-        <p style="color: #000000;">{{result}}</p>
+    <markdown [data]="result" style="color:#000000;"></markdown>
 
 
   <form class="custom-prompt-form" [formGroup] = "customPromptForm" (ngSubmit)="onSubmit()">
