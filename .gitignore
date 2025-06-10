@@ -13,3 +13,8 @@ Backend/db/users.db
 testing.py
 test.JPG
 Backend/db/users.db
+/Backend/Data
+Backend/Data
+*.db
+*.sqlite3
+/Baceknd/db/*.db
