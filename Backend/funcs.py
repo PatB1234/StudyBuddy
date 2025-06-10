@@ -122,6 +122,7 @@ def make_questions(noteID):  # Done
             res = ast.literal_eval(data_cleaner(res, True, False))
             CACHED_QUESTIONS[iter][1] = res
             CACHED_QUESTIONS[iter][1].pop(0)
+            curr_questions = CACHED_QUESTIONS[iter][1]
             return curr_questions[0]
         except:
 
