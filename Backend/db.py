@@ -8,6 +8,7 @@ from jwt.exceptions import InvalidTokenError, InvalidSignatureError
 from passlib.context import CryptContext
 from pydantic import BaseModel
 import classes
+import funcs
 load_dotenv()
 logging.getLogger('passlib').setLevel(logging.ERROR)
 
@@ -322,17 +323,38 @@ def changeCurrentNotes(token: str, noteName: str):
 
 # Delete all notes for a specific user
 def deleteAllNotesByUserID(id: int):
-    
     res = cursor_func(f"SELECT fileID FROM NOTES WHERE ownerEmail=(SELECT email FROM STUDENTS WHERE id={id})", True)
     for id in res:
-        
+        for i in range(len(funcs.CACHED_FLASHCARDS)):
+
+            if (funcs.CACHED_FLASHCARDS[i][0] == id):
+
+                funcs.CACHED_FLASHCARDS.pop(i)
+                break
+        for i in range(len(funcs.CACHED_QUESTIONS)):
+
+            if (funcs.CACHED_QUESTIONS[i][0] == id):
+
+                funcs.CACHED_QUESTIONS.pop(i)
         deleteNotesByID(int(id[0]))
 # Delete notes by ID pass
 def deleteNotesByID(id: int):
     # Delete the actual file with the id
     try:
         cursor_func(f"DELETE FROM NOTES WHERE fileID={id}", False)
+        for i in range(len(funcs.CACHED_FLASHCARDS)):
+
+            if (funcs.CACHED_FLASHCARDS[i][0] == id):
+
+                funcs.CACHED_FLASHCARDS.pop(i)
+                break
+        for i in range(len(funcs.CACHED_QUESTIONS)):
+
+            if (funcs.CACHED_QUESTIONS[i][0] == id):
+
+                funcs.CACHED_QUESTIONS.pop(i)
         os.remove(f"Data/{id}.pdf")
+
     except FileNotFoundError:
         logging.error(f"File with ID {id} does not exist.")
 
@@ -341,12 +363,24 @@ def deleteNotesByID(id: int):
 def deleteNoteByName(noteName: str, token: str):
 
     email = validate_student(token)[1]
-    noteID = getNoteIDByNoteName(token, noteName)
+    id = getNoteIDByNoteName(token, noteName)
 
-    if noteID == -1:
+    if id == -1:
         return "Note not found"
 
-    cursor_func(f"DELETE FROM NOTES WHERE fileID={noteID} AND ownerEmail='{email}'", False)
+    cursor_func(f"DELETE FROM NOTES WHERE fileID={id} AND ownerEmail='{email}'", False)
+    for i in range(len(funcs.CACHED_FLASHCARDS)):
+
+        if (funcs.CACHED_FLASHCARDS[i][0] == id):
+
+            funcs.CACHED_FLASHCARDS.pop(i)
+            break
+    for i in range(len(funcs.CACHED_QUESTIONS)):
+
+        if (funcs.CACHED_QUESTIONS[i][0] == id):
+
+            funcs.CACHED_QUESTIONS.pop(i)
+    os.remove(f"Data/{id}.pdf")
     return "Note deleted successfully"
 
 # Delete notes by email
