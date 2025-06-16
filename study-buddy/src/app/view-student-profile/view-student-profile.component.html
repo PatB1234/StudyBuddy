@@ -3,44 +3,45 @@
     <mat-card class="profile-card">
         <mat-card-content class="profile-card-content">
 
-                <form class="form flex flex-center" [formGroup]="studentProfileForm">
-                    <h1>View & Edit your profile</h1>
-                    <p>Only edit the fields that you want to change, the only mandatory field is the 'current password' field</p>
-                    <mat-label>Name: {{nameView}}  </mat-label>
-                    <br/>
-                    <mat-label>Change Name (Optional)</mat-label>
-                    <mat-form-field class="form-field" appearance="outline">
-                        <input type="name" matInput formControlName="name">
-                        
-                    </mat-form-field>
-                    <br />
-    
-                        <mat-label>Email: {{emailView}}</mat-label>
-                    <br/>
-                    <mat-label>Change password? </mat-label>
-                    <br/>
-                    <mat-label>Current password </mat-label>
-                    <mat-form-field class="form-field" appearance="outline">
-                        <input type="oldPassword" matInput formControlName="oldPassword">
-                        @if (studentProfileForm.get('oldPassword')?.hasError('required')) {
-                        <mat-error>Old Password is required</mat-error>
-                        }
-                    </mat-form-field>
-                    <br/>
-                    <mat-label>New password (Optional) </mat-label>
-                    <mat-form-field class="form-field" appearance="outline">
-                        <input type="newPassword" matInput formControlName="newPassword">
-                    </mat-form-field>
-                    <br />
-                    <p style="color: #86440a;">{{error}}</p>
-                    <br/>
-                    <br />
-                    <br/>
-                    <button mat-stroked-button (click)="submit()" [disabled]="studentProfileForm.invalid">Edit</button>
-                    <br/>
-                    <br/>
-                    <a href="/sign-up" routerLinkActive="active">Don't have an account? Sign Up!</a>
-             </form>
+            <form class="form flex flex-center" [formGroup]="studentProfileForm">
+                <h1>View & Edit your profile</h1>
+                <p>Only edit the fields that you want to change, the only mandatory field is the 'current password'
+                    field</p>
+                <mat-label>Name: {{nameView}} </mat-label>
+                <br />
+                <mat-label>Change Name (Optional)</mat-label>
+                <mat-form-field class="form-field" appearance="outline">
+                    <input type="name" matInput formControlName="name">
+
+                </mat-form-field>
+                <br />
+
+                <mat-label>Email: {{emailView}}</mat-label>
+                <br />
+                <mat-label>Change password? </mat-label>
+                <br />
+                <mat-label>Current password </mat-label>
+                <mat-form-field class="form-field" appearance="outline">
+                    <input type="oldPassword" matInput formControlName="oldPassword">
+                    @if (studentProfileForm.get('oldPassword')?.hasError('required')) {
+                    <mat-error>Old Password is required</mat-error>
+                    }
+                </mat-form-field>
+                <br />
+                <mat-label>New password (Optional) </mat-label>
+                <mat-form-field class="form-field" appearance="outline">
+                    <input type="newPassword" matInput formControlName="newPassword">
+                </mat-form-field>
+                <br />
+                <p style="color: #86440a;">{{error}}</p>
+                <br />
+                <br />
+                <br />
+                <button mat-stroked-button (click)="submit()" [disabled]="studentProfileForm.invalid">Edit</button>
+                <br />
+                <br />
+                <a href="/sign-up" routerLinkActive="active">Don't have an account? Sign Up!</a>
+            </form>
         </mat-card-content>
     </mat-card>
 

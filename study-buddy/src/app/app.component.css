@@ -7,51 +7,52 @@
     height: 100%;
     background: #ADBBDA;
     position: relative;
-  }
-  
+}
+
 .sidenav-drawer {
 
-  background-color: #7a95d9;
-  border-radius: 0px !important;
-  width: 25%;
+    background-color: #7a95d9;
+    border-radius: 0px !important;
+    width: 25%;
 }
+
 .mat-header {
 
     background-color: #8697C4;
 }
 
 .example-spacer {
-  flex: 1 1 auto;
+    flex: 1 1 auto;
 }
 
 .custom-prompt-form {
-  min-width: 150px;
-  max-width: 500px;
-  width: 100%;
+    min-width: 150px;
+    max-width: 500px;
+    width: 100%;
 }
 
 a {
 
-  margin: 10px;
+    margin: 10px;
 }
 
 
 .large_buttons {
 
-  transform: scale(2);
-  padding: 5%;
+    transform: scale(2);
+    padding: 5%;
 }
 
 .mat-tab-group {
-  margin-bottom: 48px;
+    margin-bottom: 48px;
 }
 
 h1 {
 
-  font-size: 45px;
+    font-size: 45px;
 }
 
 .delete-notes-icon {
 
-  padding: 0px
+    padding: 0px
 }

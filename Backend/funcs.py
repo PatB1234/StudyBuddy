@@ -2,13 +2,18 @@
 import google.genai
 import google.generativeai as generativeai
 from dotenv import load_dotenv
-import os, json, re, db, google, random, ast
-from google.genai.types import Content, CreateCachedContentConfig, HttpOptions, Part
+import os
+import json
+import re
+import db
+import google
+import random
+import ast
 
 load_dotenv()
 generativeai.configure(api_key=os.getenv("API_KEY"))
-CACHED_FLASHCARDS = [] # [FILEID, CACHEDATA]
-CACHED_QUESTIONS = [] # [FILEID, CACHEDATA]
+CACHED_FLASHCARDS = []  # [FILEID, CACHEDATA]
+CACHED_QUESTIONS = []  # [FILEID, CACHEDATA]
 # Create the model
 client = google.genai.Client(api_key=os.getenv("API_KEY"))
 
@@ -33,13 +38,16 @@ chat_session = model.start_chat(
     ]
 )
 
+
 def check_token_no(file_path) -> bool:
-    try: 
-        token_no = client.models.count_tokens(model=model_name,contents=client.files.upload(file=file_path, config={'display_name': 'test_data'})).total_tokens  
+    try:
+        token_no = client.models.count_tokens(model=model_name, contents=client.files.upload(
+            file=file_path, config={'display_name': 'test_data'})).total_tokens
         return True
     except:
 
         return False
+
 
 def data_cleaner(value, remove_new_line: bool, isJson: bool):  # Just cleans the data
 
@@ -57,9 +65,10 @@ def data_cleaner(value, remove_new_line: bool, isJson: bool):  # Just cleans the
     return value
 
 
-# Import File 
-try: 
-    notes = generativeai.upload_file(path=f"Data/-1.pdf", display_name=str("forgor"))
+# Import File
+try:
+    notes = generativeai.upload_file(
+        path=f"Data/-1.pdf", display_name=str("forgor"))
 except:
 
     print("Cannot call default notes")
@@ -78,14 +87,14 @@ def flashcards(noteID):
 
         if CACHED_FLASHCARDS[i][0] == noteID:
             return CACHED_FLASHCARDS[i][1]
-        
-    
+
     notes = upload_notes(noteID)
     cards = str((model.generate_content(
         [notes, "Make flashcards for the notes given. Make these short flashcards witha back of no more than 20 words. Return the data as a  json object without any additional formatting or rich text backticks/identifiers LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier. A good example of how you should do it is this: [{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, {'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}d]"])).text)
     flashcards = data_cleaner(cards, True, True)
     CACHED_FLASHCARDS.append([noteID, flashcards])
     return flashcards
+
 
 def summariser(noteID):  # Done
 
@@ -100,7 +109,7 @@ def custom_prompt(prompt, noteID):  # Done
 
 
 def make_questions(noteID):  # Done
-    curr_questions  = []    
+    curr_questions = []
     iter = -1
     for i in range(len(CACHED_QUESTIONS)):
 
@@ -108,15 +117,15 @@ def make_questions(noteID):  # Done
             curr_questions = CACHED_QUESTIONS[i][1]
             iter = i
             break
-        
+
     if iter == -1:
 
         CACHED_QUESTIONS.append([noteID, []])
         iter = len(CACHED_QUESTIONS) - 1
-    if curr_questions == [] or len(curr_questions) < 3: 
+    if curr_questions == [] or len(curr_questions) < 3:
 
         notes = upload_notes(noteID)
-        try: 
+        try:
             res = str((model.generate_content(
                 [notes, f"Generate 10 questions on these notes. Return the data as a python array without any additional formatting or rich text backticks/identifiers. ONLY GIVE THE QUESTIONS AND NO ANSWERS. DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION"])).text)
             res = ast.literal_eval(data_cleaner(res, True, False))
@@ -131,7 +140,6 @@ def make_questions(noteID):  # Done
 
         CACHED_QUESTIONS[iter][1].pop(0)
         return curr_questions[0]
-        
 
 
 def check_question(question, answer, noteID):  # Done
@@ -140,4 +148,3 @@ def check_question(question, answer, noteID):  # Done
     res = (model.generate_content(
         [notes, f"is the answer {answer} correct for the question {question}"])).text
     return res
-

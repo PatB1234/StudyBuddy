@@ -4,27 +4,27 @@ import { AppComponent } from '../app.component';
 import { take } from 'rxjs/operators';
 
 @Component({
-	selector: 'app-dashboard',
-	standalone: true,
-	imports: [],
-	templateUrl: './dashboard.component.html',
-	styleUrl: './dashboard.component.css'
+    selector: 'app-dashboard',
+    standalone: true,
+    imports: [],
+    templateUrl: './dashboard.component.html',
+    styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
-	constructor(private http: HttpClient) { }
-	
-	URL: any = AppComponent.URL;
-	name: any = "name_var_here";
+    constructor(private http: HttpClient) { }
 
-	ngOnInit(): void {
-		this.getStudent();
-	}
+    URL: any = AppComponent.URL;
+    name: any = "name_var_here";
 
-	getStudent() {
-		this.http.get(this.URL + "/get_student_credentials")
-			.pipe(take(1))
-			.subscribe((res: any) => {
-				this.name = res['name'];
-			});
-	}
+    ngOnInit(): void {
+        this.getStudent();
+    }
+
+    getStudent() {
+        this.http.get(this.URL + "/get_student_credentials")
+            .pipe(take(1))
+            .subscribe((res: any) => {
+                this.name = res['name'];
+            });
+    }
 }

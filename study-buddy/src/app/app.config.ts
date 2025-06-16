@@ -10,23 +10,23 @@ import { CookieInterceptor } from './cookie.interceptor';
 import { ErrorInterceptor } from './error.interceptor';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }), 
-    provideRouter(routes), 
-    provideClientHydration(), 
-    provideAnimationsAsync(),
-    provideHttpClient(withInterceptorsFromDi()),
-    {
-		  provide: HTTP_INTERCEPTORS,
-		  useClass: CookieInterceptor,
-		  multi: true
-		},
-    {
+    providers: [
+        provideZoneChangeDetection({ eventCoalescing: true }),
+        provideRouter(routes),
+        provideClientHydration(),
+        provideAnimationsAsync(),
+        provideHttpClient(withInterceptorsFromDi()),
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: CookieInterceptor,
+            multi: true
+        },
+        {
 
-      provide: HTTP_INTERCEPTORS,
-      useClass: ErrorInterceptor,
-      multi: true
-    },
-    provideMarkdown()
-  ]
+            provide: HTTP_INTERCEPTORS,
+            useClass: ErrorInterceptor,
+            multi: true
+        },
+        provideMarkdown()
+    ]
 };

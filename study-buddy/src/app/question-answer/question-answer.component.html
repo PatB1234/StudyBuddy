@@ -1,16 +1,16 @@
-<div class="question_and_answer"> 
+<div class="question_and_answer">
 
     <h2>Question & Answer</h2>
-    <form class="question-answer-form" [formGroup] = "questionAnswerForm" (ngSubmit)="onQuestionSubmit()">
+    <form class="question-answer-form" [formGroup]="questionAnswerForm" (ngSubmit)="onQuestionSubmit()">
         <h6>{{questionBox}}</h6>
         <mat-form-field class="example-full-width">
             <textarea matInput placeholder="Type your answer here" formControlName="questionAnswer"></textarea>
         </mat-form-field>
-        <br/>
+        <br />
         <markdown [data]="correctOrNot" style="color:#000000;"></markdown>
-    <button mat-raised-button type="submit">Submit</button>
+        <button mat-raised-button type="submit">Submit</button>
 
-</form>
-<br/>
-<button mat-raised-button (click)="nextQuestion()">Next Question</button>
+    </form>
+    <br />
+    <button mat-raised-button (click)="nextQuestion()">Next Question</button>
 </div>

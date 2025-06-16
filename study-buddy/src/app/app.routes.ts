@@ -14,7 +14,7 @@ export const routes: Routes = [
         component: DashboardComponent  // DASHBOARD COMPONENT
     },
     {
-        path: 'custom-prompt', 
+        path: 'custom-prompt',
         component: CustomPromptComponent
     },
     {
@@ -24,7 +24,7 @@ export const routes: Routes = [
     {
         path: 'question-answer',
         component: QuestionAnswerComponent
-    }, 
+    },
     {
         path: 'summariser',
         component: SummariserComponent

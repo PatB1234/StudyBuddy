@@ -1,14 +1,14 @@
-<div align="center"> 
-<mat-card appearance="outlined" class = "card">
-    <mat-card-content class = "card-content">
-        <h1>Upload a new set of notes (PDF ONLY) </h1>
-        <br/>
+<div align="center">
+    <mat-card appearance="outlined" class="card">
+        <mat-card-content class="card-content">
+            <h1>Upload a new set of notes (PDF ONLY) </h1>
+            <br />
 
-        <input type="file" (change)="onFileSelected($event)" accept="application/pdf" />
-        <br/>
-        <mat-label>Section Name:  </mat-label> 
-        <input type="text" [(ngModel)]="sectionName" placeholder="Enter Section Name" />
-        <br/>
-        <button (click)="onUpload()" [disabled]="!selectedFile">Upload</button>
-    </mat-card-content>
-</mat-card>
+            <input type="file" (change)="onFileSelected($event)" accept="application/pdf" />
+            <br />
+            <mat-label>Section Name: </mat-label>
+            <input type="text" [(ngModel)]="sectionName" placeholder="Enter Section Name" />
+            <br />
+            <button (click)="onUpload()" [disabled]="!selectedFile">Upload</button>
+        </mat-card-content>
+    </mat-card>
