@@ -54,10 +54,17 @@ export class AppComponent implements OnInit {
             .subscribe(() => {
                 this.getTree();
             });
+
+        this.router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
+                if (event.urlAfterRedirects === '/') {
+                    this.introService.buttonExplanationFeature()
+                }
+            }
+        });
     }
 
     ngAfterViewInit(): void {
-        this.introService.buttonExplanationFeature();
     }
 
     title = 'study-buddy';
