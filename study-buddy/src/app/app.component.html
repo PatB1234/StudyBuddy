@@ -1,16 +1,17 @@
 <mat-toolbar class="mat-header">
 
-	<span>Study Buddy</span>
-	
+	<h1>Study Buddy</h1>
+
 </mat-toolbar>
 <mat-sidenav-container class="sidenav-main">
 	<mat-sidenav mode="side" opened class="sidenav-drawer">
 
 		<h1 style="margin: 10px;">Notes 
-			<button class='icon-button' mat-icon-button aria-label="View accounts page" (click)="accountsMenu()"><mat-icon class="large_buttons">account_box</mat-icon></button>
-			<button class='icon-button' mat-icon-button aria-label="Add section" (click)="addSection()"><mat-icon class="large_buttons">add</mat-icon></button>
-			<button class='icon-button' mat-icon-button aria-label="Logout" (click)="logout()"><mat-icon class="large_buttons">logout</mat-icon></button>
-			<button class='icon-button' mat-icon-button aria-label="Logout" (click)="delete_user()"><mat-icon class="large_buttons">delete</mat-icon></button>
+			<button class='icon-button' mat-icon-button matTooltip="Go home" aria-label="Go home" (click)="home()"><mat-icon class="large_buttons">home</mat-icon></button>
+			<button class='icon-button' mat-icon-button (click)="accountsMenu()" matTooltip="View/Edit account details" aria-label="View/Edit account details"><mat-icon class="large_buttons">account_box</mat-icon></button>
+			<button class='icon-button' mat-icon-button (click)="addSection()" matTooltip="Add notes" aria-label="Add notes"><mat-icon class="large_buttons">add</mat-icon></button>
+			<button class='icon-button' mat-icon-button (click)="logout()" matTooltip="Logout" aria-label="Logout"><mat-icon class="large_buttons">logout</mat-icon></button>
+			<button class='icon-button' mat-icon-button (click)="delete_user()" matTooltip="Delete account" aria-label="Delete account"><mat-icon class="large_buttons">delete</mat-icon></button>
 		</h1>
 		<p style=" position: absolute; bottom: 100px; left: 0; width: 100%; text-align: center;">Select what note you would like to study by expanding the above menu.</p>	
 	<h6 style="  width: 100%; text-align: center;">Currently selected notes: {{curr_selected}}</h6>	
@@ -19,7 +20,7 @@
 			<mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
 			  <button mat-icon-button disabled></button>
 			  <a (click)="nodePress(node.name)" style="cursor: pointer;">{{node.name}}</a>
-			  	<button class='delete-notes-icon' mat-icon-button aria-label="Delete Note" (click)="deleteNode(node.name)"><mat-icon>close</mat-icon></button>
+			  	<button class='delete-notes-icon' mat-icon-button (click)="deleteNode(node.name)" matTooltip="Delete note" aria-label="Delete note"><mat-icon>close</mat-icon></button>
 			</mat-tree-node>
 			<mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding matTreeNodeToggle>
 			  <button mat-icon-button matTreeNodeToggle

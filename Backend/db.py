@@ -87,7 +87,14 @@ def create_user(student: Student):
     cursor_func(f"INSERT INTO STUDENTS (name, email, password, id) VALUES ('{student.name}', '{student.email}', '{hash_password(student.password)}', {id});", False)
     return "New user created, please login with your account"
 
-# Read
+def create_student_with_token(student: Student): # Used within the program when a student with the email is not found and we want to create an account, this simplifies the login process for the user
+
+    id = get_last_id_students() + 1
+    cursor_func(f"INSERT INTO STUDENTS (name, email, password, id) VALUES ('{student.name}', '{student.email}', '{hash_password(student.password)}', {id});", False)
+    student = Student(name=student.name, email=student.email, password=student.password, id=id)
+    token = get_user_token(student)
+    return token
+
 def get_all_students():
 
     rawStudents = cursor_func("SELECT * FROM STUDENTS", True)

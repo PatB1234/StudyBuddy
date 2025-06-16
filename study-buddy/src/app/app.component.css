@@ -39,7 +39,7 @@ a {
 .large_buttons {
 
   transform: scale(2);
-  
+  padding: 5%;
 }
 
 .mat-tab-group {
@@ -51,10 +51,6 @@ h1 {
   font-size: 45px;
 }
 
-
-.icon-button {
-  padding: 25px;
-}
 .delete-notes-icon {
 
   padding: 0px

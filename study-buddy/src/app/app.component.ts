@@ -10,6 +10,7 @@ import {MatTreeModule} from '@angular/material/tree';
 import { HttpClient } from '@angular/common/http';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import { filter } from 'rxjs/operators';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface ILink {
     path: string;
@@ -32,7 +33,8 @@ interface TreeNode {
 		MatIconButton,
 		MatIcon,
 		MatTabsModule,
-		MatTreeModule
+		MatTreeModule,
+		MatTooltipModule
 			
 	],
 	templateUrl: './app.component.html',	
@@ -60,6 +62,11 @@ export class AppComponent implements OnInit{
 	openSnackBar(message: string, action: string) {
 		this._snackBar.open(message, action);
 	  }	
+
+	home(): void {
+
+		this.router.navigate(['/'])
+	}
 
 	childrenAccessor = (node: TreeNode) => node.children ?? [];
 	hasChild = (_: number, node: TreeNode) => !!node.children && node.children.length > 0;

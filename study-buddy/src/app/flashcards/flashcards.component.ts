@@ -12,6 +12,7 @@ import {MatCardModule} from '@angular/material/card';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AppComponent } from '../app.component';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-flashcards',
@@ -25,7 +26,8 @@ import {MatSnackBar} from '@angular/material/snack-bar';
 		MatInputModule,
 		ReactiveFormsModule,
 		MatButtonModule,
-		MatCardModule
+		MatCardModule,
+		MatTooltipModule
   ],
   templateUrl: './flashcards.component.html',
   styleUrl: './flashcards.component.css',

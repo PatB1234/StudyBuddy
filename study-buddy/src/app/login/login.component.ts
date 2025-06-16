@@ -46,11 +46,6 @@ export class LoginComponent {
 
 	URL: any = AppComponent.URL;
 	error: any = "";
-	account_message: any = "Don't have an account? Sign Up!";
-	pageName: any = "Login";
-	buttonName: any = "Login";
-	currState = 0; // 0 Is login, 1 is Sign-Up
-
 
 	private _snackBar = inject(MatSnackBar);
 
@@ -64,22 +59,6 @@ export class LoginComponent {
 		name: new FormControl('', [Validators.required])
 	});
 
-
-	changeView() {
-		if (this.currState == 0) {
-
-			this.account_message = "Already have an account? Log In"
-			this.pageName = "Sign Up"
-			this.buttonName = "Sign Up";
-			this.currState = 1;
-		} else {
-
-			this.account_message = "Don't have an account? Sign Up!";
-			this.pageName = "Login";
-			this.buttonName = "Login";
-			this.currState = 0;
-		}
-	}
 	submit() {
 		if (this.loginForm.invalid) {
 			return;
@@ -89,26 +68,18 @@ export class LoginComponent {
 			password: this.loginForm.value.password,
 			name: this.loginForm.value.name
 		}
-		if (this.currState == 0) {
-			this.http.post(this.URL + "/check_student_login", this.loginForm.value).subscribe((res: any) => {
-				if (typeof (res) == 'string') {
-					document.cookie = `token=${res}; SameSite=Lax;`;
-					this._snackBar.open("Login Successful, redirecting", "Dismiss");
-					this.router.navigate(['/'])
-					
-				} else {
+		this.http.post(this.URL + "/check_student_login", this.loginForm.value).subscribe((res: any) => {
+			if (typeof (res) == 'string') {
+				document.cookie = `token=${res}; SameSite=Lax;`;
+				this._snackBar.open("Successful, redirecting", "Dismiss");
+				this.router.navigate(['/'])
+				
+			} else {
 
-					this._snackBar.open("Incorrect details, try again or create an account", "Dismiss");
+				this._snackBar.open("The details entered does not match the details associated with this email, please try again", "Dismiss");
 
-				}
+			}
+		})
 
-			})
-		} else if (this.currState == 1) {
-
-			this.http.post(this.URL + "/create_student", this.loginForm.value).subscribe((res: any) => {
-
-				this._snackBar.open(res, "Dismiss")
-			})
-		}
 	}
 }

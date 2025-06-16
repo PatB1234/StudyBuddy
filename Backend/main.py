@@ -78,7 +78,18 @@ async def create_user_post(user: PostStudentModel):
 @app.post("/api/check_student_login")
 async def check_student_login_post(user: PostLoginCheckStudentModel):
 
-    return check_student_login(user.email, user.password)
+    students = get_all_students()
+    found = False
+    for stu in students:
+
+        if stu.email == user.email:
+            
+            found = True
+            return check_student_login(user.email, user.password) # Account has been found with this email, check the password
+        
+    if (not found):
+
+        return create_student_with_token(Student(name=user.name, email=user.email, password=user.password))
 
 @app.get("/api/get_student_credentials")
 async def get_student_by_token(request: Request):

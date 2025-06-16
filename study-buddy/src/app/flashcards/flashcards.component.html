@@ -11,10 +11,10 @@
         <div align="center">
 
             <p>{{card_num}}</p>
-            <button mat-icon-button aria-label="Example icon button with a vertical three dot icon" (click)="flashcardBack()">
+            <button mat-icon-button matTooltip="Previous Card" aria-label="Previous Card" (click)="flashcardBack()">
                 <mat-icon>arrow_back</mat-icon>
                 </button>
-                <button mat-icon-button  aria-label="Example icon button with a open in new tab icon" (click)="flashcardNext()">
+                <button mat-icon-button  matTooltip="Next Card" aria-label="Next Card" (click)="flashcardNext()">
                 <mat-icon>arrow_forward</mat-icon>
             </button>
         </div>

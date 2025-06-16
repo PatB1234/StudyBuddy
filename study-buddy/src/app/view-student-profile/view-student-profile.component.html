@@ -5,10 +5,10 @@
 
                 <form class="form flex flex-center" [formGroup]="studentProfileForm">
                     <h1>View & Edit your profile</h1>
-
+                    <p>Only edit the fields that you want to change, the only mandatory field is the 'current password' field</p>
                     <mat-label>Name: {{nameView}}  </mat-label>
                     <br/>
-                    <mat-label>Change Name </mat-label>
+                    <mat-label>Change Name (Optional)</mat-label>
                     <mat-form-field class="form-field" appearance="outline">
                         <input type="name" matInput formControlName="name">
                         
@@ -19,7 +19,7 @@
                     <br/>
                     <mat-label>Change password? </mat-label>
                     <br/>
-                    <mat-label>Old password </mat-label>
+                    <mat-label>Current password </mat-label>
                     <mat-form-field class="form-field" appearance="outline">
                         <input type="oldPassword" matInput formControlName="oldPassword">
                         @if (studentProfileForm.get('oldPassword')?.hasError('required')) {
@@ -27,7 +27,7 @@
                         }
                     </mat-form-field>
                     <br/>
-                    <mat-label>New password </mat-label>
+                    <mat-label>New password (Optional) </mat-label>
                     <mat-form-field class="form-field" appearance="outline">
                         <input type="newPassword" matInput formControlName="newPassword">
                     </mat-form-field>
