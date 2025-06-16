@@ -9,7 +9,15 @@ from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError, InvalidSignatureError
 from passlib.context import CryptContext
-from funcs import Student
+from typing import Optional
+from pydantic import BaseModel
+
+class Student(BaseModel):
+
+    name: str
+    email: str
+    password: str
+    id: Optional[int] = -1
 load_dotenv()
 logging.getLogger('passlib').setLevel(logging.ERROR)
 

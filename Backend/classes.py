@@ -1,14 +1,4 @@
 from pydantic import BaseModel
-from typing import Optional
-
-
-class Student(BaseModel):
-
-    name: str
-    email: str
-    password: str
-    id: Optional[int] = -1
-
 
 class PostCustomPromptModel(BaseModel):
 
