@@ -8,10 +8,15 @@ import { SignUpComponent } from './sign-up/sign-up.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { ViewStudentProfileComponent } from './view-student-profile/view-student-profile.component';
 import { AddSectionComponent } from './add-section/add-section.component';
+import { IntroPageComponent } from './intro-page/intro-page.component';
 export const routes: Routes = [
     {
         path: '',
-        component: DashboardComponent  // DASHBOARD COMPONENT
+        component: IntroPageComponent
+    },
+    {
+        path: 'home',
+        component: DashboardComponent
     },
     {
         path: 'custom-prompt',

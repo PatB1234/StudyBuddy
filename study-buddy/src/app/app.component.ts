@@ -46,38 +46,55 @@ interface TreeNode {
 export class AppComponent implements OnInit {
 
     constructor(private router: Router, private http: HttpClient, private route: ActivatedRoute, private introService: IntrojsService) { }
+
+    title = 'study-buddy';
+    static URL = 'https://studdybuddy.app/api'; // Global URL Path Prod Path: https://studdybuddy.app/api Dev Path: http://localhost:8000/api
+    curr_selected = "None";
+    private _snackBar = inject(MatSnackBar);
+    links: ILink[] = [
+        { path: 'custom-prompt', label: 'Custom Prompt' },
+        { path: 'flashcards', label: 'Flashcards' },
+        { path: 'question-answer', label: 'Question & Answer' },
+        { path: 'summariser', label: 'Summariser' },
+    ];
+    activePath = this.links[0].path;
+
     ngOnInit(): void {
         console.log("AppComponent initialized");
-        this.getTree()
-        this.router.events
-            .pipe(filter(event => event instanceof NavigationEnd))
-            .subscribe(() => {
-                this.getTree();
-            });
+        this.router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
+                if (event.urlAfterRedirects != '/') {
+                    this.getTree()
+                    this.router.events
+                        .pipe(filter(event => event instanceof NavigationEnd))
+                        .subscribe(() => {
+                            this.getTree();
+                        });
+                }
+            }
+        });
 
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
-                if (event.urlAfterRedirects === '/') {
+                if (event.urlAfterRedirects === '/home') {
                     this.introService.buttonExplanationFeature()
                 }
             }
         });
     }
 
-    ngAfterViewInit(): void {
+    dash() {
+
+        this.router.navigate(['/']);
     }
 
-    title = 'study-buddy';
-    static URL = 'https://studdybuddy.app/api'; // Global URL Path Prod Path: https://studdybuddy.app/api Dev Path: http://localhost:8000/api
-    curr_selected = "None";
-    private _snackBar = inject(MatSnackBar);
     openSnackBar(message: string, action: string) {
         this._snackBar.open(message, action);
     }
 
     home(): void {
 
-        this.router.navigate(['/'])
+        this.router.navigate(['/home'])
     }
 
     childrenAccessor = (node: TreeNode) => node.children ?? [];
@@ -110,8 +127,6 @@ export class AppComponent implements OnInit {
                         this.curr_selected = res
                     }
                 })
-
-                // Perform any additional actions here if needed
             },
             (error: any) => {
                 console.error("Error updating current notes:", error);
@@ -143,17 +158,6 @@ export class AppComponent implements OnInit {
 
         this.router.navigate(['/add-section'])
     }
-
-    links: ILink[] = [
-        { path: 'custom-prompt', label: 'Custom Prompt' },
-        { path: 'flashcards', label: 'Flashcards' },
-        { path: 'question-answer', label: 'Question & Answer' },
-        { path: 'summariser', label: 'Summariser' },
-    ];
-
-
-
-    activePath = this.links[0].path;
 
     onActivate(path: string) {
         this.activePath = path;

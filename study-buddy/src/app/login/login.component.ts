@@ -1,15 +1,15 @@
-import { ChangeDetectionStrategy, Component, signal, Renderer2, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, Renderer2, inject, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { AppComponent } from '../app.component';
 import { MatIcon } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 
 export interface Task {
     name: string;
@@ -36,13 +36,7 @@ export interface Task {
 
 export class LoginComponent {
 
-
     constructor(private http: HttpClient, private renderer: Renderer2, private router: Router) { }
-
-    readonly task = signal<Task>({
-        name: 'Sign Up',
-        completed: false,
-    });
 
     URL: any = AppComponent.URL;
     error: any = "";
@@ -72,7 +66,8 @@ export class LoginComponent {
             if (typeof (res) == 'string') {
                 document.cookie = `token=${res}; SameSite=Lax;`;
                 this._snackBar.open("Successful, redirecting", "Dismiss");
-                this.router.navigate(['/'])
+                localStorage.setItem('buttonExplanationCompleted', 'false');
+                this.router.navigate(['/home'])
 
             } else {
 
