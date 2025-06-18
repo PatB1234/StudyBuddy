@@ -67,6 +67,7 @@ export class LoginComponent {
                 document.cookie = `token=${res}; SameSite=Lax;`;
                 this._snackBar.open("Successful, redirecting", "Dismiss");
                 localStorage.setItem('buttonExplanationCompleted', 'false');
+                localStorage.setItem('editUserExplanation', 'false');
                 this.router.navigate(['/home'])
 
             } else {

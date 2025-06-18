@@ -60,7 +60,6 @@ export class AppComponent implements OnInit {
     activePath = this.links[0].path;
 
     ngOnInit(): void {
-        console.log("AppComponent initialized");
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
                 if (event.urlAfterRedirects != '/') {

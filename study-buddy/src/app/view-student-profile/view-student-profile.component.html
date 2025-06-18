@@ -9,18 +9,18 @@
                     field</p>
                 <mat-label>Name: {{nameView}} </mat-label>
                 <br />
-                <mat-label>Change Name (Optional)</mat-label>
+                <mat-label id="changeName">Change Name (Optional)</mat-label>
                 <mat-form-field class="form-field" appearance="outline">
                     <input type="name" matInput formControlName="name">
 
                 </mat-form-field>
                 <br />
 
-                <mat-label>Email: {{emailView}}</mat-label>
+                <mat-label id="enterEmail">Email: {{emailView}}</mat-label>
                 <br />
                 <mat-label>Change password? </mat-label>
                 <br />
-                <mat-label>Current password </mat-label>
+                <mat-label id="enterCurrPwd">Current password </mat-label>
                 <mat-form-field class="form-field" appearance="outline">
                     <input type="oldPassword" matInput formControlName="oldPassword">
                     @if (studentProfileForm.get('oldPassword')?.hasError('required')) {
@@ -28,7 +28,7 @@
                     }
                 </mat-form-field>
                 <br />
-                <mat-label>New password (Optional) </mat-label>
+                <mat-label id="enterNewPwd">New password (Optional) </mat-label>
                 <mat-form-field class="form-field" appearance="outline">
                     <input type="newPassword" matInput formControlName="newPassword">
                 </mat-form-field>
@@ -37,10 +37,8 @@
                 <br />
                 <br />
                 <br />
-                <button mat-stroked-button (click)="submit()" [disabled]="studentProfileForm.invalid">Edit</button>
-                <br />
-                <br />
-                <a href="/sign-up" routerLinkActive="active">Don't have an account? Sign Up!</a>
+                <button id= "submitChanges" mat-stroked-button (click)="submit()" [disabled]="studentProfileForm.invalid">Edit</button>
+
             </form>
         </mat-card-content>
     </mat-card>

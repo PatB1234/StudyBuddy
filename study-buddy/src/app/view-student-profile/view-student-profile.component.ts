@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,6 +8,7 @@ import { MatCardModule } from '@angular/material/card';
 import { HttpClient } from '@angular/common/http';
 import { AppComponent } from '../app.component';
 import { take } from 'rxjs/operators';
+import { IntrojsService } from '../introjs/introjs.service';
 
 @Component({
     selector: 'app-view-student-profile',
@@ -22,12 +24,14 @@ import { take } from 'rxjs/operators';
     styleUrl: './view-student-profile.component.css'
 })
 export class ViewStudentProfileComponent implements OnInit {
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private router: Router, private introService: IntrojsService) { }
     URL: any = AppComponent.URL
 
     ngOnInit(): void {
 
         this.getStudent()
+        this.introService.editUserFeature()
+
     }
 
     nameView = 'name';
