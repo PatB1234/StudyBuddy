@@ -2,13 +2,7 @@
 import google.genai
 import google.generativeai as generativeai
 from dotenv import load_dotenv
-import os
-import json
-import re
-import db
-import google
-import random
-import ast
+import os, json, re, db, google, ast
 
 load_dotenv()
 generativeai.configure(api_key=os.getenv("API_KEY"))
@@ -32,12 +26,7 @@ model = generativeai.GenerativeModel(
 )
 
 completion = "How may I assist you today?"
-chat_session = model.start_chat(
-    history=[
-
-    ]
-)
-
+chat_session = model.start_chat(history=[])
 
 def check_token_no(file_path) -> bool:
     try:

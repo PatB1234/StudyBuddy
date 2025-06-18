@@ -1,4 +1,4 @@
-import { Component, Renderer2 } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -25,7 +25,7 @@ import { RouterLink, Router } from '@angular/router';
 })
 export class SignUpComponent {
 
-    constructor(private http: HttpClient, private renderer: Renderer2, private router: Router) { }
+    constructor(private http: HttpClient, private router: Router) { }
 
     URL: any = AppComponent.URL;
     error: any = "";

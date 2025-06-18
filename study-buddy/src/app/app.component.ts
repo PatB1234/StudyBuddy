@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterOutlet, RouterLink, ActivatedRoute, NavigationEnd } from '@angular/router';
+import { RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIcon } from '@angular/material/icon';
@@ -45,7 +45,7 @@ interface TreeNode {
 
 export class AppComponent implements OnInit {
 
-    constructor(private router: Router, private http: HttpClient, private route: ActivatedRoute, private introService: IntrojsService) { }
+    constructor(private router: Router, private http: HttpClient, private introService: IntrojsService) { }
 
     title = 'study-buddy';
     static URL = 'https://studdybuddy.app/api'; // Global URL Path Prod Path: https://studdybuddy.app/api Dev Path: http://localhost:8000/api

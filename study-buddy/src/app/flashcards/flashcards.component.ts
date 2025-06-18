@@ -1,4 +1,4 @@
-import { Component, OnInit, Renderer2, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -47,7 +47,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 export class FlashcardsComponent implements OnInit{
 
 
-  constructor(private http: HttpClient, private renderer: Renderer2) { }
+  constructor(private http: HttpClient) { }
 
 	URL: any = AppComponent.URL;
 	private _snackBar = inject(MatSnackBar);

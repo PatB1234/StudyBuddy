@@ -1,4 +1,4 @@
-import { Component, Renderer2, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -34,7 +34,7 @@ import { MarkdownModule } from 'ngx-markdown';
 export class SummariserComponent {
 
 
-    constructor(private http: HttpClient, private renderer: Renderer2) { }
+    constructor(private http: HttpClient) { }
 
     URL: any = AppComponent.URL;
     private _snackBar = inject(MatSnackBar);

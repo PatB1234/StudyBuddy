@@ -1,9 +1,5 @@
 import sqlite3 as driver
-import logging
-import os
-import jwt
-import classes
-import funcs
+import logging, os, jwt, classes, funcs
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer

@@ -14,7 +14,7 @@ export class DashboardComponent implements OnInit {
     constructor(private http: HttpClient) { }
 
     URL: any = AppComponent.URL;
-    name: any = "name_var_here";
+    name: string = "name_var_here";
 
     ngOnInit(): void {
         this.getStudent();
