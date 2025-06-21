@@ -29,9 +29,8 @@ export class ViewStudentProfileComponent implements OnInit {
 
     ngOnInit(): void {
 
-        this.getStudent()
+        this.getStudent();
         this.introService.editUserFeature()
-
     }
 
     nameView = 'name';
@@ -70,4 +69,5 @@ export class ViewStudentProfileComponent implements OnInit {
                 this.emailView = res['email'];
             });
     }
+
 }

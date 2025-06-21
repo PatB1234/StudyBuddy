@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, HostListener, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -58,6 +58,12 @@ export class AppComponent implements OnInit {
         { path: 'summariser', label: 'Summariser' },
     ];
     activePath = this.links[0].path;
+
+    @HostListener('document:keydown.enter', ['$event'])
+    handleEnterKey(event: KeyboardEvent) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
 
     ngOnInit(): void {
         this.router.events.subscribe((event) => {
