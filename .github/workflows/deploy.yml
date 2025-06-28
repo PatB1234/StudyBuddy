@@ -29,4 +29,8 @@ jobs:
             npm i 
             npm audit fix
             ng build 
+            cd ~/StudyBuddy/Backend/
+            source env/bin/activate
+            killall uvicorn
+            nohup uvicorn main:app --host=0.0.0.0
           EOF
