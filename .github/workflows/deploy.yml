@@ -32,5 +32,6 @@ jobs:
             cd ~/StudyBuddy/Backend/
             source env/bin/activate
             killall uvicorn
-            nohup uvicorn main:app --host=0.0.0.0 > backend.log 2> backend.err < /dev/null &
+            pip install -r requirements.txt
+            nohup gunicorn -k uvicorn.workers.UvicornWorker main:app --workers 4 --bind 0.0.0.0:8000 > backend.log 2> backend.err < /dev/null &
           EOF
