@@ -33,5 +33,4 @@ jobs:
             source env/bin/activate
             killall uvicorn
             nohup uvicorn main:app --host=0.0.0.0 &
-            disown
           EOF
