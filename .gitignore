@@ -18,3 +18,4 @@ Backend/Data
 *.db
 *.sqlite3
 /Baceknd/db/*.db
+ssh/*
