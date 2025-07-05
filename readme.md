@@ -3,7 +3,7 @@
 StudyBuddy is an AI-powered application designed to help students with their studies by providing personalized learning resources.
 <br/>
 <br/>
-Documentation: [Here](docs.studdybuddy.app)
+Documentation: [Here](https://docs.studdybuddy.app)
 
 ## Features
 
