@@ -1,5 +1,9 @@
 import sqlite3 as driver
-import logging, os, jwt, classes, funcs
+import logging
+import os
+import jwt
+import classes
+import funcs
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer
@@ -8,12 +12,15 @@ from passlib.context import CryptContext
 from typing import Optional
 from pydantic import BaseModel
 
+
 class Student(BaseModel):
 
     name: str
     email: str
     password: str
     id: Optional[int] = -1
+
+
 load_dotenv()
 logging.getLogger('passlib').setLevel(logging.ERROR)
 

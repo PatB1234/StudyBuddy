@@ -2,7 +2,14 @@
 import google.genai
 import google.generativeai as generativeai
 from dotenv import load_dotenv
-import os, json, re, db, google, ast
+import os
+import json
+import re
+import db
+import google
+import ast
+import io
+import pandas as pd
 
 load_dotenv()
 generativeai.configure(api_key=os.getenv("API_KEY"))
@@ -28,6 +35,7 @@ model = generativeai.GenerativeModel(
 completion = "How may I assist you today?"
 chat_session = model.start_chat(history=[])
 
+
 def check_token_no(file_path) -> bool:
     try:
         token_no = client.models.count_tokens(model=model_name, contents=client.files.upload(
@@ -48,8 +56,22 @@ def data_cleaner(value, remove_new_line: bool, isJson: bool):  # Just cleans the
     value = value.title()
 
     if (isJson):
-
-        value = json.loads(value[value.index("["):])
+        if "[" in value and "]" in value:
+            try:
+                # Extract the first JSON array found in the string
+                start = value.index("[")
+                end = value.rindex("]") + 1
+                json_str = value[start:end]
+                try:
+                    value = ast.literal_eval(json_str)
+                except Exception as e:
+                    print(f"Literal eval error: {e}")
+                    value = []
+            except Exception as e:
+                print(f"JSON decode error: {e}")
+                value = []
+        else:
+            value = []
 
     return value
 
@@ -137,3 +159,35 @@ def check_question(question, answer, noteID):  # Done
     res = (model.generate_content(
         [notes, f"is the answer {answer} correct for the question {question}"])).text
     return res
+
+
+def return_flashcard_exported_format(noteID, type):
+
+    # 1 means quizlet 2 means Other
+    data = flashcards(noteID)
+    res = ''
+    if type == 1:  # Quizlet, SELECT COMMA, SEMILCOLON
+
+        for i in data:
+
+            front = i['Front']
+            back = i['Back']
+            res += (front + ',' + back + ';')
+
+        return res
+
+    elif type == 2:  # Gizmo
+
+        res = {'Front': [], 'Back': []}
+        for i in data:
+
+            res["Front"].append(i['Front'])
+            res["Back"].append(i['Back'])
+
+        res = pd.DataFrame(res)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as w:
+            res.to_excel(w, index=False, sheet_name='Sheet1')
+            output.seek(0)
+
+        return res
