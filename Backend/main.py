@@ -224,3 +224,15 @@ async def post_delete_note_by_name(noteName: PostDeleteNoteModel, request: Reque
     else:
 
         return deleteNoteByName(noteName.noteName, request.headers.get('token'))
+
+
+@app.post("/api/export_flashcards")
+async def post_export_flashcards(exportModel: PostExportModel, request: Request):
+
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+
+        return return_flashcard_exported_format(getCurrentNotesByToken(request.headers.get('token')), exportModel.type)

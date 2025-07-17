@@ -1,23 +1,26 @@
 <div class="flashcards">
-				
+
     <h2>Flashcards</h2>
 
     <div class="tp-wrapper">
         <div class="tp-box" (click)="toggleFlip()" [@flipState]="flip">
             <div class="tp-box__side tp-box__front">{{front}}</div>
             <div class="tp-box__side tp-box__back">{{back}}</div>
-            
+
         </div>
         <div align="center">
 
             <p>{{card_num}}</p>
             <button mat-icon-button matTooltip="Previous Card" aria-label="Previous Card" (click)="flashcardBack()">
                 <mat-icon>arrow_back</mat-icon>
-                </button>
-                <button mat-icon-button  matTooltip="Next Card" aria-label="Next Card" (click)="flashcardNext()">
+            </button>
+            <button mat-icon-button matTooltip="Next Card" aria-label="Next Card" (click)="flashcardNext()">
                 <mat-icon>arrow_forward</mat-icon>
             </button>
+            <br />
+            <button id="Export Cards" class='icon-button' mat-icon-button matTooltip="Export Cards"
+                aria-label="Export Cards" (click)="exportCards()"><mat-icon
+                    class="large_buttons">arrow_outward</mat-icon></button>
         </div>
     </div>
 </div>
-    

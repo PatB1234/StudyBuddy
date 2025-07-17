@@ -56,8 +56,11 @@ def data_cleaner(value, remove_new_line: bool, isJson: bool):  # Just cleans the
     value = value.title()
 
     if (isJson):
+
         if "[" in value and "]" in value:
+
             try:
+
                 # Extract the first JSON array found in the string
                 start = value.index("[")
                 end = value.rindex("]") + 1

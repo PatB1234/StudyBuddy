@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class PostCustomPromptModel(BaseModel):
 
     customPrompt: str
@@ -48,3 +49,8 @@ class PostChangeNotes(BaseModel):
 class PostDeleteNoteModel(BaseModel):
 
     noteName: str
+
+
+class PostExportModel(BaseModel):
+
+    type: int = 2
