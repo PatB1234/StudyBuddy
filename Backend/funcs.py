@@ -181,16 +181,4 @@ def return_flashcard_exported_format(noteID, type):
 
     elif type == 2:  # Gizmo
 
-        res = {'Front': [], 'Back': []}
-        for i in data:
-
-            res["Front"].append(i['Front'])
-            res["Back"].append(i['Back'])
-
-        res = pd.DataFrame(res)
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as w:
-            res.to_excel(w, index=False, sheet_name='Sheet1')
-            output.seek(0)
-
-        return res
+        return data

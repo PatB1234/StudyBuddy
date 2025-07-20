@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatInputModule } from '@angular/material/input';
@@ -14,12 +13,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatButtonModule } from '@angular/material/button';
-
+import { DomSanitizer } from '@angular/platform-browser';
+import { MatIconRegistry } from '@angular/material/icon';
+import { saveAs } from 'file-saver';
 @Component({
     selector: 'app-flashcards',
     standalone: true,
     imports: [
-        RouterOutlet,
         MatSidenavModule,
         MatToolbarModule,
         MatIconModule,
@@ -49,7 +49,14 @@ import { MatButtonModule } from '@angular/material/button';
 export class FlashcardsComponent implements OnInit {
 
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private domSanitizer: DomSanitizer, private matIconRegistry: MatIconRegistry,
+    ) {
+
+        this.matIconRegistry.addSvgIcon(
+            'quizlet-logo', // The unique name for your icon
+            this.domSanitizer.bypassSecurityTrustResourceUrl('QuizletSVG.svg') // Path to your SVG file
+        );
+    }
 
     URL: any = AppComponent.URL;
     private _snackBar = inject(MatSnackBar);
@@ -113,16 +120,27 @@ export class FlashcardsComponent implements OnInit {
         }
     }
 
-    exportCards(): void {
+    exportCardsQuizlet(): void {
 
-        const promptResult = prompt("Do you want to export for quizlet or any other platform. Select: \n1. Quizlet \n2. Other");
-        let choice: number | null = null;
-        if (promptResult !== null) {
-            choice = Math.trunc(Number(promptResult));
-        }
-        if (choice === 1) {
-            alert("When importing to quizlet, select Comma & Semicolon under the Between term and definition & Between cards field respectively");
+        this.http.get(this.URL + "/export_flashcards/1").subscribe((res: any) => {
+            console.log(res)
+            navigator.clipboard.writeText(res).then(
+                () => console.log("Res copied"),
+                (err) => console.log("ERROR:", err)
+            );
+            alert("When importing to quizlet, select Comma & Semicolon under the 'Between term and definition' & 'Between cards' field respectively. The text is in your clipboard, just go to quizlet 'import' and paste it");
+        })
+    }
 
-        }
+    exportCardsXlsx(): void {
+
+        this.http.get(this.URL + "/export_flashcards/2", { responseType: 'blob' }).subscribe((res: Blob) => {
+            alert("A download window will pop up after you press 'Ok'")
+            saveAs(res, 'Flashcards.csv')
+        })
+        this.http.get(this.URL + "/delete_flashcard_request", {}).subscribe((res: any) => {
+
+            console.log(res)
+        })
     }
 }

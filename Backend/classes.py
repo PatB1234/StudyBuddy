@@ -51,6 +51,6 @@ class PostDeleteNoteModel(BaseModel):
     noteName: str
 
 
-class PostExportModel(BaseModel):
+class GetExportModel(BaseModel):
 
     type: int = 2

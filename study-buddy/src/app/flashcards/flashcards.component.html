@@ -18,9 +18,12 @@
                 <mat-icon>arrow_forward</mat-icon>
             </button>
             <br />
-            <button id="Export Cards" class='icon-button' mat-icon-button matTooltip="Export Cards"
-                aria-label="Export Cards" (click)="exportCards()"><mat-icon
-                    class="large_buttons">arrow_outward</mat-icon></button>
+            <button id="Export Cards for Quizlet" class='icon-button' mat-icon-button
+                matTooltip="Export Cards for Quizlet" aria-label="Export Cards" (click)="exportCardsQuizlet()"><mat-icon
+                    class="large_buttons" svgIcon="quizlet-logo"></mat-icon></button>
+            <button id="Export Cards as Excel" class='icon-button' mat-icon-button matTooltip="Export Cards as Excel"
+                aria-label="Export Cards as Excel" (click)="exportCardsXlsx()"><mat-icon
+                    class="large_buttons">download</mat-icon></button>
         </div>
     </div>
 </div>

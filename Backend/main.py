@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, File, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import Form
 from classes import *
@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from db import *
 import os
 import shutil
+import pandas as pd
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="/"), name="static")
 
@@ -20,6 +21,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"]
 )
 '''
 Token Validation is standardised accross the functions. If a token is valid, the function will return data as normal. If not, a False is returned by the token validator, resulting in a 401 error in the frontend
@@ -226,8 +228,8 @@ async def post_delete_note_by_name(noteName: PostDeleteNoteModel, request: Reque
         return deleteNoteByName(noteName.noteName, request.headers.get('token'))
 
 
-@app.post("/api/export_flashcards")
-async def post_export_flashcards(exportModel: PostExportModel, request: Request):
+@app.get("/api/export_flashcards/{resType}")
+async def get_export_flashcards(resType: int, request: Request):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
@@ -235,4 +237,39 @@ async def post_export_flashcards(exportModel: PostExportModel, request: Request)
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
     else:
 
-        return return_flashcard_exported_format(getCurrentNotesByToken(request.headers.get('token')), exportModel.type)
+        if resType == 1:
+            return return_flashcard_exported_format(getCurrentNotesByToken(request.headers.get('token')), resType)
+        else:
+            stud_name = validate_student(
+                request.headers.get('token'))[1]
+
+            res = return_flashcard_exported_format(getCurrentNotesByToken(
+                request.headers.get('token')), resType)
+
+            pd.DataFrame(res).to_csv(f'{stud_name}.csv', index=False)
+            return FileResponse(path=f"{stud_name}.csv", media_type="text/csv", filename=f'{stud_name}.csv')
+
+
+# Function to delete the flashcards after the user has downloaded them
+@app.get("/api/delete_flashcard_request")
+async def get_delete_flashcard(request: Request):
+
+    token_res = validate_student(request.headers.get('token'))
+    if token_res == False:
+
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+    else:
+
+        email = validate_student(request.headers.get('token'))[1]
+        if os.path.exists(f"{email}.csv"):
+
+            try:
+
+                os.remove(f"{email}.csv")
+                return True
+            except:
+
+                return False
+        else:
+
+            return False
