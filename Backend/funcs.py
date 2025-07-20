@@ -18,7 +18,7 @@ CACHED_QUESTIONS = []  # [FILEID, CACHEDATA]
 # Create the model
 client = google.genai.Client(api_key=os.getenv("API_KEY"))
 
-model_name = "gemini-2.0-flash"
+model_name = "gemini-2.5-flash"
 generation_config = {
     "temperature": 1,
     "top_p": 0.95,
