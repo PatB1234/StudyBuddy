@@ -138,39 +138,94 @@ async def change_current_notes(newNoteName: classes.PostChangeNotes, request: Re
 
 
 @app.post("/api/add_notes")
-async def post_add_notes(request: Request, sectionName: str = Form(...), file: UploadFile = File(...), ):
+async def post_add_notes(request: Request, sectionName: str = Form(...), file: UploadFile = File(...), handwritten: str = Form(...)):
 
     token_res = validate_student(request.headers.get('token'))
     if token_res == False:
 
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
     else:
-
+        isHandwritten = int(handwritten)
         if '.pdf' in file.filename:
 
-            file_path = os.path.join("Data", str(getLastNoteID() + 1) + ".pdf")
-            with open(file_path, "wb") as buff:
+            if (isHandwritten == 1):
 
-                shutil.copyfileobj(file.file, buff)
+                fileID = getLastNoteID() + 1
+                file_path = os.path.join("Data", str(fileID) + ".pdf")
 
-            # Check if the file size is ok (i.e. number of tokens)
-            if (check_token_no(file_path)):
+                with open(file_path, "wb") as buff:
+                    shutil.copyfileobj(file.file, buff)
 
-                addNotes(request.headers.get('token'), file.filename.replace(
-                    ".pdf", ""), getLastNoteID() + 1, sectionName)
-                return {"message": "Upload successful"}
+                res = convert_handwritten_to_pdf(file_path, int(fileID))
 
+                if (check_token_no(file_path)):
+
+                    addNotes(request.headers.get('token'), file.filename.replace(
+                        ".pdf", ""), getLastNoteID() + 1, sectionName)
+                    return {"message": "Upload successful" + res}
+
+                else:
+
+                    # Remove the file if it is too large
+                    if os.path.exists(file_path):
+
+                        os.remove(file_path)
+
+                    return {"message": "File is too large, please try with a different file or a select the handwritten flag if your pdf is a handwritten note"}
             else:
 
-                # Remove the file if it is too large
-                if os.path.exists(file_path):
+                file_path = os.path.join(
+                    "Data", str(getLastNoteID() + 1) + ".pdf")
+                with open(file_path, "wb") as buff:
 
-                    os.remove(file_path)
+                    shutil.copyfileobj(file.file, buff)
 
-                return {"message": "File is too large, please try with a different file or a non-handwritten file"}
+                # Check if the file size is ok (i.e. number of tokens)
+                if (check_token_no(file_path)):
+
+                    addNotes(request.headers.get('token'), file.filename.replace(
+                        ".pdf", ""), getLastNoteID() + 1, sectionName)
+                    return {"message": "Upload successful"}
+
+                else:
+
+                    # Remove the file if it is too large
+                    if os.path.exists(file_path):
+
+                        os.remove(file_path)
+
+                    return {"message": "File is too large, please try with a different file or a non-handwritten file"}
+        # If the notes are of a PNG type, they are automatically processed as handwritten notes
+        elif ('.png' in file.filename) or ('.PNG' in file.filename):
+
+            fileID = getLastNoteID() + 1
+            file_path = os.path.join("Data", str(fileID) + ".png")
+
+            with open(file_path, "wb") as buff:
+                shutil.copyfileobj(file.file, buff)
+
+            res = convert_handwritten_to_pdf(file_path, int(fileID))
+            addNotes(request.headers.get('token'), file.filename.replace(
+                ".png", ""), getLastNoteID() + 1, sectionName)
+            return {"message": "Upload successful" + res}
+
+        # If the notes are of a JPG type, they are automatically processed as handwritten notes
+        elif ('.JPG' in file.filename) or ('.jpg' in file.filename):
+
+            fileID = getLastNoteID() + 1
+            file_path = os.path.join("Data", str(fileID) + ".jpg")
+
+            with open(file_path, "wb") as buff:
+                shutil.copyfileobj(file.file, buff)
+
+            res = convert_handwritten_to_pdf(file_path, int(fileID))
+            addNotes(request.headers.get('token'), file.filename.replace(
+                ".jpg", ""), getLastNoteID() + 1, sectionName)
+            return {"message": "Upload successful" + res}
+        # If they are neither PDF, JPG nor PNG, they are rejected
         else:
 
-            return {"message": "Incorrect filetype, must be PDF"}
+            return {"message": "Incorrect filetype, must be PDF or JPG/PNG For handwritten content"}
 
 
 @app.post("/api/get_all_user_notes_tree")

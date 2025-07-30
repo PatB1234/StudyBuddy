@@ -10,13 +10,17 @@ import google
 import ast
 import io
 import pandas as pd
+from fpdf import FPDF
+from google.cloud import vision
 
 load_dotenv()
 generativeai.configure(api_key=os.getenv("API_KEY"))
 CACHED_FLASHCARDS = []  # [FILEID, CACHEDATA]
 CACHED_QUESTIONS = []  # [FILEID, CACHEDATA]
-# Create the model
+# Create the model - talks to the gemini API
 client = google.genai.Client(api_key=os.getenv("API_KEY"))
+# This represents the client link for the Google cloud vision API.
+visionClient = vision.ImageAnnotatorClient()
 
 model_name = "gemini-2.5-flash"
 generation_config = {
@@ -182,3 +186,32 @@ def return_flashcard_exported_format(noteID, type):
     elif type == 2:  # Gizmo
 
         return data
+
+
+def convert_handwritten_to_pdf(file_path, fileID):
+    try:
+        with open(file_path, "rb") as image_file:
+            content = image_file.read()
+        image = vision.Image(content=content)
+        data = ""
+
+        response = visionClient.document_text_detection(image=image)
+        for page in response.full_text_annotation.pages:
+            for block in page.blocks:
+                for paragraph in block.paragraphs:
+                    for word in paragraph.words:
+
+                        word_text = "".join(
+                            [symbol.text for symbol in word.symbols])
+                        data += word_text + " "
+
+        os.remove(file_path)
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 12)
+        pdf.multi_cell(0, 10, txt=data)
+        pdf.output(f"Data/{fileID}.pdf")
+        return "Successfully converted your handwritten PDF to text, please proceed with the app as normal"
+    except:
+
+        return "Could not convert handwritten pdf to text"

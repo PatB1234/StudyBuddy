@@ -137,10 +137,11 @@ export class FlashcardsComponent implements OnInit {
         this.http.get(this.URL + "/export_flashcards/2", { responseType: 'blob' }).subscribe((res: Blob) => {
             alert("A download window will pop up after you press 'Ok'")
             saveAs(res, 'Flashcards.csv')
-        })
-        this.http.get(this.URL + "/delete_flashcard_request", {}).subscribe((res: any) => {
+            this.http.get(this.URL + "/delete_flashcard_request", {}).subscribe((res: any) => {
 
-            console.log(res)
+                console.log(res)
+            })
         })
+
     }
 }

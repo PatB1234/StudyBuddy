@@ -4,11 +4,15 @@
             <h1>Upload a new set of notes (PDF ONLY) </h1>
             <br />
 
-            <input type="file" (change)="onFileSelected($event)" accept="application/pdf" />
+            <input type="file" (change)="onFileSelected($event)" accept="application/pdf,image/png,image/jpg"
+                mat-button="elevated" />
             <br />
             <mat-label>Section Name: </mat-label>
             <input type="text" [(ngModel)]="sectionName" placeholder="Enter Section Name" />
             <br />
-            <button (click)="onUpload()" [disabled]="!selectedFile">Upload</button>
+            <mat-checkbox class="example-margin" (change)="onChange($event.checked)">Check this box if your notes
+                are handwritten</mat-checkbox>
+            <br />
+            <button (click)="onUpload()" [disabled]="!selectedFile" mat-button="elevated">Upload</button>
         </mat-card-content>
     </mat-card>
