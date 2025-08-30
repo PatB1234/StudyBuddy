@@ -48,7 +48,7 @@ export class AddSectionComponent {
 
         const formData = new FormData()
         formData.append('file', file)
-        formData.append('sectionName', sectionName)
+        formData.append('section_name', sectionName)
         formData.append('handwritten', String(handwritten))
         this._snackBar.open("Please wait while file processes, this can take a few minutes", "Dismiss")
         return this.http.post(this.url + "/add_notes", formData)

@@ -1,16 +1,18 @@
-import sqlite3 as driver
 import logging
 import os
-import jwt
-import classes
-import funcs
+import sqlite3 as driver
 from datetime import datetime, timedelta
+from typing import Optional
+
+import jwt
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer
-from jwt.exceptions import InvalidTokenError, InvalidSignatureError
+from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
-from typing import Optional
 from pydantic import BaseModel
+
+import classes
+import funcs
 
 
 class Student(BaseModel):
@@ -22,17 +24,17 @@ class Student(BaseModel):
 
 
 load_dotenv()
-logging.getLogger('passlib').setLevel(logging.ERROR)
+logging.getLogger("passlib").setLevel(logging.ERROR)
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-DATABASE_URL = 'db/users.db'
+DATABASE_URL = "db/users.db"
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 7 Days
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # BIG VOLATILE ARRAY that stores all of the currently used notes by a user based on a token.
-currentNotes = []
+current_notes = []
 
 # JWT functions
 
@@ -54,12 +56,12 @@ def cursor_func(function, fetch: bool = False):
     try:
 
         cursor.execute(function)
-        if (fetch):
+        if fetch:
             records = cursor.fetchall()
             return records
 
         database.commit()
-    except:
+    except classes.GenericException:
 
         database.rollback()
 
@@ -67,9 +69,15 @@ def cursor_func(function, fetch: bool = False):
 def create_tables():
 
     cursor_func(
-        "CREATE TABLE IF NOT EXISTS STUDENTS (name TEXT, email TEXT, password TEXT, id INTEGER);", False)
+        "CREATE TABLE IF NOT EXISTS STUDENTS (name TEXT, email TEXT, password TEXT, id INTEGER);",
+        False,
+    )
     cursor_func(
-        "CREATE TABLE IF NOT EXISTS NOTES (fileID INTEGER, fileName TEXT, ownerEmail TEXT, sectionName TEXT);", False)
+        "CREATE TABLE IF NOT EXISTS NOTES "
+        + "(fileID INTEGER, fileName TEXT, ownerEmail TEXT, sectionName TEXT);",
+        False,
+    )
+
 
 # Student Functions
 
@@ -81,9 +89,8 @@ def get_last_id_students():
 
         last_student = students[len(students) - 1]
         return last_student[3]
-    else:
+    return -1
 
-        return -1
 
 # CRUD Functions
 # Create
@@ -98,42 +105,51 @@ def create_user(student: Student):
 
             return "User with this email already exists, please login instead"
 
-    id = get_last_id_students() + 1
+    uid = get_last_id_students() + 1
     cursor_func(
-        f"INSERT INTO STUDENTS (name, email, password, id) VALUES ('{student.name}', '{student.email}', '{hash_password(student.password)}', {id});", False)
+        "INSERT INTO STUDENTS (name, email, password, id) VALUES "
+        + f"('{student.name}', '{student.email}', '{hash_password(student.password)}', {uid});",
+        False,
+    )
     return "New user created, please login with your account"
 
 
-# Used within the program when a student with the email is not found and we want to create an account, this simplifies the login process for the user
+# Used within the program when a student with the email
+# is not found and we want to create an account,
+# this simplifies the login process for the user
 def create_student_with_token(student: Student):
 
-    id = get_last_id_students() + 1
+    uid = get_last_id_students() + 1
     cursor_func(
-        f"INSERT INTO STUDENTS (name, email, password, id) VALUES ('{student.name}', '{student.email}', '{hash_password(student.password)}', {id});", False)
-    student = Student(name=student.name, email=student.email,
-                      password=student.password, id=id)
+        "INSERT INTO STUDENTS (name, email, password, id) VALUES "
+        + f"('{student.name}', '{student.email}', '{hash_password(student.password)}', {uid});",
+        False,
+    )
+    student = Student(
+        name=student.name, email=student.email, password=student.password, id=uid
+    )
     token = get_user_token(student)
     return token
 
 
 def get_all_students():
 
-    rawStudents = cursor_func("SELECT * FROM STUDENTS", True)
-    studentArr = []
-    for i in rawStudents:
+    raw_students = cursor_func("SELECT * FROM STUDENTS", True)
+    studnet_arr = []
+    for i in raw_students:
 
-        studentArr.append(
+        studnet_arr.append(
             Student(name=i[0], email=i[1], password=i[2], id=i[3]))
 
-    return studentArr
+    return studnet_arr
 
 
-def get_user_by_id(id):
+def get_user_by_id(uid):
 
     students = get_all_students()
     for student in students:
 
-        if student.id == id:
+        if student.id == uid:
 
             return student
 
@@ -187,6 +203,7 @@ def check_student_login(email: str, password: str):
 
     return 0
 
+
 # Update
 
 
@@ -204,34 +221,35 @@ def change_email(email_old, email_new):
 def change_pwd(email, pwd):
 
     cursor_func(
-        f"UPDATE STUDENTS SET password='{hash_password(pwd)}' WHERE email='{email}'")
+        f"UPDATE STUDENTS SET password='{hash_password(pwd)}' WHERE email='{email}'"
+    )
 
 
-def editUser(newName, email, oldPwd: str, newPwd: str):
+def edit_user(new_name, email, old_pwd: str, new_pwd: str):
 
-    student = get_all_students()
-    for studen in student:
-        if check_student_login(email, oldPwd) != 0:
+    if check_student_login(email, old_pwd) != 0:
 
-            if newName != "":
+        if new_name != "":
 
-                change_name(email, newName)
-            if newPwd != "":
+            change_name(email, new_name)
+        if new_pwd != "":
 
-                change_pwd(email, newPwd)
-            return 1
+            change_pwd(email, new_pwd)
+        return 1
 
     return 0
+
 
 # Delete
 
 
-def delete_user_id(id):
+def delete_user_id(uid):
 
     try:
-        deleteAllNotesByUserID(id)
-        cursor_func(f"DELETE FROM STUDENTS WHERE id={id}", False)
-    except:
+        delete_all_notes_by_user_id(uid)
+        print(uid)
+        cursor_func(f"DELETE FROM STUDENTS WHERE id={uid}", False)
+    except classes.GenericException:
         return "Error deleting user"
     return "Successfully deleted user"
 
@@ -242,16 +260,20 @@ def delete_user_email(email):
 
 
 # JWT Functions
-# Creates a user token from a student Basemodel with an expiry time of 1 week (check const ACCESS_TOKEN_EXPIRE_MINUTES)
+# Creates a user token from a student Basemodel
+# with an expiry time of 1 week
+# (check const ACCESS_TOKEN_EXPIRE_MINUTES)
 def get_user_token(student: Student):
 
     to_encode = {
-
-        'details': {'name': student.name, 'email': student.email, 'id': student.id},
-        'expiry': str(datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+        "details": {"name": student.name, "email": student.email, "id": student.id},
+        "expiry": str(
+            datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        ),
     }
 
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
 
 # Retrieves the payload from a given token
 
@@ -259,12 +281,12 @@ def get_user_token(student: Student):
 def get_student_from_token(token):
 
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    expiry = payload.get('expiry')
-    if datetime.utcnow() >= datetime.strptime(expiry, '%Y-%m-%d %H:%M:%S.%f'):
+    expiry = payload.get("expiry")
+    if datetime.utcnow() >= datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S.%f"):
 
         return "Token Expired"
-    else:
-        return payload.get('details')
+    return payload.get("details")
+
 
 # Validates the user's token and returns the details if it is.
 
@@ -276,17 +298,11 @@ def validate_student(token):
 
             return False
 
-        else:
+        # Returns details in the form of a list
+        return [res["name"], res["email"], res["id"]]
 
-            # Returns details in the form of a list
-            return [res['name'], res['email'], res['id']]
-
-    # If the token is invalid, return False
+    # If the token is invalid or cannot be decoded, return False
     except InvalidTokenError:
-
-        return False
-    # If the token cannot be decoded, return False
-    except InvalidSignatureError:
 
         return False
 
@@ -294,52 +310,52 @@ def validate_student(token):
 # Notes functions
 # CRUD Functions for notes
 # Add notes to the database
-def addNotes(token, fileName, fileID, sectionName):
+def add_notes(token, file_name, file_id, section_name):
     cursor_func(
-        f"INSERT INTO NOTES (fileID, fileName, ownerEmail, sectionName) VALUES ({int(fileID)}, '{fileName}', '{get_student_from_token(token)['email']}', '{sectionName}');", False)
+        "INSERT INTO NOTES (fileID,fileName,ownerEmail,sectionName) VALUES "
+        + f"({int(file_id)},'{file_name}','{get_student_from_token(token)['email']}',"
+        + f"'{section_name}');",
+        False,
+    )
 
-# Change the section name
-
-
-def changeNotesSection(): pass
-
-# Change the notes name
-
-
-def changeNotesName(): pass
-
-# Update owner email
-
-
-def updateOwnerEmail(): pass
 
 # Get all notes from an email
 
 
-def getNotesByEmail(ownerEmail: str):
+def get_notes_by_email(owner_email: str):
 
-    return cursor_func(f"SELECT * FROM NOTES WHERE ownerEmail='{ownerEmail}'", True)
-# Get all notes within a specific section
-def getNotesBySectionName(): pass
+    return cursor_func(f"SELECT * FROM NOTES WHERE ownerEmail='{owner_email}'", True)
+
 
 # Get notes by noteID
 
 
-def getNoteByID(noteID: int) -> classes.notes:
-    notes = cursor_func(f"SELECT * FROM NOTES WHERE fileID={noteID}", True)
-    if (notes == []):
+def get_note_by_id(note_id: int) -> classes.Notes:
+    notes = cursor_func(f"SELECT * FROM NOTES WHERE fileID={note_id}", True)
+    if notes == []:
 
-        return classes.notes(fileID=-1, fileName="-1.txt", ownerEmail="", sectionName="")
-    else:
-        notes = notes[0]
-        return classes.notes(fileID=int(notes[0]), fileName=notes[1], ownerEmail=notes[2], sectionName=notes[3])
+        return classes.Notes(
+            fileID=-1, fileName="-1.txt", ownerEmail="", sectionName=""
+        )
+    notes = notes[0]
+    return classes.Notes(
+        fileID=int(notes[0]),
+        fileName=notes[1],
+        ownerEmail=notes[2],
+        sectionName=notes[3],
+    )
+
 
 # Get current notes by token
 
 
-def getCurrentNotesByToken(token):
+def get_current_notes_by_token(token):
 
-    for i in currentNotes:  # Gets the note that is currently being used by a user based on their token
+    for (
+        i
+    ) in (
+        current_notes
+    ):  # Gets the note that is currently being used by a user based on their token
 
         if i[0] == token:
 
@@ -347,130 +363,137 @@ def getCurrentNotesByToken(token):
 
     return -1
 
+
 # Get the noteID based on the token and the note's name
 
 
-def getNoteIDByNoteName(token: str, noteName: str):
+def get_note_id_by_note_name(token: str, note_name: str):
 
     email = validate_student(token)[1]
     res = cursor_func(
-        f"SELECT * FROM NOTES WHERE ownerEmail='{email}' AND fileName='{noteName}';", True)
+        f"SELECT * FROM NOTES WHERE ownerEmail='{email}' AND fileName='{note_name}';",
+        True,
+    )
 
     if len(res) != 0:
+
         return int(res[0][0])
-    else:
-        return -1
+
+    return -1
 
 
 # Change currently examined notes
-def changeCurrentNotes(token: str, noteName: str):
-    newNoteID = getNoteIDByNoteName(token, noteName)
+def change_current_notes(token: str, note_name: str):
+    new_note_id = get_note_id_by_note_name(token, note_name)
     found = False
-    for i in range(len(currentNotes)):
+    for current_note in current_notes:
 
-        if currentNotes[i][0] == token:
+        if current_note[0] == token:
 
-            currentNotes[i][1] = newNoteID
+            current_note[1] = new_note_id
             found = True
             return 1
 
-    if (found == False):  # Add to array incase the user's notes are not in the volatile array for some odd reason
+    if (
+        not found
+    ):  # Add to array incase the user's notes are not in the volatile array for some odd reason
 
-        currentNotes.append([token, newNoteID])
+        current_notes.append([token, new_note_id])
 
     return 0
+
 
 # Delete all notes for a specific user
 
 
-def deleteAllNotesByUserID(id: int):
+def delete_all_notes_by_user_id(nid: int):
     res = cursor_func(
-        f"SELECT fileID FROM NOTES WHERE ownerEmail=(SELECT email FROM STUDENTS WHERE id={id})", True)
-    for id in res:
-        for i in range(len(funcs.CACHED_FLASHCARDS)):
+        f"SELECT fileID FROM NOTES WHERE ownerEmail=(SELECT email FROM STUDENTS WHERE id={nid})",
+        True,
+    )
+    for ids in res:
+        for i, curr_cards in enumerate(funcs.CACHED_FLASHCARDS):
 
-            if (funcs.CACHED_FLASHCARDS[i][0] == id):
+            if curr_cards[0] == nid:
 
                 funcs.CACHED_FLASHCARDS.pop(i)
                 break
-        for i in range(len(funcs.CACHED_QUESTIONS)):
+        for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
 
-            if (funcs.CACHED_QUESTIONS[i][0] == id):
+            if curr_qs[0] == nid:
 
                 funcs.CACHED_QUESTIONS.pop(i)
-        deleteNotesByID(int(id[0]))
+        delete_notes_by_id(int(ids[0]))
+
+
 # Delete notes by ID pass
 
 
-def deleteNotesByID(id: int):
+def delete_notes_by_id(fid: int):
     # Delete the actual file with the id
     try:
-        cursor_func(f"DELETE FROM NOTES WHERE fileID={id}", False)
-        for i in range(len(funcs.CACHED_FLASHCARDS)):
+        cursor_func(f"DELETE FROM NOTES WHERE fileID={fid}", False)
+        for i, curr_cards in enumerate(funcs.CACHED_FLASHCARDS):
 
-            if (funcs.CACHED_FLASHCARDS[i][0] == id):
+            if curr_cards[0] == fid:
 
                 funcs.CACHED_FLASHCARDS.pop(i)
                 break
-        for i in range(len(funcs.CACHED_QUESTIONS)):
+        for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
 
-            if (funcs.CACHED_QUESTIONS[i][0] == id):
+            if curr_qs[0] == fid:
 
                 funcs.CACHED_QUESTIONS.pop(i)
-        os.remove(f"Data/{id}.pdf")
+        os.remove(f"Data/{fid}.pdf")
 
     except FileNotFoundError:
-        logging.error(f"File with ID {id} does not exist.")
+        logging.error("File with ID %s does not exist.", fid)
 
 
 # Delete a user's notes by the name & user token
-def deleteNoteByName(noteName: str, token: str):
+
+
+def delete_note_by_name(note_name: str, token: str):
 
     email = validate_student(token)[1]
-    id = getNoteIDByNoteName(token, noteName)
+    fid = get_note_id_by_note_name(token, note_name)
 
-    if id == -1:
+    if fid == -1:
         return "Note not found"
 
     cursor_func(
-        f"DELETE FROM NOTES WHERE fileID={id} AND ownerEmail='{email}'", False)
-    for i in range(len(funcs.CACHED_FLASHCARDS)):
+        f"DELETE FROM NOTES WHERE fileID={fid} AND ownerEmail='{email}'", False)
+    for i, curr_cards in enumerate(funcs.CACHED_FLASHCARDS):
 
-        if (funcs.CACHED_FLASHCARDS[i][0] == id):
+        if curr_cards[0] == fid:
 
             funcs.CACHED_FLASHCARDS.pop(i)
             break
-    for i in range(len(funcs.CACHED_QUESTIONS)):
+    for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
 
-        if (funcs.CACHED_QUESTIONS[i][0] == id):
+        if curr_qs[0] == fid:
 
             funcs.CACHED_QUESTIONS.pop(i)
-    os.remove(f"Data/{id}.pdf")
+    os.remove(f"Data/{fid}.pdf")
     return "Note deleted successfully"
 
-# Delete notes by email
-
-
-def deleteNotesByEmail(): pass
 
 # Get Last note ID:
+def get_last_note_id():
 
-
-def getLastNoteID():
-
-    currLargest = -1
+    curr_largest = -1
     notes = cursor_func("SELECT * FROM NOTES", True)
     for note in notes:
-        if note[0] > currLargest:
+        if note[0] > curr_largest:
 
-            currLargest = note[0]
+            curr_largest = note[0]
 
-    return currLargest
+    return curr_largest
 
 
 # Get all the notes in an acceptable tree fashion for a specific user
-def getAllNotesTree(ownerEmail: str):
-    sections = getNotesByEmail(ownerEmail)  # Fetch notes by email
+def get_all_notes_tree(owner_email: str):
+    sections = get_notes_by_email(owner_email)  # Fetch notes by email
 
     # Group sections by their names
     grouped_sections = {}
@@ -483,10 +506,12 @@ def getAllNotesTree(ownerEmail: str):
     # Build the tree structure
     tree_structure = []
     for section_name, notes in grouped_sections.items():
-        tree_structure.append({
-            "name": section_name,
-            # Add notes as children
-            "children": [{"name": note[1]} for note in notes]
-        })
+        tree_structure.append(
+            {
+                "name": section_name,
+                # Add notes as children
+                "children": [{"name": note[1]} for note in notes],
+            }
+        )
 
     return tree_structure

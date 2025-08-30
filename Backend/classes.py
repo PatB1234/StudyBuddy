@@ -25,7 +25,7 @@ class PostLoginCheckStudentModel(BaseModel):
     password: str
 
 
-class editUserModel(BaseModel):
+class EditUserModel(BaseModel):
 
     newName: str = ""
     email: str
@@ -33,7 +33,7 @@ class editUserModel(BaseModel):
     newPassword: str = ""
 
 
-class notes(BaseModel):
+class Notes(BaseModel):
 
     fileID: int
     fileName: str
@@ -54,3 +54,8 @@ class PostDeleteNoteModel(BaseModel):
 class GetExportModel(BaseModel):
 
     type: int = 2
+
+
+class GenericException(Exception):
+
+    pass

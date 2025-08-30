@@ -1,19 +1,32 @@
-from fastapi import FastAPI, Request, File, UploadFile
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi import Form
-from classes import *
-from funcs import *
-from fastapi.middleware.cors import CORSMiddleware
-from db import *
+"""
+Token Validation is standardised accross the functions.
+If a token is valid, the function will return data as normal.
+If not, a False is returned by the token validator, resulting in a 401 error in the frontend
+"""
+
 import os
 import shutil
+
 import pandas as pd
+from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+import classes
+import db
+import funcs
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="/"), name="static")
 
-origins = ['http://localhost:4200', 'http://localhost:3001', 'http://45.79.253.48:3001', 'http://45.79.253.48:3000', 'http://localhost:3000',
-           'http://45.79.253.48:4200', 'http://45.79.253.48:8000', 'http://45.79.253.25:4200', 'http://45.79.253.25:8000', 'https://studdybuddy.app/', 'http://studdybuddy.app/']
+origins = [
+    "http://localhost:4200",
+    "http://45.79.253.25:4200",
+    "http://45.79.253.25:8000",
+    "https://studdybuddy.app/",
+    "http://studdybuddy.app/",
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,73 +34,80 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["Content-Disposition"]
+    expose_headers=["Content-Disposition"],
 )
-'''
-Token Validation is standardised accross the functions. If a token is valid, the function will return data as normal. If not, a False is returned by the token validator, resulting in a 401 error in the frontend
-'''
 
 
 @app.post("/api/custom_prompt")
-async def post_custom_prompt(prompt: PostCustomPromptModel, request: Request):
+async def post_custom_prompt(prompt: classes.PostCustomPromptModel, request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
-        return custom_prompt(prompt.customPrompt, db.getCurrentNotesByToken(request.headers.get('token')))
+    return funcs.custom_prompt(
+        prompt.customPrompt,
+        db.get_current_notes_by_token(request.headers.get("token")),
+    )
 
 
 @app.get("/api/summarise")
 async def post_summarise(request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
-        return summariser(db.getCurrentNotesByToken(request.headers.get('token')))
+    return funcs.summariser(
+        db.get_current_notes_by_token(request.headers.get("token"))
+    )
 
 
 @app.get("/api/get_questions")
 async def get_questions(request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
-        return make_questions(db.getCurrentNotesByToken(request.headers.get('token')))
+    return funcs.make_questions(
+        db.get_current_notes_by_token(request.headers.get("token"))
+    )
 
 
 @app.post("/api/check_question")
-async def post_check_questions(res: PostCheckAnswersModel, request: Request):
+async def post_check_questions(res: classes.PostCheckAnswersModel, request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
-        return check_question(res.question, res.answer, db.getCurrentNotesByToken(request.headers.get('token')))
+    return funcs.check_question(
+        res.question,
+        res.answer,
+        db.get_current_notes_by_token(request.headers.get("token")),
+    )
 
 
 @app.get("/api/get_flashcards")
 async def get_flashcards(request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
-        return flashcards(db.getCurrentNotesByToken(request.headers.get('token')))
+    return funcs.flashcards(
+        db.get_current_notes_by_token(request.headers.get("token"))
+    )
 
 
 @app.post("/api/create_student")
-async def create_user_post(user: PostStudentModel):
+async def create_user_post(user: classes.PostStudentModel):
 
-    return create_user(Student(name=user.name, email=user.email, password=user.password))
+    return db.create_user(
+        db.Student(name=user.name, email=user.email, password=user.password)
+    )
 
 
 @app.post("/api/check_student_login")
-async def check_student_login_post(user: PostLoginCheckStudentModel):
+async def check_student_login_post(user: classes.PostLoginCheckStudentModel):
 
-    students = get_all_students()
+    students = db.get_all_students()
     found = False
     for stu in students:
 
@@ -95,161 +115,191 @@ async def check_student_login_post(user: PostLoginCheckStudentModel):
 
             found = True
             # Account has been found with this email, check the password
-            return check_student_login(user.email, user.password)
+            return db.check_student_login(user.email, user.password)
 
-    if (not found):
+    if not found:
 
-        return create_student_with_token(Student(name=user.name, email=user.email, password=user.password))
+        return db.create_student_with_token(
+            db.Student(name=user.name, email=user.email,
+                       password=user.password)
+        )
 
 
 @app.get("/api/get_student_credentials")
 async def get_student_by_token(request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
-        name, email, id = token_res  # Unpack the validated data
-        return {"name": name, "email": email, "id": id}
+    name, email, uid = token_res  # Unpack the validated data
+    return {"name": name, "email": email, "id": uid}
 
 
 @app.post("/api/edit_user")
-async def edit_user(newDetails: editUserModel, request: Request):
+async def edit_user(new_details: classes.EditUserModel, request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
 
-        return editUser(newDetails.newName, newDetails.email, newDetails.oldPassword, newDetails.newPassword)
+    return db.edit_user(
+        new_details.newName,
+        new_details.email,
+        new_details.oldPassword,
+        new_details.newPassword,
+    )
 
 
 @app.post("/api/change_current_notes")
-async def change_current_notes(newNoteName: classes.PostChangeNotes, request: Request):
+async def change_current_notes(
+    new_note_name: classes.PostChangeNotes, request: Request
+):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
 
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
 
-        db.changeCurrentNotes(request.headers.get(
-            'token'), newNoteName.newNoteName)
+    db.change_current_notes(request.headers.get(
+        "token"), new_note_name.newNoteName)
 
 
 @app.post("/api/add_notes")
-async def post_add_notes(request: Request, sectionName: str = Form(...), file: UploadFile = File(...), handwritten: str = Form(...)):
+async def post_add_notes(
+    request: Request,
+    section_name: str = Form(...),
+    file: UploadFile = File(...),
+    handwritten: str = Form(...),
+):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
 
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
-        isHandwritten = int(handwritten)
-        if '.pdf' in file.filename:
+    is_handwritten = int(handwritten)
+    if ".pdf" in file.filename:
 
-            if (isHandwritten == 1):
+        if is_handwritten == 1:
 
-                fileID = getLastNoteID() + 1
-                file_path = os.path.join("Data", str(fileID) + ".pdf")
-
-                with open(file_path, "wb") as buff:
-                    shutil.copyfileobj(file.file, buff)
-
-                res = convert_handwritten_to_pdf(file_path, int(fileID))
-
-                if (check_token_no(file_path)):
-
-                    addNotes(request.headers.get('token'), file.filename.replace(
-                        ".pdf", ""), getLastNoteID() + 1, sectionName)
-                    return {"message": "Upload successful" + res}
-
-                else:
-
-                    # Remove the file if it is too large
-                    if os.path.exists(file_path):
-
-                        os.remove(file_path)
-
-                    return {"message": "File is too large, please try with a different file or a select the handwritten flag if your pdf is a handwritten note"}
-            else:
-
-                file_path = os.path.join(
-                    "Data", str(getLastNoteID() + 1) + ".pdf")
-                with open(file_path, "wb") as buff:
-
-                    shutil.copyfileobj(file.file, buff)
-
-                # Check if the file size is ok (i.e. number of tokens)
-                if (check_token_no(file_path)):
-
-                    addNotes(request.headers.get('token'), file.filename.replace(
-                        ".pdf", ""), getLastNoteID() + 1, sectionName)
-                    return {"message": "Upload successful"}
-
-                else:
-
-                    # Remove the file if it is too large
-                    if os.path.exists(file_path):
-
-                        os.remove(file_path)
-
-                    return {"message": "File is too large, please try with a different file or a non-handwritten file"}
-        # If the notes are of a PNG type, they are automatically processed as handwritten notes
-        elif ('.png' in file.filename) or ('.PNG' in file.filename):
-
-            fileID = getLastNoteID() + 1
-            file_path = os.path.join("Data", str(fileID) + ".png")
+            file_id = db.get_last_note_id() + 1
+            file_path = os.path.join("Data", str(file_id) + ".pdf")
 
             with open(file_path, "wb") as buff:
                 shutil.copyfileobj(file.file, buff)
 
-            res = convert_handwritten_to_pdf(file_path, int(fileID))
-            addNotes(request.headers.get('token'), file.filename.replace(
-                ".png", ""), getLastNoteID() + 1, sectionName)
-            return {"message": "Upload successful" + res}
+            res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
 
-        # If the notes are of a JPG type, they are automatically processed as handwritten notes
-        elif ('.JPG' in file.filename) or ('.jpg' in file.filename):
+            if funcs.check_token_no(file_path):
 
-            fileID = getLastNoteID() + 1
-            file_path = os.path.join("Data", str(fileID) + ".jpg")
+                db.add_notes(
+                    request.headers.get("token"),
+                    file.filename.replace(".pdf", ""),
+                    db.getLastNoteID() + 1,
+                    section_name,
+                )
+                return {"message": "Upload successful" + res}
 
-            with open(file_path, "wb") as buff:
-                shutil.copyfileobj(file.file, buff)
+            # Remove the file if it is too large
+            if os.path.exists(file_path):
 
-            res = convert_handwritten_to_pdf(file_path, int(fileID))
-            addNotes(request.headers.get('token'), file.filename.replace(
-                ".jpg", ""), getLastNoteID() + 1, sectionName)
-            return {"message": "Upload successful" + res}
-        # If they are neither PDF, JPG nor PNG, they are rejected
-        else:
+                os.remove(file_path)
 
-            return {"message": "Incorrect filetype, must be PDF or JPG/PNG For handwritten content"}
+            return {
+                "message": "File is too large, please try with a different file "
+                + "or a select the handwritten flag if your pdf is a handwritten note"
+            }
+
+        file_path = os.path.join(
+            "Data", str(db.get_last_note_id() + 1) + ".pdf"
+        )
+        with open(file_path, "wb") as buff:
+
+            shutil.copyfileobj(file.file, buff)
+
+        # Check if the file size is ok (i.e. number of tokens)
+        if funcs.check_token_no(file_path):
+
+            db.add_notes(
+                request.headers.get("token"),
+                file.filename.replace(".pdf", ""),
+                db.get_last_note_id() + 1,
+                section_name,
+            )
+            return {"message": "Upload successful"}
+
+        # Remove the file if it is too large
+        if os.path.exists(file_path):
+
+            os.remove(file_path)
+
+        return {
+            "message": "File is too large, please "
+            + "try with a different file or a non-handwritten file"
+        }
+    # If the notes are of a PNG type, they are automatically processed as handwritten notes
+    elif (".png" in file.filename) or (".PNG" in file.filename):
+
+        file_id = db.get_last_note_id() + 1
+        file_path = os.path.join("Data", str(file_id) + ".png")
+
+        with open(file_path, "wb") as buff:
+            shutil.copyfileobj(file.file, buff)
+
+        res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
+        db.add_notes(
+            request.headers.get("token"),
+            file.filename.replace(".png", ""),
+            db.get_last_note_id() + 1,
+            section_name,
+        )
+        return {"message": "Upload successful" + res}
+
+    # If the notes are of a JPG type, they are automatically processed as handwritten notes
+    elif (".JPG" in file.filename) or (".jpg" in file.filename):
+
+        file_id = db.get_last_note_id() + 1
+        file_path = os.path.join("Data", str(file_id) + ".jpg")
+
+        with open(file_path, "wb") as buff:
+            shutil.copyfileobj(file.file, buff)
+
+        res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
+        db.add_notes(
+            request.headers.get("token"),
+            file.filename.replace(".jpg", ""),
+            db.get_last_note_id() + 1,
+            section_name,
+        )
+        return {"message": "Upload successful" + res}
+    # If they are neither PDF, JPG nor PNG, they are rejected
+
+    return {
+        "message": "Incorrect filetype, must be PDF or JPG/PNG For handwritten content"
+    }
 
 
 @app.post("/api/get_all_user_notes_tree")
 async def get_user_notes_in_tree(request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
 
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
 
-        return getAllNotesTree(token_res[1])
+    return db.get_all_notes_tree(token_res[1])
 
 
 @app.post("/api/get_currently_selected_note")
-async def getCurrentlySelectedNotesByToken(request: Request):
+async def get_currently_selected_notes_by_token(request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
 
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
 
-        return getNoteByID(getCurrentNotesByToken(request.headers.get('token'))).fileName
+    return db.get_note_by_id(
+        db.get_current_notes_by_token(request.headers.get("token"))
+    ).fileName
 
 
 # Cloud hoster calls this to ensure the server is responding
@@ -262,69 +312,73 @@ async def cloud_check():
 @app.post("/api/delete_user")
 async def post_delete_user(request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
 
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
 
-        return delete_user_id(token_res[2])
+    return db.delete_user_id(token_res[2])
 
 
 @app.post("/api/delete_note_by_name")
-async def post_delete_note_by_name(noteName: PostDeleteNoteModel, request: Request):
+async def post_delete_note_by_name(
+    note_name: classes.PostDeleteNoteModel, request: Request
+):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
-
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
-
-        return deleteNoteByName(noteName.noteName, request.headers.get('token'))
-
-
-@app.get("/api/export_flashcards/{resType}")
-async def get_export_flashcards(resType: int, request: Request):
-
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
 
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
 
-        if resType == 1:
-            return return_flashcard_exported_format(getCurrentNotesByToken(request.headers.get('token')), resType)
-        else:
-            stud_name = validate_student(
-                request.headers.get('token'))[1]
+    return db.delete_note_by_name(note_name.noteName, request.headers.get("token"))
 
-            res = return_flashcard_exported_format(getCurrentNotesByToken(
-                request.headers.get('token')), resType)
 
-            pd.DataFrame(res).to_csv(f'{stud_name}.csv', index=False)
-            return FileResponse(path=f"{stud_name}.csv", media_type="text/csv", filename=f'{stud_name}.csv')
+@app.get("/api/export_flashcards/{res_type}")
+async def get_export_flashcards(res_type: int, request: Request):
+
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
+
+        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+
+    if res_type == 1:
+        return funcs.return_flashcard_exported_format(
+            db.get_current_notes_by_token(
+                request.headers.get("token")), res_type
+        )
+    stud_name = db.validate_student(request.headers.get("token"))[1]
+
+    res = funcs.return_flashcard_exported_format(
+        db.get_current_notes_by_token(
+            request.headers.get("token")), res_type
+    )
+
+    pd.DataFrame(res).to_csv(f"{stud_name}.csv", index=False)
+    return FileResponse(
+        path=f"{stud_name}.csv",
+        media_type="text/csv",
+        filename=f"{stud_name}.csv",
+    )
 
 
 # Function to delete the flashcards after the user has downloaded them
 @app.get("/api/delete_flashcard_request")
 async def get_delete_flashcard(request: Request):
 
-    token_res = validate_student(request.headers.get('token'))
-    if token_res == False:
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
 
         return JSONResponse(status_code=401, content={"message": "Invalid token"})
-    else:
 
-        email = validate_student(request.headers.get('token'))[1]
-        if os.path.exists(f"{email}.csv"):
+    email = db.validate_student(request.headers.get("token"))[1]
+    if os.path.exists(f"{email}.csv"):
 
-            try:
+        try:
 
-                os.remove(f"{email}.csv")
-                return True
-            except:
-
-                return False
-        else:
+            os.remove(f"{email}.csv")
+            return True
+        except classes.GenericException:
 
             return False
+
+    return False
