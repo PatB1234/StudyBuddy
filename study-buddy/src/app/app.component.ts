@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, OnInit, HostListener, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -140,7 +141,7 @@ export class AppComponent implements OnInit {
     }
 
     deleteNode(nodeName: string): void {
-        var res = prompt("Are you sure you want to delete this note? This action cannot be undone. Type DELETE to confirm.");
+        const res = prompt("Are you sure you want to delete this note? This action cannot be undone. Type DELETE to confirm.");
         if (res == "DELETE") {
             this.http.post(AppComponent.URL + "/delete_note_by_name", { noteName: nodeName }).subscribe(
                 (res: any) => {
@@ -176,7 +177,7 @@ export class AppComponent implements OnInit {
     }
     delete_user(): void {
 
-        var res = prompt("Are you sure you want to delete your account? This action cannot be undone. Type DELETE to confirm.");
+        const res = prompt("Are you sure you want to delete your account? This action cannot be undone. Type DELETE to confirm.");
         if (res == "DELETE") {
 
             this._snackBar.open("Account deleted", "Dismiss");

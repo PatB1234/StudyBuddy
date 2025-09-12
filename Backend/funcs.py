@@ -130,7 +130,7 @@ def flashcards(note_id):
     )
     generated_flaschards = data_cleaner(cards, True, True)
     CACHED_FLASHCARDS.append([note_id, generated_flaschards])
-    return flashcards
+    return generated_flaschards
 
 
 def summariser(note_id):  # Done

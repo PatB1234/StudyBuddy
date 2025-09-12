@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
@@ -56,11 +57,6 @@ export class LoginComponent {
     submit() {
         if (this.loginForm.invalid) {
             return;
-        }
-        let formData = {
-            email: this.loginForm.value.email,
-            password: this.loginForm.value.password,
-            name: this.loginForm.value.name
         }
         this.http.post(this.URL + "/check_student_login", this.loginForm.value).subscribe((res: any) => {
             if (typeof (res) == 'string') {

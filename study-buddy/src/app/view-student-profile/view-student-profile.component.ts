@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -46,7 +47,7 @@ export class ViewStudentProfileComponent implements OnInit {
         if (this.studentProfileForm.invalid) {
             return;
         } else {
-            let formDetails = this.studentProfileForm.value;
+            const formDetails = this.studentProfileForm.value;
             this.http.post(this.URL + "/edit_user", { newName: formDetails.name, email: this.emailView, oldPassword: formDetails.oldPassword, newPassword: formDetails.newPassword }).subscribe((res: any) => {
                 // RES = 1 Means that user edit was successful
                 // RES = 0 Either the user was not found or the details entered did not match
