@@ -5,6 +5,7 @@ If not, a False is returned by the token validator, resulting in a 401 error in 
 """
 
 import os
+import anyio
 import shutil
 
 import pandas as pd
@@ -19,6 +20,9 @@ import funcs
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="/"), name="static")
+
+TOKEN_MESSAGE = "Invalid token"
+UPLOAD_SUCCSESFUL = "Upload successful"
 
 origins = [
     "http://localhost:4200",
@@ -43,7 +47,7 @@ async def post_custom_prompt(prompt: classes.PostCustomPromptModel, request: Req
 
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
     return funcs.custom_prompt(
         prompt.customPrompt,
         db.get_current_notes_by_token(request.headers.get("token")),
@@ -55,7 +59,7 @@ async def post_summarise(request: Request):
 
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
     return funcs.summariser(
         db.get_current_notes_by_token(request.headers.get("token"))
     )
@@ -66,7 +70,7 @@ async def get_questions(request: Request):
 
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
     return funcs.make_questions(
         db.get_current_notes_by_token(request.headers.get("token"))
     )
@@ -77,7 +81,7 @@ async def post_check_questions(res: classes.PostCheckAnswersModel, request: Requ
 
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
     return funcs.check_question(
         res.question,
         res.answer,
@@ -90,7 +94,7 @@ async def get_flashcards(request: Request):
 
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
     return funcs.flashcards(
         db.get_current_notes_by_token(request.headers.get("token"))
     )
@@ -130,7 +134,7 @@ async def get_student_by_token(request: Request):
 
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
     name, email, uid = token_res  # Unpack the validated data
     return {"name": name, "email": email, "id": uid}
 
@@ -140,7 +144,7 @@ async def edit_user(new_details: classes.EditUserModel, request: Request):
 
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     return db.edit_user(
         new_details.newName,
@@ -158,7 +162,7 @@ async def change_current_notes(
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
 
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     db.change_current_notes(request.headers.get(
         "token"), new_note_name.newNoteName)
@@ -175,7 +179,7 @@ async def post_add_notes(
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
 
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
     is_handwritten = int(handwritten)
     if ".pdf" in file.filename:
 
@@ -184,8 +188,8 @@ async def post_add_notes(
             file_id = db.get_last_note_id() + 1
             file_path = os.path.join("Data", str(file_id) + ".pdf")
 
-            with open(file_path, "wb") as buff:
-                shutil.copyfileobj(file.file, buff)
+            async with await anyio.open_file(file_path, "wb") as buff:
+                await shutil.copyfileobj(file.file, buff)
 
             res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
 
@@ -197,7 +201,7 @@ async def post_add_notes(
                     db.getLastNoteID() + 1,
                     section_name,
                 )
-                return {"message": "Upload successful" + res}
+                return {"message": UPLOAD_SUCCSESFUL + res}
 
             # Remove the file if it is too large
             if os.path.exists(file_path):
@@ -212,9 +216,8 @@ async def post_add_notes(
         file_path = os.path.join(
             "Data", str(db.get_last_note_id() + 1) + ".pdf"
         )
-        with open(file_path, "wb") as buff:
-
-            shutil.copyfileobj(file.file, buff)
+        async with await anyio.open_file(file_path, "wb") as buff:
+            await shutil.copyfileobj(file.file, buff)
 
         # Check if the file size is ok (i.e. number of tokens)
         if funcs.check_token_no(file_path):
@@ -225,7 +228,7 @@ async def post_add_notes(
                 db.get_last_note_id() + 1,
                 section_name,
             )
-            return {"message": "Upload successful"}
+            return {"message": UPLOAD_SUCCSESFUL}
 
         # Remove the file if it is too large
         if os.path.exists(file_path):
@@ -242,8 +245,8 @@ async def post_add_notes(
         file_id = db.get_last_note_id() + 1
         file_path = os.path.join("Data", str(file_id) + ".png")
 
-        with open(file_path, "wb") as buff:
-            shutil.copyfileobj(file.file, buff)
+        async with await anyio.open_file(file_path, "wb") as buff:
+            await shutil.copyfileobj(file.file, buff)
 
         res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
         db.add_notes(
@@ -252,7 +255,7 @@ async def post_add_notes(
             db.get_last_note_id() + 1,
             section_name,
         )
-        return {"message": "Upload successful" + res}
+        return {"message": UPLOAD_SUCCSESFUL + res}
 
     # If the notes are of a JPG type, they are automatically processed as handwritten notes
     elif (".JPG" in file.filename) or (".jpg" in file.filename):
@@ -260,8 +263,8 @@ async def post_add_notes(
         file_id = db.get_last_note_id() + 1
         file_path = os.path.join("Data", str(file_id) + ".jpg")
 
-        with open(file_path, "wb") as buff:
-            shutil.copyfileobj(file.file, buff)
+        async with await anyio.open_file(file_path, "wb") as buff:
+            await shutil.copyfileobj(file.file, buff)
 
         res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
         db.add_notes(
@@ -270,7 +273,7 @@ async def post_add_notes(
             db.get_last_note_id() + 1,
             section_name,
         )
-        return {"message": "Upload successful" + res}
+        return {"message": UPLOAD_SUCCSESFUL + res}
     # If they are neither PDF, JPG nor PNG, they are rejected
 
     return {
@@ -284,7 +287,7 @@ async def get_user_notes_in_tree(request: Request):
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
 
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     return db.get_all_notes_tree(token_res[1])
 
@@ -295,7 +298,7 @@ async def get_currently_selected_notes_by_token(request: Request):
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
 
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     return db.get_note_by_id(
         db.get_current_notes_by_token(request.headers.get("token"))
@@ -315,7 +318,7 @@ async def post_delete_user(request: Request):
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
 
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     return db.delete_user_id(token_res[2])
 
@@ -328,7 +331,7 @@ async def post_delete_note_by_name(
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
 
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     return db.delete_note_by_name(note_name.noteName, request.headers.get("token"))
 
@@ -339,7 +342,7 @@ async def get_export_flashcards(res_type: int, request: Request):
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
 
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     if res_type == 1:
         return funcs.return_flashcard_exported_format(
@@ -368,7 +371,7 @@ async def get_delete_flashcard(request: Request):
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
 
-        return JSONResponse(status_code=401, content={"message": "Invalid token"})
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     email = db.validate_student(request.headers.get("token"))[1]
     if os.path.exists(f"{email}.csv"):

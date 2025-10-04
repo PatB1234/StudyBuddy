@@ -9,9 +9,9 @@ export class IntrojsService {
     constructor() { }
 
     introJS: ReturnType<typeof introJs> | null = null;
-    addNotesFeature() { } // 3
-    flashcardsFeature() { } // 4
-    questionAnswerFeature() { } // 5
+    // addNotesFeature() { } // 3
+    // flashcardsFeature() { } // 4
+    // questionAnswerFeature() { } // 5
     editUserFeature() {
 
         this.introJS = introJs();
@@ -22,9 +22,9 @@ export class IntrojsService {
                 steps: [
                     {
                         element: document.getElementById('changeName'),
-                        intro: 
-                        'Write your new name here, if you wish to change it. This field is optional'
-                    }, 
+                        intro:
+                            'Write your new name here, if you wish to change it. This field is optional'
+                    },
                     {
                         element: document.getElementById('enterCurrPwd'),
                         intro: 'Enter the current password to your account. This field is mandatory'

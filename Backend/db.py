@@ -1,7 +1,7 @@
 import logging
 import os
 import sqlite3 as driver
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import jwt
@@ -56,6 +56,23 @@ def cursor_func(function, fetch: bool = False):
     try:
 
         cursor.execute(function)
+        if fetch:
+            records = cursor.fetchall()
+            return records
+
+        database.commit()
+    except classes.GenericException:
+
+        database.rollback()
+
+
+def cursor_func_with_values(function, values,  fetch: bool = False):
+
+    database = driver.connect(DATABASE_URL)
+    cursor = database.cursor()
+    try:
+
+        cursor.execute(function, values)
         if fetch:
             records = cursor.fetchall()
             return records
@@ -268,7 +285,8 @@ def get_user_token(student: Student):
     to_encode = {
         "details": {"name": student.name, "email": student.email, "id": student.id},
         "expiry": str(
-            datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            datetime.now(timezone.utc) +
+            timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         ),
     }
 
@@ -282,7 +300,7 @@ def get_student_from_token(token):
 
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     expiry = payload.get("expiry")
-    if datetime.utcnow() >= datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S.%f"):
+    if datetime.now(timezone.utc) >= datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S.%f"):
 
         return "Token Expired"
     return payload.get("details")
@@ -311,10 +329,14 @@ def validate_student(token):
 # CRUD Functions for notes
 # Add notes to the database
 def add_notes(token, file_name, file_id, section_name):
-    cursor_func(
-        "INSERT INTO NOTES (fileID,fileName,ownerEmail,sectionName) VALUES "
-        + f"({int(file_id)},'{file_name}','{get_student_from_token(token)['email']}',"
-        + f"'{section_name}');",
+    query = "INSERT INTO NOTES (fileID,fileName,ownerEmail,sectionName) VALUES " + \
+        f"({int(file_id)},?,'{get_student_from_token(token)['email']}', ?);"
+
+    values = (file_name, section_name, )
+
+    cursor_func_with_values(
+        query,
+        values,
         False,
     )
 
