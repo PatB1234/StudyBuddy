@@ -49,7 +49,7 @@ export class AppComponent implements OnInit {
     constructor(private router: Router, private http: HttpClient, private introService: IntrojsService) { }
 
     title = 'study-buddy';
-    static URL = 'http://localhost:8000/api'; // Global URL Path Prod Path: https://studdybuddy.app/api Dev Path: http://localhost:8000/api
+    static URL = 'https://studdybuddy.app/api'; // Global URL Path Prod Path: https://studdybuddy.app/api Dev Path: http://localhost:8000/api
     curr_selected = "None";
     private _snackBar = inject(MatSnackBar);
     links: ILink[] = [

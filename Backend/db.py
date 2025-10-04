@@ -300,7 +300,7 @@ def get_student_from_token(token):
 
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     expiry = payload.get("expiry")
-    if datetime.now(timezone.utc) >= datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S.%f"):
+    if datetime.now(timezone.utc) >= datetime.fromisoformat(expiry):
 
         return "Token Expired"
     return payload.get("details")
