@@ -188,8 +188,8 @@ async def post_add_notes(
             file_id = db.get_last_note_id() + 1
             file_path = os.path.join("Data", str(file_id) + ".pdf")
 
-            async with await anyio.open_file(file_path, "wb") as buff:
-                await shutil.copyfileobj(file.file, buff)
+            with open(file_path, "wb") as buff:
+                shutil.copyfileobj(file.file, buff)
 
             res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
 
@@ -216,8 +216,8 @@ async def post_add_notes(
         file_path = os.path.join(
             "Data", str(db.get_last_note_id() + 1) + ".pdf"
         )
-        async with await anyio.open_file(file_path, "wb") as buff:
-            await shutil.copyfileobj(file.file, buff)
+        with open(file_path, "wb") as buff:
+            shutil.copyfileobj(file.file, buff)
 
         # Check if the file size is ok (i.e. number of tokens)
         if funcs.check_token_no(file_path):
@@ -245,8 +245,8 @@ async def post_add_notes(
         file_id = db.get_last_note_id() + 1
         file_path = os.path.join("Data", str(file_id) + ".png")
 
-        async with await anyio.open_file(file_path, "wb") as buff:
-            await shutil.copyfileobj(file.file, buff)
+        with open(file_path, "wb") as buff:
+            shutil.copyfileobj(file.file, buff)
 
         res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
         db.add_notes(
@@ -263,8 +263,8 @@ async def post_add_notes(
         file_id = db.get_last_note_id() + 1
         file_path = os.path.join("Data", str(file_id) + ".jpg")
 
-        async with await anyio.open_file(file_path, "wb") as buff:
-            await shutil.copyfileobj(file.file, buff)
+        with open(file_path, "wb") as buff:
+            shutil.copyfileobj(file.file, buff)
 
         res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
         db.add_notes(

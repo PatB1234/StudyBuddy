@@ -3,7 +3,7 @@
     <h2>Flashcards</h2>
 
     <div class="tp-wrapper">
-        <div class="tp-box" (click)="toggleFlip()" [@flipState]="flip">
+        <div class="tp-box" (click)="toggleFlip()" (keyup.enter)="toggleFlip()" [@flipState]="flip" tabindex="0">
             <div class="tp-box__side tp-box__front">{{front}}</div>
             <div class="tp-box__side tp-box__back">{{back}}</div>
 
