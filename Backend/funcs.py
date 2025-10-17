@@ -3,21 +3,16 @@ import ast
 import os
 import re
 
-import google
-import google.genai
-from google import generativeai
+import google.generativeai as genai
 from google.cloud import vision
 from dotenv import load_dotenv
 from fpdf import FPDF
 import classes
-import db
 
 load_dotenv()
-generativeai.configure(api_key=os.getenv("API_KEY"))
+genai.configure(api_key=os.getenv("API_KEY"))
 CACHED_FLASHCARDS = []  # [FILEID, CACHEDATA]
 CACHED_QUESTIONS = []  # [FILEID, CACHEDATA]
-# Create the model - talks to the gemini API
-client = google.genai.Client(api_key=os.getenv("API_KEY"))
 # This represents the client link for the Google cloud vision API.
 visionClient = vision.ImageAnnotatorClient()
 
@@ -29,7 +24,7 @@ generation_config = {
     "max_output_tokens": 8192,
     "response_mime_type": "text/plain",
 }
-model = generativeai.GenerativeModel(
+model = genai.GenerativeModel(
     model_name=MODEL_NAME,
     generation_config=generation_config,
 )
@@ -39,12 +34,9 @@ chat_session = model.start_chat(history=[])
 
 def check_token_no(file_path) -> bool:
     try:
-        _ = client.models.count_tokens(
-            model=MODEL_NAME,
-            contents=client.files.upload(
-                file=file_path, config={"display_name": "test_data"}
-            ),
-        ).total_tokens
+        with open(file_path, "rb") as f:
+            file_payload = {"mime_type": "application/pdf", "data": f.read()}
+        _ = model.count_tokens([file_payload]).total_tokens
         return True
     except classes.GenericException:
 
@@ -84,20 +76,22 @@ def data_cleaner(value, remove_new_line: bool, is_json: bool):  # Just cleans th
     return value
 
 
-# Import File
-try:
-    notes = generativeai.upload_file(
-        path="Data/-1.pdf", display_name=str("forgor"))
-except classes.GenericException:
+# # Import File
+# try:
+#     notes = genai.upload_file(
+#         path="Data/-1.pdf")
+# except classes.GenericException:
 
-    print("Cannot call default notes")
+#     print("Cannot call default notes")
 
 
 def upload_notes(note_id: int):
-    return generativeai.upload_file(
-        path=f"Data/{note_id}.pdf",
-        display_name=str(db.get_note_by_id(note_id).fileName),
-    )
+    # return genai.upload_file(path=f"Data/{note_id}.pdf")
+    with open(f"Data/{note_id}.pdf", "rb") as f:
+
+        file_payload = {"mime_type": "application/pdf", "data": f.read()}
+
+    return file_payload
 
 
 def run_prompt(files, prompt):  # Base Function
@@ -142,6 +136,7 @@ def summariser(note_id):  # Done
 def custom_prompt(prompt, note_id):  # Done
 
     uploaded_notes = upload_notes(note_id)
+    print(note_id)
     return run_prompt(uploaded_notes, prompt)
 
 
@@ -161,13 +156,13 @@ def make_questions(note_id):  # Done
         index = len(CACHED_QUESTIONS) - 1
     if curr_questions == [] or len(curr_questions) < 3:
 
-        note_id = upload_notes(note_id)
+        uploaded_notes = upload_notes(note_id)
         try:
             res = str(
                 (
                     model.generate_content(
                         [
-                            notes,
+                            uploaded_notes,
                             "Generate 10 questions on these notes. "
                             + "Return the data as a python array without any "
                             + "additional formatting or rich text backticks/identifiers. "

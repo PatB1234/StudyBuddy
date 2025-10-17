@@ -31,7 +31,7 @@ ALGORITHM = "HS256"
 DATABASE_URL = "db/users.db"
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 7 Days
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # BIG VOLATILE ARRAY that stores all of the currently used notes by a user based on a token.
 current_notes = []
@@ -211,7 +211,6 @@ def check_student_login(email: str, password: str):
 
     students = get_all_students()
     for student in students:
-
         if student.email == email and verify_password(password, student.password):
 
             # Create JWT Token
@@ -372,13 +371,8 @@ def get_note_by_id(note_id: int) -> classes.Notes:
 
 
 def get_current_notes_by_token(token):
-
-    for (
-        i
-    ) in (
-        current_notes
-    ):  # Gets the note that is currently being used by a user based on their token
-
+    # Gets the note that is currently being used by a user based on their token
+    for (i) in (current_notes):
         if i[0] == token:
 
             return i[1]
