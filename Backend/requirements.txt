@@ -106,7 +106,6 @@ proxy_tools==0.1.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 PyAutoGUI==0.9.54
-pybind11 @ file:///Users/pratyush/Desktop/Research/Protocol/SEAL-Python/pybind11
 pycparser==2.23
 pydantic==2.12.2
 pydantic_core==2.41.4
