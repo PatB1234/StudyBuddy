@@ -13,7 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { filter } from 'rxjs/operators';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { IntrojsService } from './introjs/introjs.service';
-
+import { CookieInterceptor } from './cookie.interceptor';
 interface ILink {
     path: string;
     label: string;
@@ -103,6 +103,10 @@ export class AppComponent implements OnInit {
         this.router.navigate(['/home'])
     }
 
+    delay(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     childrenAccessor = (node: TreeNode) => node.children ?? [];
     hasChild = (_: number, node: TreeNode) => !!node.children && node.children.length > 0;
     dataSource: any = [];
@@ -172,6 +176,7 @@ export class AppComponent implements OnInit {
 
         console.log("logout")
         document.cookie = `token=INVALIDATED; SameSite=Lax;`;
+        this.delay(1500)
         this._snackBar.open("Logged out", "Dismiss");
         location.reload()
     }
