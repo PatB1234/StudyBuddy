@@ -11,8 +11,8 @@ from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
-from . import classes
-from . import funcs
+import classes
+import funcs
 
 
 class Student(BaseModel):
@@ -49,17 +49,30 @@ def verify_password(unhashed, hashed):
     return pwd_context.verify(unhashed, hashed)
 
 
-def cursor_func(function, fetch: bool = False, values=()):
+def cursor_func(function, fetch: bool = False):
 
     database = driver.connect(DATABASE_URL)
     cursor = database.cursor()
     try:
-        if (values):
 
-            cursor.execute(function, values)
-        else:
+        cursor.execute(function)
+        if fetch:
+            records = cursor.fetchall()
+            return records
 
-            cursor.execute(function)
+        database.commit()
+    except classes.GenericException:
+
+        database.rollback()
+
+
+def cursor_func_with_values(function, values,  fetch: bool = False):
+
+    database = driver.connect(DATABASE_URL)
+    cursor = database.cursor()
+    try:
+
+        cursor.execute(function, values)
         if fetch:
             records = cursor.fetchall()
             return records
@@ -320,10 +333,10 @@ def add_notes(token, file_name, file_id, section_name):
 
     values = (file_name, section_name, )
 
-    cursor_func(
+    cursor_func_with_values(
         query,
+        values,
         False,
-        values
     )
 
 

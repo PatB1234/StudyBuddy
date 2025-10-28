@@ -7,7 +7,8 @@ import google.generativeai as genai
 from google.cloud import vision
 from dotenv import load_dotenv
 from fpdf import FPDF
-from . import classes
+import classes
+
 load_dotenv()
 genai.configure(api_key=os.getenv("API_KEY"))
 CACHED_FLASHCARDS = []  # [FILEID, CACHEDATA]
