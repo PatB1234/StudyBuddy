@@ -192,6 +192,7 @@ export class AppComponent implements OnInit {
                 console.error("Error deleting account:", error);
             });
             document.cookie = `token=INVALIDATED; SameSite=Lax;`;
+            this.delay(1500)
             // Snackbar message
             this._snackBar.open("Account deleted", "Dismiss");
             location.reload()
