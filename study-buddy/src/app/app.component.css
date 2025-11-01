@@ -5,20 +5,20 @@
     bottom: 0;
     right: 0;
     height: 100%;
-    background: #ADBBDA;
+    background: #87a397;
     position: relative;
 }
 
 .sidenav-drawer {
 
-    background-color: #7a95d9;
+    background-color: #91a796;
     border-radius: 0px !important;
     width: 25%;
 }
 
 .mat-header {
 
-    background-color: #8697C4;
+    background-color: #a1ad8e;
 }
 
 .example-spacer {
@@ -55,4 +55,14 @@ h1 {
 .delete-notes-icon {
 
     padding: 0px
+}
+
+.beta-notice {
+
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: bold;
+    display: inline-block;
+    color: #69140E;
+    font-size: 18pt;
 }

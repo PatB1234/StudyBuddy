@@ -3,10 +3,12 @@
     <markdown [data]="result" style="color:#000000;"></markdown>
 
     <form class="custom-prompt-form" [formGroup]="customPromptForm" (ngSubmit)="onSubmit()">
-        <mat-form-field class="example-full-width">
-            <textarea matInput placeholder="Type your prompt here" formControlName="customPrompt"></textarea>
+        <mat-form-field appearance="outline" class="prompt-field">
+            <mat-label>Type your prompt here</mat-label>
+            <textarea matInput formControlName="customPrompt" class="textarea-input" rows="5"></textarea>
         </mat-form-field>
-        <br />
-        <button mat-raised-button type="submit">Submit</button>
+        <button mat-raised-button type="submit" color="primary" class="submit-button">
+            Submit
+        </button>
     </form>
 </div>

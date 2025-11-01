@@ -31,7 +31,7 @@ ALGORITHM = "HS256"
 DATABASE_URL = "db/users.db"
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 7 Days
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # BIG VOLATILE ARRAY that stores all of the currently used notes by a user based on a token.
 current_notes = []
@@ -40,7 +40,6 @@ current_notes = []
 
 
 def hash_password(password):
-
     return pwd_context.hash(password)
 
 
@@ -135,7 +134,6 @@ def create_user(student: Student):
 # is not found and we want to create an account,
 # this simplifies the login process for the user
 def create_student_with_token(student: Student):
-
     uid = get_last_id_students() + 1
     cursor_func(
         "INSERT INTO STUDENTS (name, email, password, id) VALUES "

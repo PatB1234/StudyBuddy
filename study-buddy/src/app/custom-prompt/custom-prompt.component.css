@@ -9,3 +9,59 @@
     white-space: pre-wrap;
 
 }
+
+.custom-prompt-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 420px;
+}
+
+.custom-prompt-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 480px;
+}
+
+:host {
+    --surface-bg: #8da9a9;
+    --textarea-bg: #a1b5b5;
+    --textarea-border: #5a6c6c;
+    --textarea-text: #1e293b;
+    --accent: #3b516a;
+}
+
+.textarea-input {
+    background-color: var(--textarea-bg);
+    color: var(--textarea-text);
+    border-radius: 10px;
+    border: 1px solid var(--textarea-border);
+    padding: 10px;
+    resize: vertical;
+}
+
+.textarea-input::placeholder {
+    color: rgba(30, 41, 59, 0.6);
+}
+
+.prompt-field .mdc-text-field--outlined {
+    --mdc-outlined-text-field-outline-color: var(--textarea-border);
+    --mdc-outlined-text-field-focus-outline-color: var(--accent);
+    --mdc-outlined-text-field-container-shape: 10px;
+    background: var(--textarea-bg);
+}
+
+.submit-button {
+    align-self: flex-start;
+    background-color: var(--accent);
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 10px 22px;
+    text-transform: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+
+    &:hover {
+        background-color: #324559;
+    }
+}

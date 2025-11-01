@@ -13,7 +13,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { filter } from 'rxjs/operators';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { IntrojsService } from './introjs/introjs.service';
-import { CookieInterceptor } from './cookie.interceptor';
 interface ILink {
     path: string;
     label: string;

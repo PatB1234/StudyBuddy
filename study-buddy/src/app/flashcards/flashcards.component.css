@@ -58,7 +58,7 @@
     border-radius: 10px;
     /* Optional for rounded corners */
 
-    background: #8697C4;
+    background: #a1ad8e;
     -webkit-transform: rotateY(0deg);
     -ms-transform: rotateY(0deg);
     transform: rotateY(0deg);
@@ -70,7 +70,7 @@
     border-radius: 10px;
     /* Optional for rounded corners */
 
-    background: #7a95d9;
+    background: #a1ad8e;
     -webkit-transform: rotateY(-180deg);
     -ms-transform: rotateY(-180deg);
     transform: rotateY(-180deg);
