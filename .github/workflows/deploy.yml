@@ -31,7 +31,7 @@ jobs:
             ng build 
             cd ~/StudyBuddy/Backend/
             source env/bin/activate
-            killall gunicorn
+            killall uvicorn
             pip install -r requirements.txt
             nohup uvicorn main:app --host 0.0.0.0 > backend.log 2> backend.err < /dev/null &
           EOF
