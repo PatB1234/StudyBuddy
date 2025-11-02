@@ -31,7 +31,7 @@ ALGORITHM = "HS256"
 DATABASE_URL = "db/users.db"
 ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 7 Days
 
-pwd_context = CryptContext(schemes=["bcrypt_sha256"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # BIG VOLATILE ARRAY that stores all of the currently used notes by a user based on a token.
 current_notes = []
