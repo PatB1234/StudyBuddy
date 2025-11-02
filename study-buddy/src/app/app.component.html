@@ -31,7 +31,7 @@
         <h6 style="  width: 100%; text-align: center;">Currently selected notes: {{curr_selected}}</h6>
 
         <mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor"
-            style="background-color: #7a95d9;">
+            style="background-color: #91a796;">
             <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
                 <button mat-icon-button disabled></button>
                 <a (click)="nodePress(node.name)" style="cursor: pointer;" id="baseNode">{{node.name}}</a>
