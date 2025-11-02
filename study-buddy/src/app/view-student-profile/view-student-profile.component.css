@@ -1,18 +1,96 @@
-.profile-card {
-
-    width: 50%;
-    justify-content: center;
-    background-color: #8697C4;
-
-}
-
-.profile-card-content {
-
-    display: flex;
-    justify-content: center;
+body {
+    background-color: #879b8d;
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
 }
 
 div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
 
-    padding-top: 20px;
+.profile-card {
+    width: 50%;
+    max-width: 500px;
+    background-color: #91a796;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.profile-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+h1,
+h2,
+h3 {
+    color: #2b3a33;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+p {
+    color: #2e3b31;
+    font-size: 0.95rem;
+    text-align: center;
+    margin: 4px 0;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="file"] {
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin: 8px 0;
+    background-color: #f2f5f2;
+    font-size: 0.95rem;
+    transition: outline 0.2s ease;
+}
+
+input:focus {
+    outline: 2px solid #6f8c80;
+}
+
+button {
+    background-color: #6f8c80;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: #587368;
+    transform: scale(1.03);
+}
+
+button:disabled {
+    background-color: #a8b6ae;
+    cursor: not-allowed;
+}
+
+.section {
+    margin: 12px 0;
+}
+
+.center {
+    text-align: center;
 }
