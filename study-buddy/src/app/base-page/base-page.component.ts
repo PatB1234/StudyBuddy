@@ -1,18 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, OnInit, HostListener, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIcon } from '@angular/material/icon';
-import { MatIconButton } from '@angular/material/button';
+import { MatSidenavContent, MatSidenavContainer, MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { Router } from '@angular/router';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTreeModule } from '@angular/material/tree';
+import { MatTabNavPanel, MatTabsModule } from '@angular/material/tabs';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { filter } from 'rxjs/operators';
+import { AppComponent } from '../app.component';
+import { MatToolbar, MatToolbarModule } from "@angular/material/toolbar";
+import { MatTree, MatTreeModule, MatTreeNode } from "@angular/material/tree";
+import { IntrojsService } from '../introjs/introjs.service';
+import { MatIcon } from '@angular/material/icon';
+import { MatIconButton } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { IntrojsService } from './introjs/introjs.service';
+
 interface ILink {
     path: string;
     label: string;
@@ -22,33 +24,35 @@ interface TreeNode {
     children?: TreeNode[];
 }
 
-
 @Component({
-    selector: 'app-root',
+    selector: 'app-base-page',
     standalone: true,
     imports: [
+        MatSidenavContent,
+        RouterOutlet,
+        MatTabNavPanel,
+        MatTabsModule,
+        MatToolbar,
+        MatSidenavContainer,
+        MatSidenav,
+        MatIcon,
+        MatTree,
+        MatTreeNode,
+        RouterLink,
+        MatIconButton,
         RouterOutlet,
         MatSidenavModule,
         MatToolbarModule,
-        RouterLink,
-        MatIconButton,
-        MatIcon,
-        MatTabsModule,
         MatTreeModule,
         MatTooltipModule
-
     ],
-    templateUrl: './app.component.html',
-    styleUrl: './app.component.css',
-
+    templateUrl: './base-page.component.html',
+    styleUrl: './base-page.component.css'
 })
+export class BasePageComponent implements OnInit {
 
-export class AppComponent implements OnInit {
 
     constructor(private router: Router, private http: HttpClient, private introService: IntrojsService) { }
-
-    title = 'study-buddy';
-    static URL = 'https://studdybuddy.app/api'; // Global URL Path Prod Path: https://studdybuddy.app/api Dev Path: http://localhost:8000/api
     curr_selected = "None";
     private _snackBar = inject(MatSnackBar);
     links: ILink[] = [
@@ -60,7 +64,7 @@ export class AppComponent implements OnInit {
     activePath = this.links[0].path;
 
     @HostListener('document:keydown.enter', ['$event'])
-    handleEnterKey(event: KeyboardEvent) {
+    handleEnterKey(event: Event) {
         event.preventDefault();
         event.stopPropagation();
     }
@@ -200,4 +204,3 @@ export class AppComponent implements OnInit {
         }
     }
 }
-

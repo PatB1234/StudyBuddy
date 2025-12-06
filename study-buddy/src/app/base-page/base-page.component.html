@@ -1,4 +1,4 @@
-<!-- <mat-toolbar class="mat-header">
+<mat-toolbar class="mat-header">
 
     <a (click)="dash()">StuddyBuddy</a>
 
@@ -65,10 +65,7 @@
             <router-outlet (activate)="onActivate($event.path)"></router-outlet>
         </mat-tab-nav-panel>
 
+        <router-outlet name="base-page"></router-outlet>
 
     </mat-sidenav-content>
-</mat-sidenav-container> -->
-
-
-<router-outlet>
-</router-outlet>
+</mat-sidenav-container>
