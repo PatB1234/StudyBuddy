@@ -123,6 +123,7 @@ export class FlashcardsComponent implements OnInit {
                     }
                 },
                 (_error: any) => {
+                    console.log(_error)
                     this.flashcards = [];
                     this.front = "We could not load flashcards right now.";
                     this.back = "Please try again in a moment.";

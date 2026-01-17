@@ -4,7 +4,6 @@ import { FlashcardsComponent } from './flashcards/flashcards.component';
 import { QuestionAnswerComponent } from './question-answer/question-answer.component';
 import { SummariserComponent } from './summariser/summariser.component';
 import { LoginComponent } from './login/login.component';
-import { SignUpComponent } from './sign-up/sign-up.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { ViewStudentProfileComponent } from './view-student-profile/view-student-profile.component';
 import { AddSectionComponent } from './add-section/add-section.component';

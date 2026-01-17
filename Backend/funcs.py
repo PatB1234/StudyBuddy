@@ -2,6 +2,7 @@
 import ast
 import os
 import re
+import json
 
 import google.generativeai as genai
 from google.cloud import vision
@@ -11,7 +12,6 @@ import classes
 
 load_dotenv()
 genai.configure(api_key=os.getenv("API_KEY"))
-CACHED_FLASHCARDS = []  # [FILEID, CACHEDATA]
 CACHED_QUESTIONS = []  # [FILEID, CACHEDATA]
 # This represents the client link for the Google cloud vision API.
 visionClient = vision.ImageAnnotatorClient()
@@ -30,6 +30,34 @@ model = genai.GenerativeModel(
 )
 
 chat_session = model.start_chat(history=[])
+
+
+def _extract_response_text(response, context: str):
+    candidates = getattr(response, "candidates", None) or []
+    text_parts = []
+    for candidate in candidates:
+        content = getattr(candidate, "content", None)
+        parts = getattr(content, "parts", None) if content else None
+        if not parts:
+            continue
+        for part in parts:
+            text_val = getattr(part, "text", None)
+            if text_val:
+                text_parts.append(text_val)
+    if text_parts:
+        return "".join(text_parts).strip()
+
+    feedback = getattr(response, "prompt_feedback", None)
+    block_reason = getattr(feedback, "block_reason",
+                           None) if feedback else None
+    if block_reason:
+        raise classes.GenericException(
+            f"Model blocked the {context} request ({block_reason}). "
+            + "Please try again with different wording or a smaller file."
+        )
+    raise classes.GenericException(
+        f"Model returned an empty response for {context} generation."
+    )
 
 
 def check_token_no(file_path) -> bool:
@@ -95,18 +123,34 @@ def upload_notes(note_id: int):
 
 
 def run_prompt(files, prompt):  # Base Function
-    return (model.generate_content([files, prompt])).text
+    try:
+        response = model.generate_content([files, prompt])
+        return _extract_response_text(response, "prompt")
+    except classes.GenericException as e:
+        return str(e)
 
 
 def flashcards(note_id):
-    for val in CACHED_FLASHCARDS:
+    if (note_id == -1 or note_id == '-1'):
 
-        if val[0] == note_id:
-            return val[1]
+        file_path = os.path.join("card_decks", str(note_id) + ".json")
+        with open(file_path, "w") as f:
+
+            f.write(json.dumps([{'Front': 'You forgot to select flashcards',
+                    'Back': 'Select flashcards on the left-hand side to use this function'}], indent=4))
+
+    file_path = os.path.join("card_decks", str(note_id) + ".json")
+
+    if os.path.exists(file_path):
+
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            print(data)
+            return data
 
     uploaded_notes = upload_notes(note_id)
-    cards = str(
-        (
+    try:
+        cards = _extract_response_text(
             model.generate_content(
                 [
                     uploaded_notes,
@@ -117,13 +161,94 @@ def flashcards(note_id):
                     + "LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier."
                     + " A good example of how you should do it is this: "
                     + "[{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, "
-                    + "{'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}d]",
+                    + "{'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}]",
                 ]
-            )
-        ).text
-    )
-    generated_flaschards = data_cleaner(cards, True, True)
-    CACHED_FLASHCARDS.append([note_id, generated_flaschards])
+            ),
+            "flashcard",
+        )
+    except classes.GenericException as e:
+        return [
+            {
+                "Front": "Unable to generate flashcards right now",
+                "Back": str(e),
+            }
+        ]
+    print(cards)
+    generated_flaschards = data_cleaner(cards, False, True)
+
+    json_str = json.dumps(generated_flaschards, indent=4)
+    file_path = os.path.join("card_decks", str(note_id) + ".json")
+    if not os.path.exists(file_path):
+
+        with open(file_path, "w") as f:
+
+            f.write(json_str)
+    else:
+        os.remove(file_path)
+
+        with open(file_path, "w") as f:
+            f.write(json_str)
+
+    return generated_flaschards
+
+
+def regenerate_flashcards(note_id):
+    if (note_id == -1 or note_id == '-1'):
+
+        file_path = os.path.join("card_decks", str(note_id) + ".json")
+        with open(file_path, "w") as f:
+
+            f.write(json.dumps([{'Front': 'You forgot to select flashcards',
+                    'Back': 'Select flashcards on the left-hand side to use this function'}], indent=4))
+
+        if os.path.exists(file_path):
+
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+                print(data)
+                return data
+
+    uploaded_notes = upload_notes(note_id)
+    try:
+        cards = _extract_response_text(
+            model.generate_content(
+                [
+                    uploaded_notes,
+                    "Make flashcards for the notes given. "
+                    + "Make these short flashcards witha back of no more than 20 words."
+                    + " Return the data as a  json object without"
+                    + " any additional formatting or rich text backticks/identifiers "
+                    + "LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier."
+                    + " A good example of how you should do it is this: "
+                    + "[{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, "
+                    + "{'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}]",
+                ]
+            ),
+            "flashcard",
+        )
+    except classes.GenericException as e:
+        return [
+            {
+                "Front": "Unable to generate flashcards right now",
+                "Back": str(e),
+            }
+        ]
+    generated_flaschards = data_cleaner(cards, False, True)
+
+    json_str = json.dumps(generated_flaschards, indent=4)
+    file_path = os.path.join("card_decks", str(note_id) + ".json")
+
+    if not os.path.exists(file_path):
+
+        with open(file_path, "w") as f:
+            f.write(json_str)
+    else:
+        os.remove(file_path)
+
+        with open(file_path, "w") as f:
+
+            f.write(json_str)
+
     return generated_flaschards
 
 
@@ -158,19 +283,18 @@ def make_questions(note_id):  # Done
 
         uploaded_notes = upload_notes(note_id)
         try:
-            res = str(
-                (
-                    model.generate_content(
-                        [
-                            uploaded_notes,
-                            "Generate 10 questions on these notes. "
-                            + "Return the data as a python array without any "
-                            + "additional formatting or rich text backticks/identifiers. "
-                            + "ONLY GIVE THE QUESTIONS AND NO ANSWERS. "
-                            + "DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION",
-                        ]
-                    )
-                ).text
+            res = _extract_response_text(
+                model.generate_content(
+                    [
+                        uploaded_notes,
+                        "Generate 10 questions on these notes. "
+                        + "Return the data as a python array without any "
+                        + "additional formatting or rich text backticks/identifiers. "
+                        + "ONLY GIVE THE QUESTIONS AND NO ANSWERS. "
+                        + "DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION",
+                    ]
+                ),
+                "question generation",
             )
             res = ast.literal_eval(data_cleaner(res, True, False))
             CACHED_QUESTIONS[index][1] = res
@@ -190,13 +314,18 @@ def make_questions(note_id):  # Done
 def check_question(question, answer, note_id):  # Done
 
     uploaded_notes = upload_notes(note_id)
-    res = (
-        model.generate_content(
-            [uploaded_notes,
-                f"is the answer {answer} correct for the question {question}"]
+    try:
+        return _extract_response_text(
+            model.generate_content(
+                [
+                    uploaded_notes,
+                    f"is the answer {answer} correct for the question {question}",
+                ]
+            ),
+            "answer check",
         )
-    ).text
-    return res
+    except classes.GenericException as e:
+        return str(e)
 
 
 def return_flashcard_exported_format(note_id, note_type):

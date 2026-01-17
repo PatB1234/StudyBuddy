@@ -6,7 +6,6 @@ import { Router } from '@angular/router';
 import { MatTabNavPanel, MatTabsModule } from '@angular/material/tabs';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { filter } from 'rxjs/operators';
 import { AppComponent } from '../app.component';
 import { MatToolbar, MatToolbarModule } from "@angular/material/toolbar";
 import { MatTree, MatTreeModule, MatTreeNode } from "@angular/material/tree";
@@ -70,26 +69,31 @@ export class BasePageComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.router.events.subscribe((event) => {
-            if (event instanceof NavigationEnd) {
-                if (event.urlAfterRedirects != '/') {
-                    this.getTree()
-                    this.router.events
-                        .pipe(filter(event => event instanceof NavigationEnd))
-                        .subscribe(() => {
-                            this.getTree();
-                        });
-                }
-            }
-        });
-
+        this.getTree();
+        this.get_curr_notes()
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
                 if (event.urlAfterRedirects === '/home') {
                     this.introService.buttonExplanationFeature()
                 }
             }
+
         });
+    }
+
+    get_curr_notes(): void {
+
+        this.http.post(AppComponent.URL + "/get_currently_selected_note", {}).subscribe(
+            (res: any) => {
+                if (res != "-1.txt") {
+
+                    this.curr_selected = res;
+                }
+            },
+            (error: any) => {
+                console.error("Error fetching currently selected notes:", error);
+            }
+        );
     }
 
     dash() {

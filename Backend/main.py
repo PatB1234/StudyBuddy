@@ -95,7 +95,19 @@ async def get_flashcards(request: Request):
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
+
     return funcs.flashcards(
+        db.get_current_notes_by_token(request.headers.get("token"))
+    )
+
+
+@app.get("/api/regenerate_flashcards")
+async def get_regenerate_flashcards(request: Request):
+
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
+    return funcs.regenerate_flashcards(
         db.get_current_notes_by_token(request.headers.get("token"))
     )
 
@@ -288,8 +300,9 @@ async def get_user_notes_in_tree(request: Request):
     if not token_res:
 
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
-
     return db.get_all_notes_tree(token_res[1])
+
+# Get the currently selected notes to ensure synchronisation with the frontend and backend
 
 
 @app.post("/api/get_currently_selected_note")
@@ -320,6 +333,7 @@ async def post_delete_user(request: Request):
 
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
+    db.reset_selected_note_by_token(request.headers.get("token"))
     return db.delete_user_id(token_res[2])
 
 
@@ -333,6 +347,7 @@ async def post_delete_note_by_name(
 
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
+    db.reset_selected_note_by_token(request.headers.get("token"))
     return db.delete_note_by_name(note_name.noteName, request.headers.get("token"))
 
 
@@ -376,6 +391,7 @@ async def get_delete_flashcard(request: Request):
     email = db.validate_student(request.headers.get("token"))[1]
     if os.path.exists(f"{email}.csv"):
 
+        db.reset_selected_note_by_token(request.headers.get("token"))
         try:
 
             os.remove(f"{email}.csv")

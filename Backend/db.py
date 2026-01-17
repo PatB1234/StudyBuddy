@@ -426,12 +426,11 @@ def delete_all_notes_by_user_id(nid: int):
         True,
     )
     for ids in res:
-        for i, curr_cards in enumerate(funcs.CACHED_FLASHCARDS):
+        file_path = os.path.join("card_decks", str(nid) + ".json")
+        if os.path.exists(file_path):
 
-            if curr_cards[0] == nid:
+            os.remove(file_path)
 
-                funcs.CACHED_FLASHCARDS.pop(i)
-                break
         for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
 
             if curr_qs[0] == nid:
@@ -447,12 +446,10 @@ def delete_notes_by_id(fid: int):
     # Delete the actual file with the id
     try:
         cursor_func(f"DELETE FROM NOTES WHERE fileID={fid}", False)
-        for i, curr_cards in enumerate(funcs.CACHED_FLASHCARDS):
+        file_path = os.path.join("card_decks", str(fid) + ".json")
+        if os.path.exists(file_path):
 
-            if curr_cards[0] == fid:
-
-                funcs.CACHED_FLASHCARDS.pop(i)
-                break
+            os.remove(file_path)
         for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
 
             if curr_qs[0] == fid:
@@ -477,12 +474,10 @@ def delete_note_by_name(note_name: str, token: str):
 
     cursor_func(
         f"DELETE FROM NOTES WHERE fileID={fid} AND ownerEmail='{email}'", False)
-    for i, curr_cards in enumerate(funcs.CACHED_FLASHCARDS):
+    file_path = os.path.join("card_decks", str(fid) + ".json")
+    if os.path.exists(file_path):
 
-        if curr_cards[0] == fid:
-
-            funcs.CACHED_FLASHCARDS.pop(i)
-            break
+        os.remove(file_path)
     for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
 
         if curr_qs[0] == fid:
@@ -529,3 +524,13 @@ def get_all_notes_tree(owner_email: str):
         )
 
     return tree_structure
+
+# Resets the notes that are currently selected to -1 to avoid unwarranted errors
+
+
+def reset_selected_note_by_token(token):
+
+    for (i) in (current_notes):
+        if i[0] == token:
+
+            i[1] = -1
