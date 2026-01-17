@@ -1,5 +1,8 @@
+<div class="loading-overlay" *ngIf="isLoading">
+    <div class="loader"></div>
+    <p class="loader-text">{{loadingMessage}}</p>
+</div>
 <div class="flashcards">
-
     <h2>Flashcards</h2>
 
     <div class="tp-wrapper">
@@ -24,6 +27,10 @@
             <button id="Export Cards as Excel" class='icon-button' mat-icon-button matTooltip="Export Cards as Excel"
                 aria-label="Export Cards as Excel" (click)="exportCardsXlsx()"><mat-icon
                     class="large_buttons">download</mat-icon></button>
+            <br />
+            <button mat-icon-button matTooltip="Refresh cards" aria-label="Refresh cards" (click)="refreshCards()">
+                <mat-icon>refresh</mat-icon>
+            </button>
         </div>
     </div>
 </div>

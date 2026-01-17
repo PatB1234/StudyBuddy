@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatInputModule } from '@angular/material/input';
@@ -17,10 +18,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
 import { saveAs } from 'file-saver';
+import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-flashcards',
     standalone: true,
     imports: [
+        CommonModule,
         MatSidenavModule,
         MatToolbarModule,
         MatIconModule,
@@ -65,8 +68,9 @@ export class FlashcardsComponent implements OnInit {
         this._snackBar.open(message, action);
     }
     ngOnInit(): void {
+        this.startLoading("Generating flashcards...");
         this._snackBar.open("Please wait while flashcards generate, this can take a while depending on the size of your notes", "Dismiss")
-        this.getFlashcards()
+        this.fetchFlashcards()
     }
 
     //Flaschard Functions
@@ -78,6 +82,17 @@ export class FlashcardsComponent implements OnInit {
     curr_card: any; // Starts at 0
     total_card: any; // Starts at 1 and counts up
     card_num: any; // To display on the frontend
+    isLoading = false;
+    loadingMessage = "Generating flashcards...";
+
+    startLoading(message: string): void {
+        this.loadingMessage = message;
+        this.isLoading = true;
+    }
+
+    stopLoading(): void {
+        this.isLoading = false;
+    }
     toggleFlip() {
         this.flip = (this.flip == 'inactive') ? 'active' : 'inactive';
     }
@@ -88,16 +103,33 @@ export class FlashcardsComponent implements OnInit {
         this.back = this.flashcards[this.curr_card]['Back']
     }
 
-    getFlashcards(): void {
-        this.http.get(this.URL + "/get_flashcards").subscribe((res: any) => {
-            this.flashcards = res;
-            this.total_card = this.flashcards.length;
-            this.curr_card = 0;
-            this.front = this.flashcards[this.curr_card]['Front']
-            this.back = this.flashcards[this.curr_card]['Back']
-            this.card_num = `1/${this.total_card}`;
-
-        })
+    fetchFlashcards(message: string = "Generating flashcards...", endpoint: string = "/get_flashcards"): void {
+        this.startLoading(message);
+        this.http.get(this.URL + endpoint)
+            .pipe(finalize(() => this.stopLoading()))
+            .subscribe(
+                (res: any) => {
+                    this.flashcards = res;
+                    this.total_card = this.flashcards?.length ?? 0;
+                    if (this.total_card > 0) {
+                        this.curr_card = 0;
+                        this.front = this.flashcards[this.curr_card]['Front']
+                        this.back = this.flashcards[this.curr_card]['Back']
+                        this.card_num = `1/${this.total_card}`;
+                    } else {
+                        this.front = "No flashcards available yet.";
+                        this.back = "Try generating again in a few moments.";
+                        this.card_num = "";
+                    }
+                },
+                (_error: any) => {
+                    this.flashcards = [];
+                    this.front = "We could not load flashcards right now.";
+                    this.back = "Please try again in a moment.";
+                    this.card_num = "";
+                    this._snackBar.open("Unable to generate flashcards. Please try again.", "Dismiss");
+                }
+            )
 
     }
 
@@ -143,6 +175,10 @@ export class FlashcardsComponent implements OnInit {
                 console.log(res)
             })
         })
+    }
 
+    refreshCards(): void {
+        this._snackBar.open("Refreshing flashcards...", "Dismiss")
+        this.fetchFlashcards("Regenerating fresh flashcards...", "/regenerate_flashcards");
     }
 }

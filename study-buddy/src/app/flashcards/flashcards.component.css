@@ -4,7 +4,39 @@
 
     margin: 10px;
     white-space: pre-wrap;
+    position: relative;
 
+}
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(2px);
+    z-index: 2000;
+    text-align: center;
+    pointer-events: all;
+}
+
+.loader {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 6px solid #a1ad8e;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+.loader-text {
+    font-weight: 700;
+    color: #333;
 }
 
 .tp-wrapper {
@@ -25,6 +57,15 @@
     -ms-transform: transform 1s;
     transform: transform 1s;
 
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .tp-box__side {
