@@ -14,6 +14,8 @@ from pydantic import BaseModel
 import classes
 import funcs
 
+# Basemodel
+
 
 class Student(BaseModel):
 
