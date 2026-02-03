@@ -141,7 +141,7 @@ export class FlashcardsComponent implements OnInit {
             this.curr_card -= 1
             this.updateCardStatus()
             this.card_num = `${this.curr_card + 1}/${this.total_card}`;
-            this.flip = (this.flip == 'inactive') ? 'active' : 'inactive';
+            this.flip = 'inactive';
         }
     }
 
@@ -152,7 +152,7 @@ export class FlashcardsComponent implements OnInit {
             this.curr_card += 1
             this.updateCardStatus()
             this.card_num = `${this.curr_card + 1}/${this.total_card}`;
-            this.flip = (this.flip == 'inactive') ? 'active' : 'inactive';
+            this.flip = 'inactive';
         }
     }
 
