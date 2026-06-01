@@ -15,4 +15,37 @@ body {
 body {
     margin: 0;
     font-family: Roboto, "Helvetica Neue", sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+:root {
+    --color-bg: #f4f1ea;
+    --color-surface: #ffffff;
+    --color-surface-alt: #eef2ef;
+    --color-nav: #e3ebe6;
+    --color-header: #1f5f5b;
+    --color-primary: #1f5f5b;
+    --color-primary-hover: #184b47;
+    --color-accent: #e07a5f;
+    --color-border: #cfd8d2;
+    --color-text: #1f2a2e;
+    --color-text-muted: #4a5a5f;
+    --color-danger: #9b3b2f;
+}
+
+a {
+    color: var(--color-primary);
+}
+
+a:hover {
+    color: var(--color-primary-hover);
+}
+
+.error-text {
+    color: var(--color-danger);
+}
+
+.markdown-output {
+    color: var(--color-text);
 }

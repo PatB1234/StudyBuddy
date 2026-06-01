@@ -8,37 +8,6 @@
 
 }
 
-.loading-overlay {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(2px);
-    z-index: 2000;
-    text-align: center;
-    pointer-events: all;
-}
-
-.loader {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    border: 6px solid #a1ad8e;
-    border-top-color: transparent;
-    animation: spin 1s linear infinite;
-}
-
-.loader-text {
-    font-weight: 700;
-    color: #333;
-}
-
 .tp-wrapper {
     -webkit-perspective: 800px;
     perspective: 800px;
@@ -59,16 +28,6 @@
 
 }
 
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-}
-
 .tp-box__side {
     width: 100%;
     height: 100%;
@@ -77,7 +36,7 @@
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
 
-    color: #000000;
+    color: var(--color-text);
     text-align: center;
 
     display: flex;
@@ -100,7 +59,7 @@
     border-radius: 10px;
     /* Optional for rounded corners */
 
-    background: #a1ad8e;
+    background: var(--color-surface-alt);
     -webkit-transform: rotateY(0deg);
     -ms-transform: rotateY(0deg);
     transform: rotateY(0deg);
@@ -112,7 +71,7 @@
     border-radius: 10px;
     /* Optional for rounded corners */
 
-    background: #91a796;
+    background: var(--color-nav);
     -webkit-transform: rotateY(-180deg);
     -ms-transform: rotateY(-180deg);
     transform: rotateY(-180deg);

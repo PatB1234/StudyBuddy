@@ -1,5 +1,5 @@
 body {
-    background-color: #879b8d;
+    background-color: var(--color-bg);
     margin: 0;
     font-family: 'Roboto', sans-serif;
 }
@@ -15,7 +15,7 @@ div {
 .profile-card {
     width: 50%;
     max-width: 500px;
-    background-color: #91a796;
+    background-color: var(--color-surface-alt);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     border-radius: 16px;
     padding: 24px;
@@ -37,13 +37,13 @@ div {
 h1,
 h2,
 h3 {
-    color: #2b3a33;
+    color: var(--color-text);
     text-align: center;
     margin-bottom: 12px;
 }
 
 p {
-    color: #2e3b31;
+    color: var(--color-text-muted);
     font-size: 0.95rem;
     text-align: center;
     margin: 4px 0;
@@ -57,18 +57,18 @@ input[type="file"] {
     border-radius: 8px;
     padding: 8px 10px;
     margin: 8px 0;
-    background-color: #f2f5f2;
+    background-color: var(--color-surface);
     font-size: 0.95rem;
     transition: outline 0.2s ease;
 }
 
 input:focus {
-    outline: 2px solid #6f8c80;
+    outline: 2px solid var(--color-primary);
 }
 
 button {
-    background-color: #6f8c80;
-    color: white;
+    background-color: var(--color-primary);
+    color: var(--color-surface);
     border: none;
     border-radius: 8px;
     padding: 10px 20px;
@@ -78,12 +78,12 @@ button {
 }
 
 button:hover {
-    background-color: #587368;
+    background-color: var(--color-primary-hover);
     transform: scale(1.03);
 }
 
 button:disabled {
-    background-color: #a8b6ae;
+    background-color: var(--color-border);
     cursor: not-allowed;
 }
 

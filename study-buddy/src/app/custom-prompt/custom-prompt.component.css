@@ -25,11 +25,11 @@
 }
 
 :host {
-    --surface-bg: #8da9a9;
-    --textarea-bg: #a1b5b5;
-    --textarea-border: #5a6c6c;
-    --textarea-text: #1e293b;
-    --accent: #3b516a;
+    --surface-bg: var(--color-surface-alt);
+    --textarea-bg: var(--color-surface);
+    --textarea-border: var(--color-border);
+    --textarea-text: var(--color-text);
+    --accent: var(--color-primary);
 }
 
 .textarea-input {
@@ -42,7 +42,7 @@
 }
 
 .textarea-input::placeholder {
-    color: rgba(30, 41, 59, 0.6);
+    color: var(--color-text-muted);
 }
 
 .prompt-field .mdc-text-field--outlined {
@@ -55,13 +55,13 @@
 .submit-button {
     align-self: flex-start;
     background-color: var(--accent);
-    color: #ffffff;
+    color: var(--color-surface);
     border-radius: 999px;
     padding: 10px 22px;
     text-transform: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
 
-    &:hover {
-        background-color: #324559;
-    }
+.submit-button:hover {
+    background-color: var(--color-primary-hover);
 }

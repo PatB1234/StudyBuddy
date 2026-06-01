@@ -5,11 +5,10 @@
             <br />
 
             <input type="file" (change)="onFileSelected($event)" accept="application/pdf,image/png,image/jpg"
-                mat-button="elevated" style="background-color: #6f8c80;" />
+                mat-button="elevated" />
             <br />
             <mat-label>Section Name: </mat-label>
-            <input type="text" [(ngModel)]="sectionName" placeholder="Enter Section Name"
-                style="background-color: #6f8c80;" />
+            <input type="text" [(ngModel)]="sectionName" placeholder="Enter Section Name" />
             <br />
             <mat-checkbox class="example-margin" (change)="onChange($event.checked)">Check this box if your notes
                 are handwritten</mat-checkbox>

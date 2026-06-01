@@ -1,10 +1,14 @@
+<div class="loading-overlay" *ngIf="isLoading">
+    <div class="loader"></div>
+    <p class="loader-text">{{loadingMessage}}</p>
+</div>
 <mat-toolbar class="mat-header">
 
     <a (click)="dash()">StuddyBuddy</a>
 
     <div style="flex: 1 1 auto;" align="center" class="beta-notice">
 
-        <span>BETA V1.2.1</span>
+        <span>BETA V1.3.0</span>
     </div>
 
 </mat-toolbar>
@@ -31,7 +35,7 @@
         <h6 style="  width: 100%; text-align: center;">Currently selected notes: {{curr_selected}}</h6>
 
         <mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor"
-            style="background-color: #91a796;">
+            style="background-color: var(--color-nav);">
             <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
                 <button mat-icon-button disabled></button>
                 <a (click)="nodePress(node.name)" style="cursor: pointer;" id="baseNode">{{node.name}}</a>

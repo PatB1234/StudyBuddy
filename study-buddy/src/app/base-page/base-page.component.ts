@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, OnInit, HostListener, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
 import { MatSidenavContent, MatSidenavContainer, MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { Router } from '@angular/router';
@@ -7,6 +8,7 @@ import { MatTabNavPanel, MatTabsModule } from '@angular/material/tabs';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AppComponent } from '../app.component';
+import { LoadingService } from '../loading.service';
 import { MatToolbar, MatToolbarModule } from "@angular/material/toolbar";
 import { MatTree, MatTreeModule, MatTreeNode } from "@angular/material/tree";
 import { IntrojsService } from '../introjs/introjs.service';
@@ -27,6 +29,7 @@ interface TreeNode {
     selector: 'app-base-page',
     standalone: true,
     imports: [
+        CommonModule,
         MatSidenavContent,
         RouterOutlet,
         MatTabNavPanel,
@@ -51,8 +54,10 @@ interface TreeNode {
 export class BasePageComponent implements OnInit {
 
 
-    constructor(private router: Router, private http: HttpClient, private introService: IntrojsService) { }
+    constructor(private router: Router, private http: HttpClient, private introService: IntrojsService, private loadingService: LoadingService) { }
     curr_selected = "None";
+    isLoading = false;
+    loadingMessage = '';
     private _snackBar = inject(MatSnackBar);
     links: ILink[] = [
         { path: 'custom-prompt', label: 'Custom Prompt' },
@@ -69,6 +74,8 @@ export class BasePageComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.loadingService.isLoading$.subscribe(v => this.isLoading = v);
+        this.loadingService.message$.subscribe(v => this.loadingMessage = v);
         this.getTree();
         this.get_curr_notes()
         this.router.events.subscribe((event) => {

@@ -1,3 +1,37 @@
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(2px);
+    z-index: 2000;
+    text-align: center;
+    pointer-events: all;
+}
+
+.loader {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 6px solid var(--color-primary);
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+.loader-text {
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 .sidenav-main {
 
     top: 0;
@@ -5,13 +39,13 @@
     bottom: 0;
     right: 0;
     height: calc(100vh - 64px);
-    background: #87a397;
+    background: var(--color-bg);
     position: relative;
 }
 
 .sidenav-drawer {
 
-    background-color: #91a796;
+    background-color: var(--color-nav);
     border-radius: 0px !important;
     width: 25%;
     height: 100vh;
@@ -19,7 +53,12 @@
 
 .mat-header {
 
-    background-color: #a1ad8e;
+    background-color: var(--color-header);
+    color: var(--color-surface);
+}
+
+.mat-header a {
+    color: var(--color-surface);
 }
 
 .example-spacer {
@@ -64,6 +103,6 @@ h1 {
     font-size: 0.75em;
     font-weight: bold;
     display: inline-block;
-    color: #69140E;
+    color: var(--color-accent);
     font-size: 18pt;
 }

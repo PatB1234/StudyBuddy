@@ -10,6 +10,7 @@ import { HttpClient } from '@angular/common/http';
 import { MatCardModule } from '@angular/material/card';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AppComponent } from '../app.component';
+import { LoadingService } from '../loading.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
@@ -53,8 +54,7 @@ import { finalize } from 'rxjs/operators';
 export class FlashcardsComponent implements OnInit {
 
 
-    constructor(private http: HttpClient, private domSanitizer: DomSanitizer, private matIconRegistry: MatIconRegistry,
-    ) {
+    constructor(private http: HttpClient, private domSanitizer: DomSanitizer, private matIconRegistry: MatIconRegistry, private loadingService: LoadingService) {
 
         this.matIconRegistry.addSvgIcon(
             'quizlet-logo', // The unique name for your icon
@@ -68,30 +68,27 @@ export class FlashcardsComponent implements OnInit {
         this._snackBar.open(message, action);
     }
     ngOnInit(): void {
-        this.startLoading("Generating flashcards...");
-        this._snackBar.open("Please wait while flashcards generate, this can take a while depending on the size of your notes", "Dismiss")
-        this.fetchFlashcards()
+
     }
 
     //Flaschard Functions
     flip: string = 'inactive';
-    front: any = "Click next to start";
-    back: any = "Click next to start";
+    front: any = "Click the add button to generate or fetch your cards";
+    back: any = "Click the add button to generate or fetch your cards";
 
     flashcards: any;
     curr_card: any; // Starts at 0
     total_card: any; // Starts at 1 and counts up
     card_num: any; // To display on the frontend
-    isLoading = false;
-    loadingMessage = "Generating flashcards...";
+    iconType: any = "add_notes";
+    iconMessage: string = "Fetch or generate your flashcards"
 
     startLoading(message: string): void {
-        this.loadingMessage = message;
-        this.isLoading = true;
+        this.loadingService.start(message);
     }
 
     stopLoading(): void {
-        this.isLoading = false;
+        this.loadingService.stop();
     }
     toggleFlip() {
         this.flip = (this.flip == 'inactive') ? 'active' : 'inactive';
@@ -181,7 +178,19 @@ export class FlashcardsComponent implements OnInit {
     }
 
     refreshCards(): void {
-        this._snackBar.open("Refreshing flashcards...", "Dismiss")
-        this.fetchFlashcards("Regenerating fresh flashcards...", "/regenerate_flashcards");
+
+        if (this.iconType == "add_notes") {
+
+            this.iconType = "refresh"
+            this.iconMessage = "Regenerate your cards"
+            this.startLoading("Generating flashcards...");
+            this._snackBar.open("Please wait while flashcards generate, this can take a while depending on the size of your notes", "Dismiss")
+            this.fetchFlashcards()
+        } else {
+
+            this._snackBar.open("Refreshing flashcards...", "Dismiss")
+            this.fetchFlashcards("Regenerating fresh flashcards...", "/regenerate_flashcards");
+        }
+
     }
 }

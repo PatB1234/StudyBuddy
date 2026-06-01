@@ -2,7 +2,7 @@
 
     width: 50%;
     justify-content: center;
-    background-color: #91a796;
+    background-color: var(--color-surface-alt);
 
 }
 
@@ -16,7 +16,7 @@
 body,
 .login-body {
 
-    background-color: #879b8d;
+    background-color: var(--color-bg);
     width: 100%;
     height: 100%;
 }

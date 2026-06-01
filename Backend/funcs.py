@@ -16,12 +16,12 @@ CACHED_QUESTIONS = []  # [FILEID, CACHEDATA]
 # This represents the client link for the Google cloud vision API.
 visionClient = vision.ImageAnnotatorClient()
 
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-2.5-flash-lite"
 generation_config = {
-    "temperature": 1,
+    "temperature": 0.3,
     "top_p": 0.95,
     "top_k": 64,
-    "max_output_tokens": 8192,
+    "max_output_tokens": 32768,
     "response_mime_type": "text/plain",
 }
 model = genai.GenerativeModel(
