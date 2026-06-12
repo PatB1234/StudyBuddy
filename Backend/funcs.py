@@ -348,31 +348,71 @@ def return_flashcard_exported_format(note_id, note_type):
         return data
 
 
+# def convert_handwritten_to_pdf(file_path, file_id):
+#     try:
+#         with open(file_path, "rb") as image_file:
+#             content = image_file.read()
+#         image = vision.Image(content=content)
+#         data = ""
+
+#         response = visionClient.document_text_detection(image=image)
+#         for page in response.full_text_annotation.pages:
+#             for block in page.blocks:
+#                 for paragraph in block.paragraphs:
+#                     for word in paragraph.words:
+
+#                         word_text = "".join(
+#                             [symbol.text for symbol in word.symbols])
+#                         data += word_text + " "
+
+#         os.remove(file_path)
+#         pdf = FPDF()
+#         pdf.add_page()
+#         pdf.set_font("Arial", "B", 12)
+#         pdf.multi_cell(0, 10, txt=data)
+#         pdf.output(f"Data/{file_id}.pdf")
+#         return "Successfully converted your handwritten PDF to text, " \
+#             + "please proceed with the app as normal"
+#     except classes.GenericException:
+
+#         return "Could not convert handwritten pdf to text"
+
+
 def convert_handwritten_to_pdf(file_path, file_id):
+
     try:
+
         with open(file_path, "rb") as image_file:
             content = image_file.read()
+        client = vision.ImageAnnotatorClient()
         image = vision.Image(content=content)
-        data = ""
+        res = client.document_text_detection(image=image)
 
-        response = visionClient.document_text_detection(image=image)
-        for page in response.full_text_annotation.pages:
-            for block in page.blocks:
-                for paragraph in block.paragraphs:
-                    for word in paragraph.words:
+        if res.error.message:
 
-                        word_text = "".join(
-                            [symbol.text for symbol in word.symbols])
-                        data += word_text + " "
+            raise RuntimeError(f"Error from Vision API: {res.error.message}")
+
+        data = res.full_text_annotation.text
+
+        if not data.strip():
+
+            return "No text could be extracted from this image. Please try again with a new image or better handwriting :)"
 
         os.remove(file_path)
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", "B", 12)
-        pdf.multi_cell(0, 10, txt=data)
+        pdf.set_font("Arial", size=12)
+        # Remove special characters to avoid an FPDF Crash
+        safe_data = data.encode("latin-1", errors="replace").decode("latin-1")
+        pdf.multi_cell(0, 10, txt=safe_data)
+        os.makedirs("Data", exist_ok=True)
         pdf.output(f"Data/{file_id}.pdf")
         return "Successfully converted your handwritten PDF to text, " \
             + "please proceed with the app as normal"
-    except classes.GenericException:
-
-        return "Could not convert handwritten pdf to text"
+    except FileNotFoundError:
+        return "Could not find the uploaded image file"
+    except RuntimeError as e:
+        return str(e)
+    except Exception as e:
+        print(f"[convert_handwritten_to_pdf] Unexpected error: {e}")
+        return "Could not convert handwritten notes to text"

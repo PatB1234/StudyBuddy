@@ -3,3 +3,4 @@ Data
 db/*
 db/users.db
 Backend/HomeworkBuddy.py
+gcloud_key.json
