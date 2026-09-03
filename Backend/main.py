@@ -30,8 +30,8 @@ UPLOAD_SUCCSESFUL = "Upload successful"
 
 origins = [
     "http://localhost:4200",
-    "http://172.236.9.40:4200",
-    "http://172.236.9.40:8000",
+    "http://34.88.99.24:4200",
+    "http://34.88.99.24:8000",
     "https://studdybuddy.app/",
     "http://studdybuddy.app/",
 ]
