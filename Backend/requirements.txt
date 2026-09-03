@@ -38,7 +38,6 @@ fonttools==4.60.1
 fpdf==1.7.2
 frozenlist==1.8.0
 ghp-import==2.1.0
-google-ai-generativelanguage
 google-api-core
 google-api-python-client
 google-auth
@@ -52,7 +51,6 @@ google-cloud-storage
 google-cloud-vision==3.10.2
 google-crc32c==1.7.1
 google-genai==1.44.0
-google-generativeai==0.8.5
 google-resumable-media==2.7.2
 googleapis-common-protos==1.70.0
 grpc-google-iam-v1==0.14.2

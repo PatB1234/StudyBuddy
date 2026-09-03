@@ -5,14 +5,15 @@ import re
 import json
 import threading
 
-import google.generativeai as genai
+from google import genai
+from google.genai import errors as genai_errors
+from google.genai import types as genai_types
 from google.cloud import vision
 from dotenv import load_dotenv
 from fpdf import FPDF
 import classes
 
 load_dotenv()
-genai.configure(api_key=os.getenv("API_KEY"))
 CACHED_QUESTIONS = []  # [FILEID, CACHEDATA]
 # Requests are now handled concurrently (see main.py), so CACHED_QUESTIONS -
 # a module-level list shared across every in-flight request - needs a lock
@@ -22,19 +23,39 @@ CACHED_QUESTIONS_LOCK = threading.Lock()
 visionClient = vision.ImageAnnotatorClient()
 
 MODEL_NAME = "gemini-2.5-flash-lite"
-generation_config = {
-    "temperature": 0.3,
-    "top_p": 0.95,
-    "top_k": 64,
-    "max_output_tokens": 32768,
-    "response_mime_type": "text/plain",
-}
-model = genai.GenerativeModel(
-    model_name=MODEL_NAME,
-    generation_config=generation_config,
+
+# Set GOOGLE_GENAI_USE_VERTEXAI=true to talk to Vertex AI (using the service
+# account in GOOGLE_APPLICATION_CREDENTIALS) instead of the Gemini API key.
+USE_VERTEX_AI = os.getenv(
+    "GOOGLE_GENAI_USE_VERTEXAI", "").strip().lower() in ("1", "true", "yes")
+
+if USE_VERTEX_AI:
+    client = genai.Client(
+        vertexai=True,
+        project=os.getenv("student-ai-st-chris "),
+        location="europe-west2"
+    )
+else:
+    client = genai.Client(api_key=os.getenv("API_KEY"))
+
+generation_config = genai_types.GenerateContentConfig(
+    temperature=0.3,
+    top_p=0.95,
+    top_k=64,
+    max_output_tokens=32768,
+    response_mime_type="text/plain",
 )
 
-chat_session = model.start_chat(history=[])
+MODEL_ERRORS = (classes.GenericException, genai_errors.APIError)
+
+
+def generate(contents, context: str):
+    response = client.models.generate_content(
+        model=MODEL_NAME,
+        contents=contents,
+        config=generation_config,
+    )
+    return _extract_response_text(response, context)
 
 
 def _extract_response_text(response, context: str):
@@ -68,10 +89,12 @@ def _extract_response_text(response, context: str):
 def check_token_no(file_path) -> bool:
     try:
         with open(file_path, "rb") as f:
-            file_payload = {"mime_type": "application/pdf", "data": f.read()}
-        _ = model.count_tokens([file_payload]).total_tokens
+            file_payload = genai_types.Part.from_bytes(
+                data=f.read(), mime_type="application/pdf")
+        _ = client.models.count_tokens(
+            model=MODEL_NAME, contents=[file_payload]).total_tokens
         return True
-    except classes.GenericException:
+    except MODEL_ERRORS:
 
         return False
 
@@ -97,10 +120,10 @@ def data_cleaner(value, remove_new_line: bool, is_json: bool):  # Just cleans th
                 json_str = value[start:end]
                 try:
                     value = ast.literal_eval(json_str)
-                except classes.GenericException as e:
+                except (ValueError, SyntaxError) as e:
                     print(f"Literal eval error: {e}")
                     value = []
-            except classes.GenericException as e:
+            except ValueError as e:
                 print(f"JSON decode error: {e}")
                 value = []
         else:
@@ -109,29 +132,19 @@ def data_cleaner(value, remove_new_line: bool, is_json: bool):  # Just cleans th
     return value
 
 
-# # Import File
-# try:
-#     notes = genai.upload_file(
-#         path="Data/-1.pdf")
-# except classes.GenericException:
-
-#     print("Cannot call default notes")
-
-
 def upload_notes(note_id: int):
-    # return genai.upload_file(path=f"Data/{note_id}.pdf")
     with open(f"Data/{note_id}.pdf", "rb") as f:
 
-        file_payload = {"mime_type": "application/pdf", "data": f.read()}
+        file_payload = genai_types.Part.from_bytes(
+            data=f.read(), mime_type="application/pdf")
 
     return file_payload
 
 
 def run_prompt(files, prompt):  # Base Function
     try:
-        response = model.generate_content([files, prompt])
-        return _extract_response_text(response, "prompt")
-    except classes.GenericException as e:
+        return generate([files, prompt], "prompt")
+    except MODEL_ERRORS as e:
         return str(e)
 
 
@@ -155,23 +168,21 @@ def flashcards(note_id):
 
     uploaded_notes = upload_notes(note_id)
     try:
-        cards = _extract_response_text(
-            model.generate_content(
-                [
-                    uploaded_notes,
-                    "Make flashcards for the notes given. "
-                    + "Make these short flashcards witha back of no more than 20 words."
-                    + " Return the data as a  json object without"
-                    + " any additional formatting or rich text backticks/identifiers "
-                    + "LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier."
-                    + " A good example of how you should do it is this: "
-                    + "[{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, "
-                    + "{'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}]",
-                ]
-            ),
+        cards = generate(
+            [
+                uploaded_notes,
+                "Make flashcards for the notes given. "
+                + "Make these short flashcards witha back of no more than 20 words."
+                + " Return the data as a  json object without"
+                + " any additional formatting or rich text backticks/identifiers "
+                + "LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier."
+                + " A good example of how you should do it is this: "
+                + "[{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, "
+                + "{'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}]",
+            ],
             "flashcard",
         )
-    except classes.GenericException as e:
+    except MODEL_ERRORS as e:
         return [
             {
                 "Front": "Unable to generate flashcards right now",
@@ -215,23 +226,21 @@ def regenerate_flashcards(note_id):
 
     uploaded_notes = upload_notes(note_id)
     try:
-        cards = _extract_response_text(
-            model.generate_content(
-                [
-                    uploaded_notes,
-                    "Make flashcards for the notes given. "
-                    + "Make these short flashcards witha back of no more than 20 words."
-                    + " Return the data as a  json object without"
-                    + " any additional formatting or rich text backticks/identifiers "
-                    + "LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier."
-                    + " A good example of how you should do it is this: "
-                    + "[{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, "
-                    + "{'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}]",
-                ]
-            ),
+        cards = generate(
+            [
+                uploaded_notes,
+                "Make flashcards for the notes given. "
+                + "Make these short flashcards witha back of no more than 20 words."
+                + " Return the data as a  json object without"
+                + " any additional formatting or rich text backticks/identifiers "
+                + "LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier."
+                + " A good example of how you should do it is this: "
+                + "[{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, "
+                + "{'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}]",
+            ],
             "flashcard",
         )
-    except classes.GenericException as e:
+    except MODEL_ERRORS as e:
         return [
             {
                 "Front": "Unable to generate flashcards right now",
@@ -296,27 +305,29 @@ def make_questions(note_id):  # Done
     # for *different* notes aren't serialised behind a single network call.
     uploaded_notes = upload_notes(note_id)
     try:
-        res = _extract_response_text(
-            model.generate_content(
-                [
-                    uploaded_notes,
-                    "Generate 10 questions on these notes. "
-                    + "Return the data as a python array without any "
-                    + "additional formatting or rich text backticks/identifiers. "
-                    + "ONLY GIVE THE QUESTIONS AND NO ANSWERS. "
-                    + "DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION",
-                ]
-            ),
+        res = generate(
+            [
+                uploaded_notes,
+                "Generate 10 questions on these notes. "
+                + "Return the data as a python array without any "
+                + "additional formatting or rich text backticks/identifiers. "
+                + "ONLY GIVE THE QUESTIONS AND NO ANSWERS. "
+                + "DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION",
+            ],
             "question generation",
         )
-        res = ast.literal_eval(data_cleaner(res, True, False))
+        # data_cleaner slices out the first [...] array, so a stray markdown
+        # fence or lead-in sentence around the list doesn't break parsing.
+        res = data_cleaner(res, True, True)
+        if len(res) < 2:
+            return "Error generating questions, please try again in a few minutes"
         with CACHED_QUESTIONS_LOCK:
             CACHED_QUESTIONS[index][1] = res
             CACHED_QUESTIONS[index][1].pop(0)
             curr_questions = CACHED_QUESTIONS[index][1]
         print(CACHED_QUESTIONS)
         return curr_questions[0]
-    except classes.GenericException:
+    except MODEL_ERRORS:
 
         return "Error generating questions, please try again in a few minutes"
 
@@ -325,16 +336,14 @@ def check_question(question, answer, note_id):  # Done
 
     uploaded_notes = upload_notes(note_id)
     try:
-        return _extract_response_text(
-            model.generate_content(
-                [
-                    uploaded_notes,
-                    f"is the answer {answer} correct for the question {question}",
-                ]
-            ),
+        return generate(
+            [
+                uploaded_notes,
+                f"is the answer {answer} correct for the question {question}",
+            ],
             "answer check",
         )
-    except classes.GenericException as e:
+    except MODEL_ERRORS as e:
         return str(e)
 
 
