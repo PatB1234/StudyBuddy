@@ -30,8 +30,8 @@ UPLOAD_SUCCSESFUL = "Upload successful"
 
 origins = [
     "http://localhost:4200",
-    "http://45.79.253.25:4200",
-    "http://45.79.253.25:8000",
+    "http://172.236.9.40:4200",
+    "http://172.236.9.40:8000",
     "https://studdybuddy.app/",
     "http://studdybuddy.app/",
 ]
@@ -392,7 +392,8 @@ async def get_export_flashcards(res_type: int, request: Request):
     )
 
     await anyio.to_thread.run_sync(
-        functools.partial(pd.DataFrame(res).to_csv, f"{stud_name}.csv", index=False)
+        functools.partial(pd.DataFrame(res).to_csv,
+                          f"{stud_name}.csv", index=False)
     )
     return FileResponse(
         path=f"{stud_name}.csv",
