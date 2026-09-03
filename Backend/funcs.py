@@ -22,12 +22,11 @@ CACHED_QUESTIONS_LOCK = threading.Lock()
 # This represents the client link for the Google cloud vision API.
 visionClient = vision.ImageAnnotatorClient()
 
-MODEL_NAME = "gemini-2.5-flash-lite"
+MODEL_NAME = "gemini-3.5-flash"
 
 # Set GOOGLE_GENAI_USE_VERTEXAI=true to talk to Vertex AI (using the service
 # account in GOOGLE_APPLICATION_CREDENTIALS) instead of the Gemini API key.
-USE_VERTEX_AI = os.getenv(
-    "GOOGLE_GENAI_USE_VERTEXAI", "").strip().lower() in ("1", "true", "yes")
+USE_VERTEX_AI = True
 
 if USE_VERTEX_AI:
     client = genai.Client(
