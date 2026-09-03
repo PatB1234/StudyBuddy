@@ -428,16 +428,6 @@ def delete_all_notes_by_user_id(nid: int):
         True,
     )
     for ids in res:
-        file_path = os.path.join("card_decks", str(nid) + ".json")
-        if os.path.exists(file_path):
-
-            os.remove(file_path)
-
-        for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
-
-            if curr_qs[0] == nid:
-
-                funcs.CACHED_QUESTIONS.pop(i)
         delete_notes_by_id(int(ids[0]))
 
 
@@ -452,11 +442,13 @@ def delete_notes_by_id(fid: int):
         if os.path.exists(file_path):
 
             os.remove(file_path)
-        for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
+        with funcs.CACHED_QUESTIONS_LOCK:
+            for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
 
-            if curr_qs[0] == fid:
+                if curr_qs[0] == fid:
 
-                funcs.CACHED_QUESTIONS.pop(i)
+                    funcs.CACHED_QUESTIONS.pop(i)
+                    break
         os.remove(f"Data/{fid}.pdf")
 
     except FileNotFoundError:
@@ -480,12 +472,17 @@ def delete_note_by_name(note_name: str, token: str):
     if os.path.exists(file_path):
 
         os.remove(file_path)
-    for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
+    with funcs.CACHED_QUESTIONS_LOCK:
+        for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
 
-        if curr_qs[0] == fid:
+            if curr_qs[0] == fid:
 
-            funcs.CACHED_QUESTIONS.pop(i)
-    os.remove(f"Data/{fid}.pdf")
+                funcs.CACHED_QUESTIONS.pop(i)
+                break
+    try:
+        os.remove(f"Data/{fid}.pdf")
+    except FileNotFoundError:
+        logging.error("File with ID %s does not exist.", fid)
     return "Note deleted successfully"
 
 

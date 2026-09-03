@@ -3,6 +3,7 @@ import ast
 import os
 import re
 import json
+import threading
 
 import google.generativeai as genai
 from google.cloud import vision
@@ -13,6 +14,10 @@ import classes
 load_dotenv()
 genai.configure(api_key=os.getenv("API_KEY"))
 CACHED_QUESTIONS = []  # [FILEID, CACHEDATA]
+# Requests are now handled concurrently (see main.py), so CACHED_QUESTIONS -
+# a module-level list shared across every in-flight request - needs a lock
+# around its reads/writes to avoid two requests corrupting it at once.
+CACHED_QUESTIONS_LOCK = threading.Lock()
 # This represents the client link for the Google cloud vision API.
 visionClient = vision.ImageAnnotatorClient()
 
@@ -266,49 +271,54 @@ def custom_prompt(prompt, note_id):  # Done
 
 
 def make_questions(note_id):  # Done
-    curr_questions = []
-    index = -1
-    for i, val in enumerate(CACHED_QUESTIONS):
+    with CACHED_QUESTIONS_LOCK:
+        curr_questions = []
+        index = -1
+        for i, val in enumerate(CACHED_QUESTIONS):
 
-        if val[0] == note_id:
-            curr_questions = val[1]
-            index = i
-            break
-    print(note_id, index)
-    if index == -1:
+            if val[0] == note_id:
+                curr_questions = val[1]
+                index = i
+                break
+        print(note_id, index)
+        if index == -1:
 
-        CACHED_QUESTIONS.append([note_id, []])
-        index = len(CACHED_QUESTIONS) - 1
-    if curr_questions == [] or len(curr_questions) < 3:
+            CACHED_QUESTIONS.append([note_id, []])
+            index = len(CACHED_QUESTIONS) - 1
 
-        uploaded_notes = upload_notes(note_id)
-        try:
-            res = _extract_response_text(
-                model.generate_content(
-                    [
-                        uploaded_notes,
-                        "Generate 10 questions on these notes. "
-                        + "Return the data as a python array without any "
-                        + "additional formatting or rich text backticks/identifiers. "
-                        + "ONLY GIVE THE QUESTIONS AND NO ANSWERS. "
-                        + "DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION",
-                    ]
-                ),
-                "question generation",
-            )
-            res = ast.literal_eval(data_cleaner(res, True, False))
+        needs_generation = curr_questions == [] or len(curr_questions) < 3
+        if not needs_generation:
+
+            CACHED_QUESTIONS[index][1].pop(0)
+            return curr_questions[0]
+
+    # The Gemini call happens outside the lock so that concurrent requests
+    # for *different* notes aren't serialised behind a single network call.
+    uploaded_notes = upload_notes(note_id)
+    try:
+        res = _extract_response_text(
+            model.generate_content(
+                [
+                    uploaded_notes,
+                    "Generate 10 questions on these notes. "
+                    + "Return the data as a python array without any "
+                    + "additional formatting or rich text backticks/identifiers. "
+                    + "ONLY GIVE THE QUESTIONS AND NO ANSWERS. "
+                    + "DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION",
+                ]
+            ),
+            "question generation",
+        )
+        res = ast.literal_eval(data_cleaner(res, True, False))
+        with CACHED_QUESTIONS_LOCK:
             CACHED_QUESTIONS[index][1] = res
             CACHED_QUESTIONS[index][1].pop(0)
             curr_questions = CACHED_QUESTIONS[index][1]
-            print(CACHED_QUESTIONS)
-            return curr_questions[0]
-        except classes.GenericException:
-
-            return "Error generating questions, please try again in a few minutes"
-    else:
-
-        CACHED_QUESTIONS[index][1].pop(0)
+        print(CACHED_QUESTIONS)
         return curr_questions[0]
+    except classes.GenericException:
+
+        return "Error generating questions, please try again in a few minutes"
 
 
 def check_question(question, answer, note_id):  # Done

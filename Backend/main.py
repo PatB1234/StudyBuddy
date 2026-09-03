@@ -4,6 +4,7 @@ If a token is valid, the function will return data as normal.
 If not, a False is returned by the token validator, resulting in a 401 error in the frontend
 """
 
+import functools
 import os
 import anyio
 import shutil
@@ -20,6 +21,9 @@ import funcs
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="/"), name="static")
+
+# Serialises note-ID allocation so concurrent uploads can't collide
+UPLOAD_LOCK = anyio.Lock()
 
 TOKEN_MESSAGE = "Invalid token"
 UPLOAD_SUCCSESFUL = "Upload successful"
@@ -48,7 +52,8 @@ async def post_custom_prompt(prompt: classes.PostCustomPromptModel, request: Req
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
-    return funcs.custom_prompt(
+    return await anyio.to_thread.run_sync(
+        funcs.custom_prompt,
         prompt.customPrompt,
         db.get_current_notes_by_token(request.headers.get("token")),
     )
@@ -60,8 +65,9 @@ async def post_summarise(request: Request):
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
-    return funcs.summariser(
-        db.get_current_notes_by_token(request.headers.get("token"))
+    return await anyio.to_thread.run_sync(
+        funcs.summariser,
+        db.get_current_notes_by_token(request.headers.get("token")),
     )
 
 
@@ -71,8 +77,9 @@ async def get_questions(request: Request):
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
-    return funcs.make_questions(
-        db.get_current_notes_by_token(request.headers.get("token"))
+    return await anyio.to_thread.run_sync(
+        funcs.make_questions,
+        db.get_current_notes_by_token(request.headers.get("token")),
     )
 
 
@@ -82,7 +89,8 @@ async def post_check_questions(res: classes.PostCheckAnswersModel, request: Requ
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
-    return funcs.check_question(
+    return await anyio.to_thread.run_sync(
+        funcs.check_question,
         res.question,
         res.answer,
         db.get_current_notes_by_token(request.headers.get("token")),
@@ -96,8 +104,9 @@ async def get_flashcards(request: Request):
     if not token_res:
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
-    return funcs.flashcards(
-        db.get_current_notes_by_token(request.headers.get("token"))
+    return await anyio.to_thread.run_sync(
+        funcs.flashcards,
+        db.get_current_notes_by_token(request.headers.get("token")),
     )
 
 
@@ -107,8 +116,9 @@ async def get_regenerate_flashcards(request: Request):
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
-    return funcs.regenerate_flashcards(
-        db.get_current_notes_by_token(request.headers.get("token"))
+    return await anyio.to_thread.run_sync(
+        funcs.regenerate_flashcards,
+        db.get_current_notes_by_token(request.headers.get("token")),
     )
 
 
@@ -193,27 +203,60 @@ async def post_add_notes(
 
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
     is_handwritten = int(handwritten)
-    if ".pdf" in file.filename:
 
-        if is_handwritten == 1:
+    def write_upload(dest_path: str) -> None:
+        with open(dest_path, "wb") as buff:
+            shutil.copyfileobj(file.file, buff)
+
+    async with UPLOAD_LOCK:
+
+        if ".pdf" in file.filename:
+
+            if is_handwritten == 1:
+
+                file_id = db.get_last_note_id() + 1
+                file_path = os.path.join("Data", str(file_id) + ".pdf")
+
+                await anyio.to_thread.run_sync(write_upload, file_path)
+
+                res = await anyio.to_thread.run_sync(
+                    funcs.convert_handwritten_to_pdf, file_path, int(file_id)
+                )
+
+                if await anyio.to_thread.run_sync(funcs.check_token_no, file_path):
+
+                    db.add_notes(
+                        request.headers.get("token"),
+                        file.filename.replace(".pdf", ""),
+                        file_id,
+                        section_name,
+                    )
+                    return {"message": UPLOAD_SUCCSESFUL + res}
+
+                # Remove the file if it is too large
+                if os.path.exists(file_path):
+
+                    os.remove(file_path)
+
+                return {
+                    "message": "File is too large, please try with a different file "
+                    + "or a select the handwritten flag if your pdf is a handwritten note"
+                }
 
             file_id = db.get_last_note_id() + 1
             file_path = os.path.join("Data", str(file_id) + ".pdf")
+            await anyio.to_thread.run_sync(write_upload, file_path)
 
-            with open(file_path, "wb") as buff:
-                shutil.copyfileobj(file.file, buff)
-
-            res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
-
-            if funcs.check_token_no(file_path):
+            # Check if the file size is ok (i.e. number of tokens)
+            if await anyio.to_thread.run_sync(funcs.check_token_no, file_path):
 
                 db.add_notes(
                     request.headers.get("token"),
                     file.filename.replace(".pdf", ""),
-                    db.getLastNoteID() + 1,
+                    file_id,
                     section_name,
                 )
-                return {"message": UPLOAD_SUCCSESFUL + res}
+                return {"message": UPLOAD_SUCCSESFUL}
 
             # Remove the file if it is too large
             if os.path.exists(file_path):
@@ -221,76 +264,51 @@ async def post_add_notes(
                 os.remove(file_path)
 
             return {
-                "message": "File is too large, please try with a different file "
-                + "or a select the handwritten flag if your pdf is a handwritten note"
+                "message": "File is too large, please "
+                + "try with a different file or a non-handwritten file"
             }
+        # If the notes are of a PNG type, they are automatically processed as handwritten notes
+        elif (".png" in file.filename) or (".PNG" in file.filename):
 
-        file_path = os.path.join(
-            "Data", str(db.get_last_note_id() + 1) + ".pdf"
-        )
-        with open(file_path, "wb") as buff:
-            shutil.copyfileobj(file.file, buff)
+            file_id = db.get_last_note_id() + 1
+            file_path = os.path.join("Data", str(file_id) + ".png")
 
-        # Check if the file size is ok (i.e. number of tokens)
-        if funcs.check_token_no(file_path):
+            await anyio.to_thread.run_sync(write_upload, file_path)
 
+            res = await anyio.to_thread.run_sync(
+                funcs.convert_handwritten_to_pdf, file_path, int(file_id)
+            )
             db.add_notes(
                 request.headers.get("token"),
-                file.filename.replace(".pdf", ""),
-                db.get_last_note_id() + 1,
+                file.filename.replace(".png", ""),
+                file_id,
                 section_name,
             )
-            return {"message": UPLOAD_SUCCSESFUL}
+            return {"message": UPLOAD_SUCCSESFUL + res}
 
-        # Remove the file if it is too large
-        if os.path.exists(file_path):
+        # If the notes are of a JPG type, they are automatically processed as handwritten notes
+        elif (".JPG" in file.filename) or (".jpg" in file.filename):
 
-            os.remove(file_path)
+            file_id = db.get_last_note_id() + 1
+            file_path = os.path.join("Data", str(file_id) + ".jpg")
+
+            await anyio.to_thread.run_sync(write_upload, file_path)
+
+            res = await anyio.to_thread.run_sync(
+                funcs.convert_handwritten_to_pdf, file_path, int(file_id)
+            )
+            db.add_notes(
+                request.headers.get("token"),
+                file.filename.replace(".jpg", ""),
+                file_id,
+                section_name,
+            )
+            return {"message": UPLOAD_SUCCSESFUL + res}
+        # If they are neither PDF, JPG nor PNG, they are rejected
 
         return {
-            "message": "File is too large, please "
-            + "try with a different file or a non-handwritten file"
+            "message": "Incorrect filetype, must be PDF or JPG/PNG For handwritten content"
         }
-    # If the notes are of a PNG type, they are automatically processed as handwritten notes
-    elif (".png" in file.filename) or (".PNG" in file.filename):
-
-        file_id = db.get_last_note_id() + 1
-        file_path = os.path.join("Data", str(file_id) + ".png")
-
-        with open(file_path, "wb") as buff:
-            shutil.copyfileobj(file.file, buff)
-
-        res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
-        db.add_notes(
-            request.headers.get("token"),
-            file.filename.replace(".png", ""),
-            db.get_last_note_id() + 1,
-            section_name,
-        )
-        return {"message": UPLOAD_SUCCSESFUL + res}
-
-    # If the notes are of a JPG type, they are automatically processed as handwritten notes
-    elif (".JPG" in file.filename) or (".jpg" in file.filename):
-
-        file_id = db.get_last_note_id() + 1
-        file_path = os.path.join("Data", str(file_id) + ".jpg")
-
-        with open(file_path, "wb") as buff:
-            shutil.copyfileobj(file.file, buff)
-
-        res = funcs.convert_handwritten_to_pdf(file_path, int(file_id))
-        db.add_notes(
-            request.headers.get("token"),
-            file.filename.replace(".jpg", ""),
-            db.get_last_note_id() + 1,
-            section_name,
-        )
-        return {"message": UPLOAD_SUCCSESFUL + res}
-    # If they are neither PDF, JPG nor PNG, they are rejected
-
-    return {
-        "message": "Incorrect filetype, must be PDF or JPG/PNG For handwritten content"
-    }
 
 
 @app.post("/api/get_all_user_notes_tree")
@@ -360,18 +378,22 @@ async def get_export_flashcards(res_type: int, request: Request):
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     if res_type == 1:
-        return funcs.return_flashcard_exported_format(
-            db.get_current_notes_by_token(
-                request.headers.get("token")), res_type
+        return await anyio.to_thread.run_sync(
+            funcs.return_flashcard_exported_format,
+            db.get_current_notes_by_token(request.headers.get("token")),
+            res_type,
         )
     stud_name = db.validate_student(request.headers.get("token"))[1]
 
-    res = funcs.return_flashcard_exported_format(
-        db.get_current_notes_by_token(
-            request.headers.get("token")), res_type
+    res = await anyio.to_thread.run_sync(
+        funcs.return_flashcard_exported_format,
+        db.get_current_notes_by_token(request.headers.get("token")),
+        res_type,
     )
 
-    pd.DataFrame(res).to_csv(f"{stud_name}.csv", index=False)
+    await anyio.to_thread.run_sync(
+        functools.partial(pd.DataFrame(res).to_csv, f"{stud_name}.csv", index=False)
+    )
     return FileResponse(
         path=f"{stud_name}.csv",
         media_type="text/csv",
