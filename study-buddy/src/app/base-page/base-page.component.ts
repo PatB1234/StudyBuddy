@@ -187,8 +187,11 @@ export class BasePageComponent implements OnInit {
 
         clearTokenCookie();
         this._snackBar.open("Logged out", "Dismiss");
-        // Give the snackbar a moment to be seen before the page reloads.
-        setTimeout(() => location.reload(), 1500);
+        // Go to the login page directly. Reloading the current route only
+        // reached /login if an API call happened to come back 401, so any
+        // network or CORS failure (status 0) left the user sitting in the app
+        // looking signed in. A hard navigation also drops in-memory state.
+        setTimeout(() => location.assign('/login'), 900);
     }
 
     delete_user(): void {
@@ -208,7 +211,7 @@ export class BasePageComponent implements OnInit {
                 console.log("Account deletion response:", response);
                 clearTokenCookie();
                 this._snackBar.open("Account deleted", "Dismiss");
-                setTimeout(() => location.reload(), 1500);
+                setTimeout(() => location.assign('/login'), 900);
             },
             (error: any) => {
                 console.error("Error deleting account:", error);
