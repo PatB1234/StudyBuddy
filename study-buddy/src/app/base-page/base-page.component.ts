@@ -15,6 +15,7 @@ import { IntrojsService } from '../introjs/introjs.service';
 import { MatIcon } from '@angular/material/icon';
 import { MatIconButton } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { clearTokenCookie } from '../auth-cookie';
 
 interface ILink {
     path: string;
@@ -117,10 +118,6 @@ export class BasePageComponent implements OnInit {
         this.router.navigate(['/home'])
     }
 
-    delay(ms: number) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
     childrenAccessor = (node: TreeNode) => node.children ?? [];
     hasChild = (_: number, node: TreeNode) => !!node.children && node.children.length > 0;
     dataSource: any = [];
@@ -188,30 +185,35 @@ export class BasePageComponent implements OnInit {
     }
     logout(): void {
 
-        console.log("logout")
-        document.cookie = `token=INVALIDATED; SameSite=Lax;`;
-        this.delay(1500)
+        clearTokenCookie();
         this._snackBar.open("Logged out", "Dismiss");
-        location.reload()
+        // Give the snackbar a moment to be seen before the page reloads.
+        setTimeout(() => location.reload(), 1500);
     }
+
     delete_user(): void {
 
         const res = prompt("Are you sure you want to delete your account? This action cannot be undone. Type DELETE to confirm.");
-        if (res == "DELETE") {
+        if (res != "DELETE") {
 
-            this._snackBar.open("Account deleted", "Dismiss");
-            this.http.post(AppComponent.URL + "/delete_user", {}).subscribe((res: any) => {
-                console.log("Account deletion response:", res);
-            }, (error: any) => {
-                console.error("Error deleting account:", error);
-            });
-            document.cookie = `token=INVALIDATED; SameSite=Lax;`;
-            this.delay(1500)
-            // Snackbar message
-            this._snackBar.open("Account deleted", "Dismiss");
-            location.reload()
-        } else {
             this._snackBar.open("Account deletion cancelled", "Dismiss");
+            return;
         }
+
+        // Only report success, sign the user out and reload once the server
+        // has actually confirmed the deletion. This used to announce
+        // "Account deleted" twice, before the request had even been sent.
+        this.http.post(AppComponent.URL + "/delete_user", {}).subscribe(
+            (response: any) => {
+                console.log("Account deletion response:", response);
+                clearTokenCookie();
+                this._snackBar.open("Account deleted", "Dismiss");
+                setTimeout(() => location.reload(), 1500);
+            },
+            (error: any) => {
+                console.error("Error deleting account:", error);
+                this._snackBar.open("We could not delete your account. Please try again.", "Dismiss");
+            }
+        );
     }
 }

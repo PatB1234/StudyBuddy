@@ -1,5 +1,6 @@
 # Imports
 import ast
+import logging
 import os
 import re
 import json
@@ -28,11 +29,18 @@ MODEL_NAME = "gemini-3.5-flash"
 # account in GOOGLE_APPLICATION_CREDENTIALS) instead of the Gemini API key.
 USE_VERTEX_AI = True
 
+# Overridable per environment; the defaults are what the project actually
+# uses, so a fresh checkout works without any env setup. The old code passed
+# the project ID to os.getenv as if it were a variable name, which returned
+# None and only worked because Vertex fell back to the local gcloud default.
+GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "student-ai-st-chris")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "europe-west2")
+
 if USE_VERTEX_AI:
     client = genai.Client(
         vertexai=True,
-        project=os.getenv("student-ai-st-chris "),
-        location="europe-west2"
+        project=GOOGLE_CLOUD_PROJECT,
+        location=GOOGLE_CLOUD_LOCATION,
     )
 else:
     client = genai.Client(api_key=os.getenv("API_KEY"))
@@ -85,17 +93,46 @@ def _extract_response_text(response, context: str):
     )
 
 
-def check_token_no(file_path) -> bool:
+FILE_TOO_LARGE_MESSAGE = "File is too large, please try with a different file"
+AI_UNAVAILABLE_MESSAGE = (
+    "We could not process this file because the AI service is unavailable. "
+    "Please try again in a few minutes."
+)
+AI_AUTH_MESSAGE = (
+    "We could not process this file because the AI service rejected our "
+    "credentials. Please let the site owner know."
+)
+
+
+def check_token_no(file_path):
+    """Return None when the notes are usable, else a user-facing message.
+
+    Previously this returned a bare False for every failure, so an auth
+    problem or a network blip was reported to the student as "file is too
+    large" - which sent them off trying to shrink a perfectly fine PDF.
+    """
     try:
         with open(file_path, "rb") as f:
             file_payload = genai_types.Part.from_bytes(
                 data=f.read(), mime_type="application/pdf")
-        _ = client.models.count_tokens(
-            model=MODEL_NAME, contents=[file_payload]).total_tokens
-        return True
-    except MODEL_ERRORS:
+        client.models.count_tokens(model=MODEL_NAME, contents=[file_payload])
+        return None
+    except genai_errors.APIError as e:
+        code = getattr(e, "code", None) or getattr(e, "status_code", None)
+        logging.warning(
+            "count_tokens failed for %s (code=%s): %s", file_path, code, e)
 
-        return False
+        if code in (400, 413):
+
+            return FILE_TOO_LARGE_MESSAGE
+        if code in (401, 403):
+
+            return AI_AUTH_MESSAGE
+        return AI_UNAVAILABLE_MESSAGE
+    except (OSError, classes.GenericException):
+
+        logging.exception("Could not read uploaded file %s", file_path)
+        return AI_UNAVAILABLE_MESSAGE
 
 
 def data_cleaner(value, remove_new_line: bool, is_json: bool):  # Just cleans the data
@@ -105,7 +142,6 @@ def data_cleaner(value, remove_new_line: bool, is_json: bool):  # Just cleans th
     if remove_new_line:
 
         value = value.replace("\n", "")
-    value = value.title()
 
     if is_json:
 
@@ -147,40 +183,51 @@ def run_prompt(files, prompt):  # Base Function
         return str(e)
 
 
-def flashcards(note_id):
-    if (note_id == -1 or note_id == '-1'):
+NO_NOTES_SELECTED_DECK = [
+    {
+        "Front": "You forgot to select flashcards",
+        "Back": "Select flashcards on the left-hand side to use this function",
+    }
+]
 
-        file_path = os.path.join("card_decks", str(note_id) + ".json")
-        with open(file_path, "w") as f:
+FLASHCARD_PROMPT = (
+    "Make flashcards for the notes given. "
+    + "Make these short flashcards witha back of no more than 20 words."
+    + " Return the data as a  json object without"
+    + " any additional formatting or rich text backticks/identifiers "
+    + "LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier."
+    + " A good example of how you should do it is this: "
+    + "[{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, "
+    + "{'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}]"
+)
 
-            f.write(json.dumps([{'Front': 'You forgot to select flashcards',
-                    'Back': 'Select flashcards on the left-hand side to use this function'}], indent=4))
 
-    file_path = os.path.join("card_decks", str(note_id) + ".json")
+def _deck_path(note_id) -> str:
 
-    if os.path.exists(file_path):
+    return os.path.join("card_decks", str(note_id) + ".json")
 
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-            print(data)
-            return data
 
+def _read_cached_deck(note_id):
+    """Return the deck saved for this note, or None when there isn't one."""
+    file_path = _deck_path(note_id)
+    if not os.path.exists(file_path):
+
+        return None
+
+    try:
+        with open(file_path, "r") as file:
+            return json.load(file)
+    except (OSError, ValueError):
+
+        # A truncated or corrupt cache file should just be regenerated.
+        return None
+
+
+def _generate_deck(note_id):
+    """Ask the model for a fresh deck and cache it, replacing any existing one."""
     uploaded_notes = upload_notes(note_id)
     try:
-        cards = generate(
-            [
-                uploaded_notes,
-                "Make flashcards for the notes given. "
-                + "Make these short flashcards witha back of no more than 20 words."
-                + " Return the data as a  json object without"
-                + " any additional formatting or rich text backticks/identifiers "
-                + "LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier."
-                + " A good example of how you should do it is this: "
-                + "[{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, "
-                + "{'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}]",
-            ],
-            "flashcard",
-        )
+        cards = generate([uploaded_notes, FLASHCARD_PROMPT], "flashcard")
     except MODEL_ERRORS as e:
         return [
             {
@@ -188,81 +235,37 @@ def flashcards(note_id):
                 "Back": str(e),
             }
         ]
-    print(cards)
-    generated_flaschards = data_cleaner(cards, False, True)
 
-    json_str = json.dumps(generated_flaschards, indent=4)
-    file_path = os.path.join("card_decks", str(note_id) + ".json")
-    if not os.path.exists(file_path):
+    generated_flashcards = data_cleaner(cards, False, True)
 
-        with open(file_path, "w") as f:
+    os.makedirs("card_decks", exist_ok=True)
+    with open(_deck_path(note_id), "w") as f:
+        f.write(json.dumps(generated_flashcards, indent=4))
 
-            f.write(json_str)
-    else:
-        os.remove(file_path)
+    return generated_flashcards
 
-        with open(file_path, "w") as f:
-            f.write(json_str)
 
-    return generated_flaschards
+def flashcards(note_id):
+    """Return the cached deck for these notes, generating one if needed."""
+    if str(note_id) == "-1":
+
+        return NO_NOTES_SELECTED_DECK
+
+    cached = _read_cached_deck(note_id)
+    if cached is not None:
+
+        return cached
+
+    return _generate_deck(note_id)
 
 
 def regenerate_flashcards(note_id):
-    if (note_id == -1 or note_id == '-1'):
+    """Always ask the model for a new deck, discarding any cached one."""
+    if str(note_id) == "-1":
 
-        file_path = os.path.join("card_decks", str(note_id) + ".json")
-        with open(file_path, "w") as f:
+        return NO_NOTES_SELECTED_DECK
 
-            f.write(json.dumps([{'Front': 'You forgot to select flashcards',
-                    'Back': 'Select flashcards on the left-hand side to use this function'}], indent=4))
-
-        if os.path.exists(file_path):
-
-            with open(file_path, 'r') as file:
-                data = json.load(file)
-                print(data)
-                return data
-
-    uploaded_notes = upload_notes(note_id)
-    try:
-        cards = generate(
-            [
-                uploaded_notes,
-                "Make flashcards for the notes given. "
-                + "Make these short flashcards witha back of no more than 20 words."
-                + " Return the data as a  json object without"
-                + " any additional formatting or rich text backticks/identifiers "
-                + "LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier."
-                + " A good example of how you should do it is this: "
-                + "[{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, "
-                + "{'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}]",
-            ],
-            "flashcard",
-        )
-    except MODEL_ERRORS as e:
-        return [
-            {
-                "Front": "Unable to generate flashcards right now",
-                "Back": str(e),
-            }
-        ]
-    generated_flaschards = data_cleaner(cards, False, True)
-
-    json_str = json.dumps(generated_flaschards, indent=4)
-    file_path = os.path.join("card_decks", str(note_id) + ".json")
-
-    if not os.path.exists(file_path):
-
-        with open(file_path, "w") as f:
-            f.write(json_str)
-    else:
-        os.remove(file_path)
-
-        with open(file_path, "w") as f:
-
-            f.write(json_str)
-
-    return generated_flaschards
+    return _generate_deck(note_id)
 
 
 def summariser(note_id):  # Done
@@ -278,27 +281,28 @@ def custom_prompt(prompt, note_id):  # Done
     return run_prompt(uploaded_notes, prompt)
 
 
+def _cached_questions_for(note_id):
+    """Return the cached question list for note_id, creating it if absent.
+
+    Always looked up by note_id rather than by a saved index: entries are
+    removed by delete_notes_by_id, so an index captured earlier can go stale.
+    Callers must hold CACHED_QUESTIONS_LOCK.
+    """
+    for entry in CACHED_QUESTIONS:
+        if entry[0] == note_id:
+            return entry[1]
+
+    CACHED_QUESTIONS.append([note_id, []])
+    return CACHED_QUESTIONS[-1][1]
+
+
 def make_questions(note_id):  # Done
     with CACHED_QUESTIONS_LOCK:
-        curr_questions = []
-        index = -1
-        for i, val in enumerate(CACHED_QUESTIONS):
-
-            if val[0] == note_id:
-                curr_questions = val[1]
-                index = i
-                break
-        print(note_id, index)
-        if index == -1:
-
-            CACHED_QUESTIONS.append([note_id, []])
-            index = len(CACHED_QUESTIONS) - 1
-
-        needs_generation = curr_questions == [] or len(curr_questions) < 3
-        if not needs_generation:
-
-            CACHED_QUESTIONS[index][1].pop(0)
-            return curr_questions[0]
+        cached = _cached_questions_for(note_id)
+        # Serve from the bank until it is empty. pop returns the question we
+        # hand back, so nothing is silently dropped.
+        if cached:
+            return cached.pop(0)
 
     # The Gemini call happens outside the lock so that concurrent requests
     # for *different* notes aren't serialised behind a single network call.
@@ -318,14 +322,12 @@ def make_questions(note_id):  # Done
         # data_cleaner slices out the first [...] array, so a stray markdown
         # fence or lead-in sentence around the list doesn't break parsing.
         res = data_cleaner(res, True, True)
-        if len(res) < 2:
+        if not res:
             return "Error generating questions, please try again in a few minutes"
         with CACHED_QUESTIONS_LOCK:
-            CACHED_QUESTIONS[index][1] = res
-            CACHED_QUESTIONS[index][1].pop(0)
-            curr_questions = CACHED_QUESTIONS[index][1]
-        print(CACHED_QUESTIONS)
-        return curr_questions[0]
+            cached = _cached_questions_for(note_id)
+            cached[:] = res
+            return cached.pop(0)
     except MODEL_ERRORS:
 
         return "Error generating questions, please try again in a few minutes"
@@ -396,6 +398,34 @@ def return_flashcard_exported_format(note_id, note_type):
 #         return "Could not convert handwritten pdf to text"
 
 
+# fpdf 1.7.2 writes latin-1 only. That covers Western European accents
+# (cafe, naive, resume survive), but silently turns typographic punctuation,
+# Greek letters and maths symbols into "?" - exactly what science notes are
+# full of. Map those to readable ASCII before encoding.
+PDF_CHARACTER_REPLACEMENTS = {
+    "\u2014": "-", "\u2013": "-", "\u2212": "-",
+    "\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"',
+    "\u2026": "...", "\u00b7": ".", "\u2022": "-",
+    "\u2248": "~=", "\u2260": "!=", "\u2264": "<=", "\u2265": ">=",
+    "\u00d7": "x", "\u00f7": "/", "\u221a": "sqrt", "\u221e": "infinity",
+    "\u2211": "sum", "\u220f": "product", "\u222b": "integral",
+    "\u2202": "d", "\u2207": "grad", "\u00b0": " degrees",
+    "\u0394": "Delta", "\u03b4": "delta", "\u03bc": "u", "\u03c0": "pi",
+    "\u03b1": "alpha", "\u03b2": "beta", "\u03b3": "gamma",
+    "\u03bb": "lambda", "\u03c3": "sigma", "\u03a9": "Omega",
+    "\u03b8": "theta", "\u03c6": "phi", "\u03c9": "omega",
+    "\u2192": "->", "\u2190": "<-", "\u21d2": "=>", "\u00b1": "+/-",
+}
+
+
+def to_pdf_safe_text(data: str) -> str:
+    """Make text writable by a latin-1 PDF without losing its meaning."""
+    for source, replacement in PDF_CHARACTER_REPLACEMENTS.items():
+
+        data = data.replace(source, replacement)
+    return data.encode("latin-1", errors="replace").decode("latin-1")
+
+
 def convert_handwritten_to_pdf(file_path, file_id):
 
     try:
@@ -421,7 +451,7 @@ def convert_handwritten_to_pdf(file_path, file_id):
         pdf.add_page()
         pdf.set_font("Arial", size=12)
         # Remove special characters to avoid an FPDF Crash
-        safe_data = data.encode("latin-1", errors="replace").decode("latin-1")
+        safe_data = to_pdf_safe_text(data)
         pdf.multi_cell(0, 10, txt=safe_data)
         os.makedirs("Data", exist_ok=True)
         pdf.output(f"Data/{file_id}.pdf")

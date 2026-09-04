@@ -42,5 +42,41 @@
             </div>
         </div>
 
+        <section class="testimonials" (mouseenter)="pause()" (mouseleave)="resume()"
+            (focusin)="pause()" (focusout)="resume()">
+
+            <h2 class="testimonials-title">What students say</h2>
+
+            <div class="carousel" role="group" aria-roledescription="carousel"
+                aria-label="Student testimonials">
+
+                <button type="button" class="carousel-arrow" aria-label="Previous testimonial"
+                    (click)="previous(); resume()">&#8249;</button>
+
+                <div class="carousel-viewport">
+                    <div class="carousel-track"
+                        [style.transform]="'translateX(-' + (activeIndex * 100) + '%)'">
+                        @for (item of testimonials; track $index) {
+                        <figure class="testimonial" [attr.aria-hidden]="item !== testimonials[activeIndex]">
+                            <blockquote class="testimonial-quote">{{ item.quote }}</blockquote>
+                            <figcaption class="testimonial-author">{{ item.role }}</figcaption>
+                        </figure>
+                        }
+                    </div>
+                </div>
+
+                <button type="button" class="carousel-arrow" aria-label="Next testimonial"
+                    (click)="next(); resume()">&#8250;</button>
+            </div>
+
+            <div class="carousel-dots">
+                @for (item of testimonials; track $index; let i = $index) {
+                <button type="button" class="carousel-dot" [class.is-active]="i === activeIndex"
+                    [attr.aria-current]="i === activeIndex" [attr.aria-label]="'Show testimonial ' + (i + 1)"
+                    (click)="selectAndRestart(i)"></button>
+                }
+            </div>
+        </section>
+
     </div>
 </div>

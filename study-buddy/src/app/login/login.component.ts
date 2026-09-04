@@ -11,6 +11,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { setTokenCookie } from '../auth-cookie';
 
 export interface Task {
     name: string;
@@ -58,20 +59,36 @@ export class LoginComponent {
         if (this.loginForm.invalid) {
             return;
         }
-        this.http.post(this.URL + "/check_student_login", this.loginForm.value).subscribe((res: any) => {
-            if (typeof (res) == 'string') {
-                document.cookie = `token=${res}; SameSite=Lax;`;
-                this._snackBar.open("Successful, redirecting", "Dismiss");
+        this.http.post(this.URL + "/check_student_login", this.loginForm.value).subscribe(
+            (res: any) => {
+                // The server now replies { token, created }; a bare string is
+                // the older shape and is still accepted.
+                const token = typeof res === 'string' ? res : res?.token;
+
+                if (!token) {
+                    this._snackBar.open("The details entered does not match the details associated with this email, please try again", "Dismiss");
+                    return;
+                }
+
+                setTokenCookie(token);
                 localStorage.setItem('buttonExplanationCompleted', 'false');
                 localStorage.setItem('editUserExplanation', 'false');
+
+                // Spell out which of the two things just happened, so a
+                // mistyped email cannot look like a normal sign-in.
+                if (res?.created) {
+                    this._snackBar.open(`No account existed for ${this.loginForm.value.email}, so we created a new one for you.`, "Dismiss");
+                } else {
+                    this._snackBar.open("Welcome back! Redirecting...", "Dismiss");
+                }
+
                 this.router.navigate(['/home'])
-
-            } else {
-
-                this._snackBar.open("The details entered does not match the details associated with this email, please try again", "Dismiss");
-
+            },
+            (error: any) => {
+                console.error("Login failed:", error);
+                this._snackBar.open("We could not reach the server. Please try again.", "Dismiss");
             }
-        })
+        )
 
     }
 }

@@ -6,6 +6,7 @@ If not, a False is returned by the token validator, resulting in a 401 error in 
 
 import functools
 import os
+import tempfile
 import anyio
 import shutil
 
@@ -13,17 +14,24 @@ import pandas as pd
 from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTask
 
 import classes
 import db
 import funcs
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="/"), name="static")
 
 # Serialises note-ID allocation so concurrent uploads can't collide
 UPLOAD_LOCK = anyio.Lock()
+
+def _remove_file(path: str) -> None:
+    """Delete a temporary export once its response has been sent."""
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+
 
 TOKEN_MESSAGE = "Invalid token"
 UPLOAD_SUCCSESFUL = "Upload successful"
@@ -132,23 +140,26 @@ async def create_user_post(user: classes.PostStudentModel):
 
 @app.post("/api/check_student_login")
 async def check_student_login_post(user: classes.PostLoginCheckStudentModel):
+    """Log in, or sign up if the email is new.
 
-    students = db.get_all_students()
-    found = False
-    for stu in students:
+    The response distinguishes the two outcomes via "created" so the client
+    can say which one happened. Without that, mistyping your email silently
+    drops you into a brand new empty account that looks exactly like a
+    successful login.
+    """
+    if db.get_user_by_email(user.email) != "":
 
-        if stu.email == user.email:
+        # Account has been found with this email, check the password
+        token = db.check_student_login(user.email, user.password)
+        if token == 0:
 
-            found = True
-            # Account has been found with this email, check the password
-            return db.check_student_login(user.email, user.password)
+            return {"token": None, "created": False}
+        return {"token": token, "created": False}
 
-    if not found:
-
-        return db.create_student_with_token(
-            db.Student(name=user.name, email=user.email,
-                       password=user.password)
-        )
+    token = db.create_student_with_token(
+        db.Student(name=user.name, email=user.email, password=user.password)
+    )
+    return {"token": token, "created": True}
 
 
 @app.get("/api/get_student_credentials")
@@ -157,8 +168,16 @@ async def get_student_by_token(request: Request):
     token_res = db.validate_student(request.headers.get("token"))
     if not token_res:
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
-    name, email, uid = token_res  # Unpack the validated data
-    return {"name": name, "email": email, "id": uid}
+
+    # The token identifies who is asking, but the database is the source of
+    # truth for their details. Reading the name straight off the JWT meant a
+    # rename did not show up until the token was reissued, up to 7 days later.
+    name, email, uid = token_res
+    student = db.get_user_by_email(email)
+    if student == "":
+
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
+    return {"name": student.name, "email": student.email, "id": student.id}
 
 
 @app.post("/api/edit_user")
@@ -168,9 +187,12 @@ async def edit_user(new_details: classes.EditUserModel, request: Request):
     if not token_res:
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
+    # The account edited is always the one the token belongs to. A
+    # client-supplied email must never be able to point the edit at
+    # somebody else's account, so new_details.email is deliberately ignored.
     return db.edit_user(
         new_details.newName,
-        new_details.email,
+        token_res[1],
         new_details.oldPassword,
         new_details.newPassword,
     )
@@ -208,70 +230,58 @@ async def post_add_notes(
         with open(dest_path, "wb") as buff:
             shutil.copyfileobj(file.file, buff)
 
+    # Match on the real extension rather than a substring of the name: the
+    # old check treated "notes.pdf.txt" as a PDF, rejected "NOTES.PDF"
+    # outright, and had no branch at all for ".jpeg".
+    extension = os.path.splitext(file.filename)[1].lower()
+    title = os.path.splitext(file.filename)[0]
+
     async with UPLOAD_LOCK:
 
-        if ".pdf" in file.filename:
-
-            if is_handwritten == 1:
-
-                file_id = db.get_last_note_id() + 1
-                file_path = os.path.join("Data", str(file_id) + ".pdf")
-
-                await anyio.to_thread.run_sync(write_upload, file_path)
-
-                res = await anyio.to_thread.run_sync(
-                    funcs.convert_handwritten_to_pdf, file_path, int(file_id)
-                )
-
-                if await anyio.to_thread.run_sync(funcs.check_token_no, file_path):
-
-                    db.add_notes(
-                        request.headers.get("token"),
-                        file.filename.replace(".pdf", ""),
-                        file_id,
-                        section_name,
-                    )
-                    return {"message": UPLOAD_SUCCSESFUL + res}
-
-                # Remove the file if it is too large
-                if os.path.exists(file_path):
-
-                    os.remove(file_path)
-
-                return {
-                    "message": "File is too large, please try with a different file "
-                    + "or a select the handwritten flag if your pdf is a handwritten note"
-                }
+        if extension == ".pdf":
 
             file_id = db.get_last_note_id() + 1
             file_path = os.path.join("Data", str(file_id) + ".pdf")
             await anyio.to_thread.run_sync(write_upload, file_path)
 
-            # Check if the file size is ok (i.e. number of tokens)
-            if await anyio.to_thread.run_sync(funcs.check_token_no, file_path):
+            res = ""
+            if is_handwritten == 1:
+
+                res = await anyio.to_thread.run_sync(
+                    funcs.convert_handwritten_to_pdf, file_path, int(file_id)
+                )
+
+            # None means the notes are usable; anything else is a message
+            # explaining what actually went wrong.
+            problem = await anyio.to_thread.run_sync(
+                funcs.check_token_no, file_path)
+
+            if problem is None:
 
                 db.add_notes(
                     request.headers.get("token"),
-                    file.filename.replace(".pdf", ""),
+                    title,
                     file_id,
                     section_name,
                 )
-                return {"message": UPLOAD_SUCCSESFUL}
+                return {"message": UPLOAD_SUCCSESFUL + res}
 
-            # Remove the file if it is too large
             if os.path.exists(file_path):
 
                 os.remove(file_path)
 
-            return {
-                "message": "File is too large, please "
-                + "try with a different file or a non-handwritten file"
-            }
-        # If the notes are of a PNG type, they are automatically processed as handwritten notes
-        elif (".png" in file.filename) or (".PNG" in file.filename):
+            if problem == funcs.FILE_TOO_LARGE_MESSAGE and is_handwritten != 1:
+
+                problem += (
+                    ", or tick the handwritten box if these are handwritten notes"
+                )
+            return {"message": problem}
+
+        # Images are always processed as handwritten notes.
+        if extension in (".png", ".jpg", ".jpeg"):
 
             file_id = db.get_last_note_id() + 1
-            file_path = os.path.join("Data", str(file_id) + ".png")
+            file_path = os.path.join("Data", str(file_id) + extension)
 
             await anyio.to_thread.run_sync(write_upload, file_path)
 
@@ -280,32 +290,13 @@ async def post_add_notes(
             )
             db.add_notes(
                 request.headers.get("token"),
-                file.filename.replace(".png", ""),
+                title,
                 file_id,
                 section_name,
             )
             return {"message": UPLOAD_SUCCSESFUL + res}
 
-        # If the notes are of a JPG type, they are automatically processed as handwritten notes
-        elif (".JPG" in file.filename) or (".jpg" in file.filename):
-
-            file_id = db.get_last_note_id() + 1
-            file_path = os.path.join("Data", str(file_id) + ".jpg")
-
-            await anyio.to_thread.run_sync(write_upload, file_path)
-
-            res = await anyio.to_thread.run_sync(
-                funcs.convert_handwritten_to_pdf, file_path, int(file_id)
-            )
-            db.add_notes(
-                request.headers.get("token"),
-                file.filename.replace(".jpg", ""),
-                file_id,
-                section_name,
-            )
-            return {"message": UPLOAD_SUCCSESFUL + res}
-        # If they are neither PDF, JPG nor PNG, they are rejected
-
+        # If they are neither PDF, JPG/JPEG nor PNG, they are rejected
         return {
             "message": "Incorrect filetype, must be PDF or JPG/PNG For handwritten content"
         }
@@ -383,22 +374,28 @@ async def get_export_flashcards(res_type: int, request: Request):
             db.get_current_notes_by_token(request.headers.get("token")),
             res_type,
         )
-    stud_name = db.validate_student(request.headers.get("token"))[1]
-
     res = await anyio.to_thread.run_sync(
         funcs.return_flashcard_exported_format,
         db.get_current_notes_by_token(request.headers.get("token")),
         res_type,
     )
 
+    # A unique file per request: the export used to be written to
+    # "<email>.csv" in the working directory, so two people exporting at the
+    # same time overwrote each other's download.
+    handle, csv_path = tempfile.mkstemp(prefix="flashcards-", suffix=".csv")
+    os.close(handle)
+
     await anyio.to_thread.run_sync(
-        functools.partial(pd.DataFrame(res).to_csv,
-                          f"{stud_name}.csv", index=False)
+        functools.partial(pd.DataFrame(res).to_csv, csv_path, index=False)
     )
+    # Cleanup runs once the response has been sent, so it no longer depends
+    # on the client remembering to call /api/delete_flashcard_request.
     return FileResponse(
-        path=f"{stud_name}.csv",
+        path=csv_path,
         media_type="text/csv",
-        filename=f"{stud_name}.csv",
+        filename="Flashcards.csv",
+        background=BackgroundTask(_remove_file, csv_path),
     )
 
 
@@ -411,16 +408,7 @@ async def get_delete_flashcard(request: Request):
 
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
-    email = db.validate_student(request.headers.get("token"))[1]
-    if os.path.exists(f"{email}.csv"):
-
-        db.reset_selected_note_by_token(request.headers.get("token"))
-        try:
-
-            os.remove(f"{email}.csv")
-            return True
-        except classes.GenericException:
-
-            return False
-
-    return False
+    # The exported file is now cleaned up automatically once the download
+    # response completes, so there is nothing left for this to delete. The
+    # endpoint stays so existing clients keep working.
+    return True

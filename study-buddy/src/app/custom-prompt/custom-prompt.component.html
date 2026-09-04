@@ -7,8 +7,8 @@
             <mat-label>Type your prompt here</mat-label>
             <textarea matInput formControlName="customPrompt" class="textarea-input" rows="5"></textarea>
         </mat-form-field>
-        <button mat-raised-button type="submit" color="primary" class="submit-button">
-            Submit
+        <button mat-raised-button type="submit" color="primary" class="submit-button" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Working...' : 'Submit' }}
         </button>
     </form>
 </div>

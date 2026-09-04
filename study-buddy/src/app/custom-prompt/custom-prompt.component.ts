@@ -13,6 +13,8 @@ import { MatCardModule } from '@angular/material/card';
 import { AppComponent } from '../app.component';
 import { MarkdownModule } from 'ngx-markdown';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { LoadingService } from '../loading.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-custom-prompt',
@@ -36,7 +38,7 @@ export class CustomPromptComponent {
 
 
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private loadingService: LoadingService) { }
 
     URL: any = AppComponent.URL;
     private _snackBar = inject(MatSnackBar);
@@ -49,12 +51,33 @@ export class CustomPromptComponent {
     });
     result: any = '';
 
+    // Guards against a second request being fired while one is in flight.
+    isSubmitting = false;
+
     onSubmit() {
-        this._snackBar.open("Please wait while we process your request", "Dismiss")
-        this.http.post(this.URL + "/custom_prompt", this.customPromptForm.value).subscribe((res: any) => {
+        if (this.isSubmitting) {
+            return;
+        }
+        if (!this.customPromptForm.value.customPrompt?.trim()) {
+            this._snackBar.open("Please type a prompt before submitting.", "Dismiss");
+            return;
+        }
 
-
-            this.result = res + "\n-----------------------------------------------------------------\n" + this.result;
-        })
+        this.isSubmitting = true;
+        this.loadingService.start("Working through your notes...");
+        this.http.post(this.URL + "/custom_prompt", this.customPromptForm.value)
+            .pipe(finalize(() => {
+                this.isSubmitting = false;
+                this.loadingService.stop();
+            }))
+            .subscribe(
+                (res: any) => {
+                    this.result = res + "\n-----------------------------------------------------------------\n" + this.result;
+                },
+                (error: any) => {
+                    console.error("Error running custom prompt:", error);
+                    this._snackBar.open("We could not run that prompt right now. Please try again.", "Dismiss");
+                }
+            );
     }
 }

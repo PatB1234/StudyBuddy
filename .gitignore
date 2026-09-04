@@ -1,5 +1,6 @@
 /.env
-/__pycache__
+__pycache__/
+*.pyc
 /env
 
 # windsurf rules
@@ -19,3 +20,10 @@ Backend/Data
 *.sqlite3
 /Baceknd/db/*.db
 ssh/*
+
+# Generated flashcard caches
+Backend/card_decks/
+
+# OS / tooling artefacts
+.DS_Store
+.pytest_cache/

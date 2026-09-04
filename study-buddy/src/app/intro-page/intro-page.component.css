@@ -4,26 +4,76 @@ body {
     background-color: var(--color-bg);
 }
 
+/*
+ * The intro page is sized to sit inside one viewport on a laptop or tablet.
+ * Everything that costs vertical space (title, images, padding, the carousel)
+ * scales with clamp() against vh, so a shorter screen compresses rather than
+ * pushing content below the fold. Phones and very short windows opt out at the
+ * bottom of this file and scroll normally.
+ */
 .intro-body {
 
     background-color: var(--color-bg);
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    min-height: 100vh;
+    /* dvh so mobile browser chrome appearing does not clip the layout */
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .intro-page {
     background-color: var(--color-bg);
-    padding-top: 10px;
-    padding-left: 18%;
-    padding-right: 18%;
-    padding-bottom: 50px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    /* Centre the block so a tall screen does not leave the page top-heavy.
+       "safe" falls back to flex-start when content overflows, which keeps the
+       top of the page reachable instead of overflowing past the scroll origin. */
+    justify-content: safe center;
+    gap: clamp(0.5rem, 1.4vh, 1.25rem);
+    padding: clamp(0.75rem, 2vh, 1.5rem) clamp(1rem, 6vw, 7rem);
+    box-sizing: border-box;
+    /* Safety valve: if a viewport is still too short once everything has
+       compressed, scroll rather than clip. */
+    overflow: auto;
+}
+
+.intro-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 0;
+}
+
+.header-spacer {
+    flex: 1;
+}
+
+.intro-title {
+    font-size: clamp(1.5rem, 3.4vh, 2.6rem);
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text);
+}
+
+.intro-page>p {
+    margin: 0;
+    font-size: clamp(0.85rem, 1.7vh, 1rem);
+    line-height: 1.5;
+    color: var(--color-text-muted);
 }
 
 .features-section {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2rem;
-    padding: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    align-items: stretch;
+    gap: clamp(0.6rem, 1.4vw, 1.5rem);
+    padding: 0;
     background-color: var(--color-bg);
     font-family: "Segoe UI", sans-serif;
 }
@@ -44,76 +94,242 @@ body {
 
 .feature-card img {
     width: 100%;
-    height: 200px;
+    height: clamp(70px, 15vh, 190px);
+    /* Cards are a uniform size but the screenshots run from 1.13:1 to 5.82:1,
+       so the box is filled with image rather than letterboxed. Anchoring left
+       keeps each screenshot's heading in frame and crops the trailing edge,
+       which is the half that carries nothing but body text. */
     object-fit: cover;
+    object-position: left center;
+    display: block;
 }
 
 .feature-card h3 {
-    margin: 1rem;
-    font-size: 1.2rem;
+    margin: clamp(0.4rem, 1vh, 0.9rem) clamp(0.6rem, 1vw, 1rem) 0;
+    font-size: clamp(0.95rem, 1.9vh, 1.2rem);
     color: var(--color-text);
 }
 
 .feature-card p {
-    margin: 0 1rem 1rem;
-    font-size: 0.95rem;
+    margin: clamp(0.2rem, 0.6vh, 0.5rem) clamp(0.6rem, 1vw, 1rem) clamp(0.5rem, 1.2vh, 1rem);
+    font-size: clamp(0.75rem, 1.5vh, 0.95rem);
     color: var(--color-text-muted);
 }
 
 .cta-buttons {
     text-align: center;
-    margin-top: 1rem;
-    padding-bottom: 1rem;
+    margin: 0;
+    padding: 0;
 }
 
 .cta-buttons button {
     background-color: var(--color-primary);
     color: var(--color-surface);
     border: none;
-    padding: 0.75rem 1.5rem;
-    margin: 0.5rem;
+    padding: clamp(0.45rem, 1.1vh, 0.75rem) clamp(0.9rem, 1.6vw, 1.5rem);
+    margin: 0.25rem;
     border-radius: 0.5rem;
-    font-size: 1rem;
+    font-size: clamp(0.8rem, 1.6vh, 1rem);
     cursor: pointer;
     transition: background-color 0.3s ease;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: nowrap;
-}
-
-.btn {
-    padding: 0.8rem 1.4rem;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: 0.2s ease;
 }
 
 .cta-buttons button:hover {
     background-color: var(--color-primary-hover);
 }
 
-.intro-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-    gap: 1rem;
-}
-
-.header-spacer {
-    flex: 1;
-}
-
-.intro-title {
-    font-size: 2.8rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--color-text);
+.btn {
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s ease;
 }
 
 .cta-buttons.inline {
     display: flex;
     gap: 0.75rem;
+}
+
+/* Testimonials carousel.
+   Cards use the same surface, radius and shadow as .feature-card, and the
+   controls use --color-primary, so the section reads as part of the same page
+   rather than a separate widget. */
+.testimonials {
+    margin: 0;
+    padding: 0;
+}
+
+.testimonials-title {
+    font-size: clamp(1.05rem, 2.2vh, 1.5rem);
+    font-weight: 700;
+    color: var(--color-text);
+    text-align: center;
+    margin: 0 0 clamp(0.5rem, 1.2vh, 1rem);
+}
+
+.carousel {
+    display: flex;
+    align-items: stretch;
+    gap: clamp(0.4rem, 0.8vw, 0.75rem);
+}
+
+.carousel-viewport {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 1rem;
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.5s ease;
+}
+
+.testimonial {
+    flex: 0 0 100%;
+    margin: 0;
+    padding: clamp(0.9rem, 2.2vh, 1.75rem) clamp(1rem, 2vw, 2rem);
+    box-sizing: border-box;
+    background: var(--color-surface-alt);
+    border-radius: 1rem;
+    /* Plain --color-border first as a fallback, then a teal-tinted version so
+       the card reads as a distinct panel against the page background. */
+    border: 1px solid var(--color-border);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 32%, var(--color-border));
+    box-shadow: 0 12px 28px rgba(31, 42, 46, 0.14);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: clamp(96px, 16vh, 190px);
+}
+
+.testimonial-quote {
+    margin: 0;
+    font-size: clamp(0.85rem, 1.75vh, 1.05rem);
+    line-height: 1.55;
+    color: var(--color-text);
+}
+
+.testimonial-quote::before {
+    content: '\201C';
+}
+
+.testimonial-quote::after {
+    content: '\201D';
+}
+
+.testimonial-author {
+    margin-top: clamp(0.4rem, 1.1vh, 1rem);
+    font-size: clamp(0.72rem, 1.4vh, 0.9rem);
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.carousel-arrow {
+    flex: 0 0 auto;
+    align-self: center;
+    width: clamp(1.9rem, 4vh, 2.5rem);
+    height: clamp(1.9rem, 4vh, 2.5rem);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font-size: clamp(1.1rem, 2.4vh, 1.5rem);
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.carousel-arrow:hover {
+    background: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.carousel-arrow:focus-visible,
+.carousel-dot:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: clamp(0.5rem, 1.2vh, 1.25rem);
+}
+
+.carousel-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-border);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.carousel-dot.is-active {
+    background: var(--color-primary);
+    transform: scale(1.3);
+}
+
+/* The obvious exceptions: phones and very short windows stop trying to fit a
+   whole page of content into one screen and just scroll. */
+@media (max-width: 760px),
+(max-height: 600px) {
+
+    .intro-body {
+        min-height: 0;
+        height: auto;
+    }
+
+    .intro-page {
+        justify-content: flex-start;
+        overflow: visible;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .intro-title {
+        font-size: 1.75rem;
+    }
+
+    .intro-header {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .feature-card img {
+        height: 150px;
+    }
+
+    .feature-card h3 {
+        font-size: 1.1rem;
+    }
+
+    .feature-card p {
+        font-size: 0.9rem;
+    }
+
+    .testimonial {
+        min-height: 0;
+        padding: 1.25rem;
+    }
+
+    .testimonial-quote {
+        font-size: 0.95rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .carousel-track,
+    .carousel-dot,
+    .carousel-arrow,
+    .feature-card {
+        transition: none;
+    }
 }

@@ -28,7 +28,9 @@ class PostLoginCheckStudentModel(BaseModel):
 class EditUserModel(BaseModel):
 
     newName: str = ""
-    email: str
+    # Accepted for backwards compatibility with the existing client, but
+    # ignored: the server edits whichever account the token identifies.
+    email: str = ""
     oldPassword: str
     newPassword: str = ""
 

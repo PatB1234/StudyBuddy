@@ -31,7 +31,7 @@ logging.getLogger("passlib").setLevel(logging.ERROR)
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 DATABASE_URL = "db/users.db"
-ACCESS_TOKEN_EXPIRE_MINUTES = 10080  # 7 Days
+ACCESS_TOKEN_EXPIRE_MINUTES = 2880  # 2 Days
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -50,38 +50,43 @@ def verify_password(unhashed, hashed):
     return pwd_context.verify(unhashed, hashed)
 
 
-def cursor_func(function, fetch: bool = False):
+def _execute(query, values=(), fetch: bool = False):
+    """Run one statement, returning its rows when fetch is set.
 
+    sqlite raises driver.Error. The previous handler caught
+    classes.GenericException, which sqlite never raises, so the rollback was
+    unreachable. Errors still propagate to the caller as before, but the
+    transaction is now actually rolled back and logged first, and the
+    connection is always closed - one was leaked per call.
+    """
     database = driver.connect(DATABASE_URL)
-    cursor = database.cursor()
     try:
 
-        cursor.execute(function)
+        cursor = database.cursor()
+        cursor.execute(query, values)
         if fetch:
-            records = cursor.fetchall()
-            return records
+            return cursor.fetchall()
 
         database.commit()
-    except classes.GenericException:
+        return None
+    except driver.Error:
 
         database.rollback()
+        logging.exception("Database error running: %s", query)
+        raise
+    finally:
+
+        database.close()
+
+
+def cursor_func(function, fetch: bool = False, values=()):
+
+    return _execute(function, values, fetch)
 
 
 def cursor_func_with_values(function, values,  fetch: bool = False):
 
-    database = driver.connect(DATABASE_URL)
-    cursor = database.cursor()
-    try:
-
-        cursor.execute(function, values)
-        if fetch:
-            records = cursor.fetchall()
-            return records
-
-        database.commit()
-    except classes.GenericException:
-
-        database.rollback()
+    return _execute(function, values, fetch)
 
 
 def create_tables():
@@ -101,12 +106,12 @@ def create_tables():
 
 
 def get_last_id_students():
+    # MAX rather than the last row: rows are not ordered by id, and deleting
+    # the newest user made the next signup reuse their id.
+    rows = cursor_func("SELECT MAX(id) FROM STUDENTS", True)
+    if rows and rows[0][0] is not None:
 
-    students = cursor_func("SELECT * FROM STUDENTS", True)
-    if students != []:
-
-        last_student = students[len(students) - 1]
-        return last_student[3]
+        return rows[0][0]
     return -1
 
 
@@ -124,9 +129,9 @@ def create_user(student: Student):
             return "User with this email already exists, please login instead"
 
     uid = get_last_id_students() + 1
-    cursor_func(
-        "INSERT INTO STUDENTS (name, email, password, id) VALUES "
-        + f"('{student.name}', '{student.email}', '{hash_password(student.password)}', {uid});",
+    cursor_func_with_values(
+        "INSERT INTO STUDENTS (name, email, password, id) VALUES (?, ?, ?, ?);",
+        (student.name, student.email, hash_password(student.password), uid),
         False,
     )
     return "New user created, please login with your account"
@@ -137,9 +142,9 @@ def create_user(student: Student):
 # this simplifies the login process for the user
 def create_student_with_token(student: Student):
     uid = get_last_id_students() + 1
-    cursor_func(
-        "INSERT INTO STUDENTS (name, email, password, id) VALUES "
-        + f"('{student.name}', '{student.email}', '{hash_password(student.password)}', {uid});",
+    cursor_func_with_values(
+        "INSERT INTO STUDENTS (name, email, password, id) VALUES (?, ?, ?, ?);",
+        (student.name, student.email, hash_password(student.password), uid),
         False,
     )
     student = Student(
@@ -225,19 +230,20 @@ def check_student_login(email: str, password: str):
 
 def change_name(email, name):
 
-    cursor_func(f"UPDATE STUDENTS SET name='{name}' WHERE email='{email}'")
+    cursor_func_with_values(
+        "UPDATE STUDENTS SET name=? WHERE email=?", (name, email))
 
 
 def change_email(email_old, email_new):
 
-    cursor_func(
-        f"UPDATE STUDENTS SET email='{email_new}' WHERE email='{email_old}'")
+    cursor_func_with_values(
+        "UPDATE STUDENTS SET email=? WHERE email=?", (email_new, email_old))
 
 
 def change_pwd(email, pwd):
 
-    cursor_func(
-        f"UPDATE STUDENTS SET password='{hash_password(pwd)}' WHERE email='{email}'"
+    cursor_func_with_values(
+        "UPDATE STUDENTS SET password=? WHERE email=?", (hash_password(pwd), email)
     )
 
 
@@ -263,16 +269,18 @@ def delete_user_id(uid):
 
     try:
         delete_all_notes_by_user_id(uid)
-        print(uid)
-        cursor_func(f"DELETE FROM STUDENTS WHERE id={uid}", False)
-    except classes.GenericException:
+        cursor_func_with_values(
+            "DELETE FROM STUDENTS WHERE id=?", (uid,), False)
+    except (driver.Error, OSError):
+        logging.exception("Error deleting user %s", uid)
         return "Error deleting user"
     return "Successfully deleted user"
 
 
 def delete_user_email(email):
 
-    cursor_func(f"DELETE FROM STUDENTS WHERE email='{email}';", False)
+    cursor_func_with_values(
+        "DELETE FROM STUDENTS WHERE email=?;", (email,), False)
 
 
 # JWT Functions
@@ -328,10 +336,15 @@ def validate_student(token):
 # CRUD Functions for notes
 # Add notes to the database
 def add_notes(token, file_name, file_id, section_name):
-    query = "INSERT INTO NOTES (fileID,fileName,ownerEmail,sectionName) VALUES " + \
-        f"({int(file_id)},?,'{get_student_from_token(token)['email']}', ?);"
+    query = ("INSERT INTO NOTES (fileID, fileName, ownerEmail, sectionName) "
+             "VALUES (?, ?, ?, ?);")
 
-    values = (file_name, section_name, )
+    values = (
+        int(file_id),
+        file_name,
+        get_student_from_token(token)["email"],
+        section_name,
+    )
 
     cursor_func_with_values(
         query,
@@ -345,14 +358,16 @@ def add_notes(token, file_name, file_id, section_name):
 
 def get_notes_by_email(owner_email: str):
 
-    return cursor_func(f"SELECT * FROM NOTES WHERE ownerEmail='{owner_email}'", True)
+    return cursor_func_with_values(
+        "SELECT * FROM NOTES WHERE ownerEmail=?", (owner_email,), True)
 
 
 # Get notes by noteID
 
 
 def get_note_by_id(note_id: int) -> classes.Notes:
-    notes = cursor_func(f"SELECT * FROM NOTES WHERE fileID={note_id}", True)
+    notes = cursor_func_with_values(
+        "SELECT * FROM NOTES WHERE fileID=?", (note_id,), True)
     if notes == []:
 
         return classes.Notes(
@@ -386,8 +401,9 @@ def get_current_notes_by_token(token):
 def get_note_id_by_note_name(token: str, note_name: str):
 
     email = validate_student(token)[1]
-    res = cursor_func(
-        f"SELECT * FROM NOTES WHERE ownerEmail='{email}' AND fileName='{note_name}';",
+    res = cursor_func_with_values(
+        "SELECT * FROM NOTES WHERE ownerEmail=? AND fileName=?;",
+        (email, note_name),
         True,
     )
 
@@ -423,8 +439,10 @@ def change_current_notes(token: str, note_name: str):
 
 
 def delete_all_notes_by_user_id(nid: int):
-    res = cursor_func(
-        f"SELECT fileID FROM NOTES WHERE ownerEmail=(SELECT email FROM STUDENTS WHERE id={nid})",
+    res = cursor_func_with_values(
+        "SELECT fileID FROM NOTES WHERE ownerEmail="
+        "(SELECT email FROM STUDENTS WHERE id=?)",
+        (nid,),
         True,
     )
     for ids in res:
@@ -437,7 +455,8 @@ def delete_all_notes_by_user_id(nid: int):
 def delete_notes_by_id(fid: int):
     # Delete the actual file with the id
     try:
-        cursor_func(f"DELETE FROM NOTES WHERE fileID={fid}", False)
+        cursor_func_with_values(
+            "DELETE FROM NOTES WHERE fileID=?", (fid,), False)
         file_path = os.path.join("card_decks", str(fid) + ".json")
         if os.path.exists(file_path):
 
@@ -466,8 +485,8 @@ def delete_note_by_name(note_name: str, token: str):
     if fid == -1:
         return "Note not found"
 
-    cursor_func(
-        f"DELETE FROM NOTES WHERE fileID={fid} AND ownerEmail='{email}'", False)
+    cursor_func_with_values(
+        "DELETE FROM NOTES WHERE fileID=? AND ownerEmail=?", (fid, email), False)
     file_path = os.path.join("card_decks", str(fid) + ".json")
     if os.path.exists(file_path):
 

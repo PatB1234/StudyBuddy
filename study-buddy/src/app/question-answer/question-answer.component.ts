@@ -13,6 +13,8 @@ import { MatCardModule } from '@angular/material/card';
 import { AppComponent } from '../app.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MarkdownModule } from 'ngx-markdown';
+import { LoadingService } from '../loading.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-question-answer',
@@ -35,7 +37,7 @@ import { MarkdownModule } from 'ngx-markdown';
 export class QuestionAnswerComponent {
 
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private loadingService: LoadingService) { }
 
     URL: any = AppComponent.URL;
     private _snackBar = inject(MatSnackBar);
@@ -55,22 +57,63 @@ export class QuestionAnswerComponent {
     correctOrNot: any;
     questionBox: any;
 
-    onQuestionSubmit(): void {
-        this._snackBar.open("Please wait a few minutes while we check your answer to this question", "Dismiss")
-        this.http.post(this.URL + "/check_question", { question: this.question, answer: this.questionAnswerForm.value.questionAnswer }).subscribe((res: any) => {
+    // Guards against a second request being fired while one is in flight,
+    // which is what happens when the model takes a while and the button is
+    // clicked again.
+    isChecking = false;
+    isFetchingQuestion = false;
 
-            this.correctOrNot = res;
-        })
+    onQuestionSubmit(): void {
+        if (this.isChecking || !this.question) {
+            return;
+        }
+        if (!this.questionAnswerForm.value.questionAnswer?.trim()) {
+            this._snackBar.open("Please type an answer before submitting.", "Dismiss");
+            return;
+        }
+
+        this.isChecking = true;
+        this.loadingService.start("Checking your answer...");
+        this.http.post(this.URL + "/check_question", { question: this.question, answer: this.questionAnswerForm.value.questionAnswer })
+            .pipe(finalize(() => {
+                this.isChecking = false;
+                this.loadingService.stop();
+            }))
+            .subscribe(
+                (res: any) => {
+                    this.correctOrNot = res;
+                },
+                (error: any) => {
+                    console.error("Error checking answer:", error);
+                    this._snackBar.open("We could not check your answer right now. Please try again.", "Dismiss");
+                }
+            );
     }
 
     nextQuestion(): void {
-        this.correctOrNot = ""
-        this._snackBar.open("Please wait a few minutes while we generate a bank of questions", "Dismiss")
-        this.http.get(this.URL + "/get_questions").subscribe((res: any) => {
+        if (this.isFetchingQuestion) {
+            return;
+        }
 
-            this.question = res;
-            this.questionBox = res;
-        })
+        this.isFetchingQuestion = true;
+        this.correctOrNot = "";
+        this.loadingService.start("Finding your next question...");
+        this.http.get(this.URL + "/get_questions")
+            .pipe(finalize(() => {
+                this.isFetchingQuestion = false;
+                this.loadingService.stop();
+            }))
+            .subscribe(
+                (res: any) => {
+                    this.question = res;
+                    this.questionBox = res;
+                    this.questionAnswerForm.reset();
+                },
+                (error: any) => {
+                    console.error("Error fetching question:", error);
+                    this._snackBar.open("We could not load a question right now. Please try again.", "Dismiss");
+                }
+            );
     }
 
 }
