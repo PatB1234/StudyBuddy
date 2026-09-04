@@ -58,7 +58,7 @@
                         [style.transform]="'translateX(-' + (activeIndex * 100) + '%)'">
                         @for (item of testimonials; track $index) {
                         <figure class="testimonial" [attr.aria-hidden]="item !== testimonials[activeIndex]">
-                            <blockquote class="testimonial-quote">{{ item.quote }}</blockquote>
+                            <blockquote class="testimonial-quote">&ldquo;{{ item.quote }}&rdquo;</blockquote>
                             <figcaption class="testimonial-author">{{ item.role }}</figcaption>
                         </figure>
                         }
