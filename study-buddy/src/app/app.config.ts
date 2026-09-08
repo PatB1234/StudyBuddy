@@ -8,6 +8,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CookieInterceptor } from './cookie.interceptor';
 import { ErrorInterceptor } from './error.interceptor';
+import { MATH_EXTENSION } from './math-extension';
 import 'katex';
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -27,6 +28,8 @@ export const appConfig: ApplicationConfig = {
             useClass: ErrorInterceptor,
             multi: true
         },
-        provideMarkdown()
+        // The maths extension has to be registered here: it must claim LaTeX
+        // during tokenising, before marked's emphasis rules reach it.
+        provideMarkdown({ markedExtensions: [MATH_EXTENSION] })
     ]
 };

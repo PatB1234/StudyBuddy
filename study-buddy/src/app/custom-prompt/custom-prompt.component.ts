@@ -12,6 +12,7 @@ import { HttpClient } from '@angular/common/http';
 import { MatCardModule } from '@angular/material/card';
 import { AppComponent } from '../app.component';
 import { MarkdownModule } from 'ngx-markdown';
+import { KATEX_OPTIONS } from '../katex-options';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { LoadingService } from '../loading.service';
 import { finalize } from 'rxjs/operators';
@@ -39,6 +40,9 @@ export class CustomPromptComponent {
 
 
     constructor(private http: HttpClient, private loadingService: LoadingService) { }
+
+    // Shared so maths renders the same way on every page.
+    katexOptions = KATEX_OPTIONS;
 
     URL: any = AppComponent.URL;
     private _snackBar = inject(MatSnackBar);

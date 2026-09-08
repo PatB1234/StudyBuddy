@@ -1,6 +1,6 @@
 <div class="custom-prompt">
     <h2>Result</h2>
-    <markdown [data]="result" class="markdown-output"></markdown>
+    <markdown katex [katexOptions]="katexOptions" [data]="result" class="markdown-output"></markdown>
 
     <form class="custom-prompt-form" [formGroup]="customPromptForm" (ngSubmit)="onSubmit()">
         <mat-form-field appearance="outline" class="prompt-field">
