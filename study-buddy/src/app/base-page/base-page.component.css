@@ -77,24 +77,76 @@ a {
 }
 
 
-.large_buttons {
-
-    transform: scale(2);
-    padding: 5%;
+/* Sidenav account actions */
+.sidenav-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 10px 16px;
 }
+
+.action-button.mat-mdc-button {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text);
+    text-align: left;
+}
+
+.action-button .mat-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+    line-height: 24px;
+    flex: 0 0 auto;
+    color: var(--color-primary);
+}
+
+.action-button:hover {
+    background-color: var(--color-surface-alt);
+}
+
+.action-label {
+    white-space: nowrap;
+}
+
 
 .mat-tab-group {
     margin-bottom: 48px;
 }
 
-h1 {
+.sidenav-title {
+    margin: 10px;
+    font-size: 34px;
+}
 
-    font-size: 45px;
+.sidenav-hint {
+    margin: 0 10px 8px;
+    font-size: 14px;
+    color: var(--color-text-muted);
+}
+
+.sidenav-selected {
+    margin: 0 10px 12px;
+    font-size: 14px;
+    color: var(--color-text);
 }
 
 .delete-notes-icon {
 
-    padding: 0px
+    padding: 0px;
+    color: var(--color-danger);
+}
+
+.delete-notes-icon:hover {
+    background-color: rgba(155, 59, 47, 0.08);
 }
 
 .beta-notice {

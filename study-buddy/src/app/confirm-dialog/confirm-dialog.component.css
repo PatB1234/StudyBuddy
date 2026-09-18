@@ -1,0 +1,52 @@
+.confirm-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-danger);
+}
+
+.confirm-title-icon {
+    flex: 0 0 auto;
+}
+
+.confirm-line {
+    margin: 0 0 12px;
+    color: var(--color-text);
+    line-height: 1.5;
+}
+
+.confirm-field {
+    width: 100%;
+    margin-top: 4px;
+}
+
+.confirm-actions {
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 24px 16px;
+}
+
+.confirm-danger-button:not([disabled]) {
+    background-color: var(--color-danger);
+    color: var(--color-surface);
+}
+
+.confirm-info-button:not([disabled]) {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.confirm-title-info {
+    color: var(--color-primary);
+}
+
+.confirm-hold {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: var(--color-text-muted);
+    min-height: 1.2em;
+}
+
+.confirm-hold-ready {
+    color: var(--color-text);
+}

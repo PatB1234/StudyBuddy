@@ -1,13 +1,15 @@
 <div class="custom-prompt">
     <h2>Result</h2>
-    <markdown katex [katexOptions]="katexOptions" [data]="result" class="markdown-output"></markdown>
+    <markdown id="promptResult" katex [katexOptions]="katexOptions" [data]="result"
+        class="markdown-output"></markdown>
 
     <form class="custom-prompt-form" [formGroup]="customPromptForm" (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="outline" class="prompt-field">
+        <mat-form-field id="promptField" appearance="outline" class="prompt-field">
             <mat-label>Type your prompt here</mat-label>
             <textarea matInput formControlName="customPrompt" class="textarea-input" rows="5"></textarea>
         </mat-form-field>
-        <button mat-raised-button type="submit" color="primary" class="submit-button" [disabled]="isSubmitting">
+        <button id="promptSubmit" mat-raised-button type="submit" color="primary" class="submit-button"
+            [disabled]="isSubmitting">
             {{ isSubmitting ? 'Working...' : 'Submit' }}
         </button>
     </form>

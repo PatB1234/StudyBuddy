@@ -1,7 +1,7 @@
 import { MarkedExtension, Tokens } from 'marked';
 
-/* Keeps LaTeX intact through markdown parsing.
-ngx-markdown runs marked first and KaTeX second, over the resulting DOM. */
+// Keeps LaTeX intact through markdown parsing. ngx-markdown runs marked
+// first, then KaTeX over the resulting DOM.
 
 interface MathToken extends Tokens.Generic {
     type: 'mathBlock' | 'mathInline';
@@ -9,7 +9,7 @@ interface MathToken extends Tokens.Generic {
     text: string;
 }
 
-/** Escape so that markup characters inside a formula cannot become HTML. */
+// Stops markup characters inside a formula becoming HTML
 function escapeHtml(value: string): string {
     return value
         .replace(/&/g, '&amp;')

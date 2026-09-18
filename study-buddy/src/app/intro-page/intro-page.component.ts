@@ -68,9 +68,8 @@ export class IntroPageComponent implements OnInit, OnDestroy {
     }
 
     private startRotating(): void {
-        // Only in the browser: the intro page is prerendered, and a timer
-        // started during SSR would never be cleared. Readers who have asked
-        // for reduced motion get the controls without the movement.
+        // Browser only: this page is prerendered and an SSR timer never
+        // clears. Reduced motion gets the controls without the movement.
         if (!isPlatformBrowser(this.platformId) || this.prefersReducedMotion()) {
             return;
         }
@@ -98,7 +97,7 @@ export class IntroPageComponent implements OnInit, OnDestroy {
         this.activeIndex = index;
     }
 
-    /** Hovering or tabbing into the carousel holds the current quote still. */
+    // Hover or focus holds the current quote
     pause(): void {
         this.stopRotating();
     }
@@ -107,7 +106,7 @@ export class IntroPageComponent implements OnInit, OnDestroy {
         this.startRotating();
     }
 
-    /** Restart the countdown so a manual choice gets a full interval to be read. */
+    // Restart so a manual choice gets a full interval
     selectAndRestart(index: number): void {
         this.goTo(index);
         this.startRotating();

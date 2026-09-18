@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Component, ViewChild, ElementRef, inject } from '@angular/core';
+import { AfterViewInit, Component, ViewChild, ElementRef, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { HttpClient } from '@angular/common/http';
 import { MatCardModule } from '@angular/material/card';
 import { AppComponent } from '../app.component';
+import { IntrojsService } from '../introjs/introjs.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MarkdownModule } from 'ngx-markdown';
 import { KATEX_OPTIONS } from '../katex-options';
@@ -35,10 +36,16 @@ import { finalize } from 'rxjs/operators';
     templateUrl: './question-answer.component.html',
     styleUrl: './question-answer.component.css'
 })
-export class QuestionAnswerComponent {
+export class QuestionAnswerComponent implements AfterViewInit {
 
 
-    constructor(private http: HttpClient, private loadingService: LoadingService) { }
+    constructor(private http: HttpClient, private loadingService: LoadingService, private introService: IntrojsService) { }
+
+    ngAfterViewInit(): void {
+
+        this.introService.questionAnswerFeature();
+    }
+
 
     // Shared so maths renders the same way on every page.
     katexOptions = KATEX_OPTIONS;
@@ -61,9 +68,7 @@ export class QuestionAnswerComponent {
     correctOrNot: any;
     questionBox: any;
 
-    // Guards against a second request being fired while one is in flight,
-    // which is what happens when the model takes a while and the button is
-    // clicked again.
+    // Guards against a second request being fired while one is in flight.
     isChecking = false;
     isFetchingQuestion = false;
 

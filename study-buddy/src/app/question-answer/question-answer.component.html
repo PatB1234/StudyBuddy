@@ -2,19 +2,20 @@
 
     <h2>Question &amp; Answer</h2>
     <form class="question-answer-form" [formGroup]="questionAnswerForm" (ngSubmit)="onQuestionSubmit()">
-        <h6>{{ questionBox || 'Press "Next Question" to generate a question from your selected notes.' }}</h6>
-        <mat-form-field class="example-full-width">
+        <h6 id="questionBox">{{ questionBox || 'Press "Next Question" to generate a question from your selected notes.' }}</h6>
+        <mat-form-field id="answerField" class="example-full-width">
             <textarea matInput placeholder="Type your answer here" formControlName="questionAnswer"></textarea>
         </mat-form-field>
         <br />
-        <markdown katex [katexOptions]="katexOptions" [data]="correctOrNot" class="markdown-output"></markdown>
-        <button mat-raised-button type="submit" [disabled]="isChecking || !question">
+        <markdown id="answerFeedback" katex [katexOptions]="katexOptions" [data]="correctOrNot"
+            class="markdown-output"></markdown>
+        <button id="submitAnswer" mat-raised-button type="submit" [disabled]="isChecking || !question">
             {{ isChecking ? 'Checking...' : 'Submit' }}
         </button>
 
     </form>
     <br />
-    <button mat-raised-button (click)="nextQuestion()" [disabled]="isFetchingQuestion">
+    <button id="nextQuestion" mat-raised-button (click)="nextQuestion()" [disabled]="isFetchingQuestion">
         {{ isFetchingQuestion ? 'Loading...' : 'Next Question' }}
     </button>
 </div>

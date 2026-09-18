@@ -13,9 +13,12 @@ import { MatToolbar, MatToolbarModule } from "@angular/material/toolbar";
 import { MatTree, MatTreeModule, MatTreeNode } from "@angular/material/tree";
 import { IntrojsService } from '../introjs/introjs.service';
 import { MatIcon } from '@angular/material/icon';
-import { MatIconButton } from '@angular/material/button';
+import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { clearTokenCookie } from '../auth-cookie';
+import { MatDialog } from '@angular/material/dialog';
+import { take } from 'rxjs/operators';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
 
 interface ILink {
     path: string;
@@ -43,6 +46,7 @@ interface TreeNode {
         MatTreeNode,
         RouterLink,
         MatIconButton,
+        MatButtonModule,
         RouterOutlet,
         MatSidenavModule,
         MatToolbarModule,
@@ -60,6 +64,7 @@ export class BasePageComponent implements OnInit {
     isLoading = false;
     loadingMessage = '';
     private _snackBar = inject(MatSnackBar);
+    private dialog = inject(MatDialog);
     links: ILink[] = [
         { path: 'custom-prompt', label: 'Custom Prompt' },
         { path: 'flashcards', label: 'Flashcards' },
@@ -82,11 +87,27 @@ export class BasePageComponent implements OnInit {
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
                 if (event.urlAfterRedirects === '/home') {
-                    this.introService.buttonExplanationFeature()
+                    this.maybeStartTour();
                 }
             }
 
         });
+        // Whichever of route and tree lands last starts the tour
+        this.onHome = this.router.url.split('?')[0] === '/home';
+        this.maybeStartTour();
+    }
+
+    private onHome = false;
+    private treeLoaded = false;
+
+    // #expandIcon lives in the tree, so both must be ready
+    private maybeStartTour(): void {
+        if (this.router.url.split('?')[0] === '/home') {
+            this.onHome = true;
+        }
+        if (this.onHome && this.treeLoaded) {
+            this.introService.buttonExplanationFeature();
+        }
     }
 
     get_curr_notes(): void {
@@ -125,9 +146,13 @@ export class BasePageComponent implements OnInit {
         this.http.post(AppComponent.URL + "/get_all_user_notes_tree", {}).subscribe(
             (res: any) => {
                 this.dataSource = res;
+                this.treeLoaded = true;
+                this.maybeStartTour();
             },
             (error: any) => {
                 console.error("Error fetching tree data:", error);
+                this.treeLoaded = true;
+                this.maybeStartTour();
             }
         );
     }
@@ -156,18 +181,36 @@ export class BasePageComponent implements OnInit {
     }
 
     deleteNode(nodeName: string): void {
-        const res = prompt("Are you sure you want to delete this note? This action cannot be undone. Type DELETE to confirm.");
-        if (res == "DELETE") {
-            this.http.post(AppComponent.URL + "/delete_note_by_name", { noteName: nodeName }).subscribe(
-                (res: any) => {
-                    console.log("Note delete action completed successfully:", res);
-                    this._snackBar.open(res)
-                    setTimeout(() => location.reload(), 1500)
+
+        const data: ConfirmDialogData = {
+            title: 'Delete these notes?',
+            lines: [
+                `"${nodeName}" will be deleted permanently.`,
+                'This cannot be undone, and anything generated from these notes goes with them.'
+            ],
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+            confirmIcon: 'delete_forever',
+            holdSeconds: 5
+        };
+
+        this.dialog
+            .open(ConfirmDialogComponent, { data, width: '420px' })
+            .afterClosed()
+            .pipe(take(1))
+            .subscribe(confirmed => {
+                if (!confirmed) {
+                    this._snackBar.open("Note deletion cancelled", "Dismiss");
+                    return;
                 }
-            );
-        } else {
-            this._snackBar.open("Note deletion cancelled", "Dismiss");
-        }
+                this.http.post(AppComponent.URL + "/delete_note_by_name", { noteName: nodeName }).subscribe(
+                    (res: any) => {
+                        console.log("Note delete action completed successfully:", res);
+                        this._snackBar.open(res)
+                        setTimeout(() => location.reload(), 1500)
+                    }
+                );
+            });
     }
 
     accountsMenu(): void {
@@ -187,36 +230,8 @@ export class BasePageComponent implements OnInit {
 
         clearTokenCookie();
         this._snackBar.open("Logged out", "Dismiss");
-        // Go to the login page directly. Reloading the current route only
-        // reached /login if an API call happened to come back 401, so any
-        // network or CORS failure (status 0) left the user sitting in the app
-        // looking signed in. A hard navigation also drops in-memory state.
+        // Hard navigation, so in-memory state goes too
         setTimeout(() => location.assign('/login'), 900);
     }
 
-    delete_user(): void {
-
-        const res = prompt("Are you sure you want to delete your account? This action cannot be undone. Type DELETE to confirm.");
-        if (res != "DELETE") {
-
-            this._snackBar.open("Account deletion cancelled", "Dismiss");
-            return;
-        }
-
-        // Only report success, sign the user out and reload once the server
-        // has actually confirmed the deletion. This used to announce
-        // "Account deleted" twice, before the request had even been sent.
-        this.http.post(AppComponent.URL + "/delete_user", {}).subscribe(
-            (response: any) => {
-                console.log("Account deletion response:", response);
-                clearTokenCookie();
-                this._snackBar.open("Account deleted", "Dismiss");
-                setTimeout(() => location.assign('/login'), 900);
-            },
-            (error: any) => {
-                console.error("Error deleting account:", error);
-                this._snackBar.open("We could not delete your account. Please try again.", "Dismiss");
-            }
-        );
-    }
 }

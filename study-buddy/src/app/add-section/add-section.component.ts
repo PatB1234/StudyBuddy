@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AppComponent } from '../app.component';
+import { IntrojsService } from '../introjs/introjs.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatLabel } from '@angular/material/form-field';
 import { MatFormField } from '@angular/material/form-field';
@@ -20,7 +21,7 @@ import { MatButtonModule } from '@angular/material/button';
     styleUrl: './add-section.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AddSectionComponent {
+export class AddSectionComponent implements AfterViewInit {
 
     url: string = AppComponent.URL;
     selectedFile: File | null = null;
@@ -57,7 +58,13 @@ export class AddSectionComponent {
     openSnackBar(message: string, action: string) {
         this._snackBar.open(message, action);
     }
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private introService: IntrojsService) { }
+
+    ngAfterViewInit(): void {
+
+        this.introService.addNotesFeature();
+    }
+
 
 
     onUpload(): void {

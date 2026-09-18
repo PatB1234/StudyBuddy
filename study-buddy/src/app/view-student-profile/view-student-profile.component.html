@@ -37,9 +37,37 @@
                 <br />
                 <br />
                 <br />
-                <button id= "submitChanges" mat-stroked-button (click)="submit()" [disabled]="studentProfileForm.invalid">Edit</button>
+                <button id="submitChanges" class="save-button" mat-flat-button color="primary" (click)="submit()"
+                    [disabled]="studentProfileForm.invalid"
+                    matTooltip="Save the changes you have made above">
+                    <mat-icon aria-hidden="true">save</mat-icon>
+                    Save changes
+                </button>
+                @if (studentProfileForm.invalid) {
+                <p class="save-hint">Enter your current password to save any changes.</p>
+                }
 
             </form>
+        </mat-card-content>
+    </mat-card>
+
+    <mat-card class="danger-card">
+        <mat-card-content class="danger-card-content">
+            <h2 class="danger-heading">
+                <mat-icon aria-hidden="true">warning</mat-icon>
+                Danger zone
+            </h2>
+            <p class="danger-copy">
+                Deleting your account removes it permanently, along with every note you have created.
+                This cannot be undone.
+            </p>
+            <button id="deleteAccount" class="danger-button" mat-stroked-button (click)="delete_user()"
+                [disabled]="deleting"
+                matTooltip="Permanently delete your account and every note in it"
+                aria-label="Delete account permanently">
+                <mat-icon aria-hidden="true">delete_forever</mat-icon>
+                {{ deleting ? 'Deleting...' : 'Delete account' }}
+            </button>
         </mat-card-content>
     </mat-card>
 

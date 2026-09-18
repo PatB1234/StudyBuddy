@@ -6,8 +6,10 @@ body {
 
 div {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 20px;
     min-height: 100vh;
     padding: 20px;
 }
@@ -93,4 +95,65 @@ button:disabled {
 
 .center {
     text-align: center;
+}
+
+.save-button {
+    min-width: 180px;
+    height: 44px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.save-hint {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+/* Danger zone */
+.danger-card {
+    width: 50%;
+    max-width: 500px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-danger);
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: none;
+}
+
+.danger-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.danger-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--color-danger);
+    text-align: left;
+}
+
+.danger-copy {
+    margin: 0;
+    text-align: left;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+/* The button rule above sets primary colours, so restate them */
+.danger-button.mat-mdc-outlined-button:not(:disabled) {
+    margin-top: 8px;
+    background-color: transparent;
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.danger-button.mat-mdc-outlined-button:not(:disabled):hover {
+    background-color: rgba(155, 59, 47, 0.08);
+    transform: none;
 }

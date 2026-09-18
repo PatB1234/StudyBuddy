@@ -1,10 +1,5 @@
-/*
- * The intro page is sized to sit inside one viewport on a laptop or tablet.
- * Only what dominates vertical space scales with vh (page padding, title,
- * screenshot height, quote height); small paddings are fixed, which keeps
- * this file inside the project's component-style budget. Phones and short
- * windows opt out at the bottom and scroll normally.
- */
+/* Sized to fit one viewport on a laptop or tablet. Only the big vertical
+   items scale with vh. Phones and short windows opt out at the bottom. */
 .intro-body {
     background-color: var(--color-bg);
     width: 100%;
@@ -20,8 +15,7 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    /* "safe" falls back to top-aligned if content overflows, so the top of
-       the page stays reachable. */
+    /* "safe" falls back to top-aligned if content overflows */
     justify-content: safe center;
     gap: clamp(0.5rem, 1.4vh, 1.25rem);
     padding: clamp(0.75rem, 2vh, 1.5rem) clamp(1rem, 6vw, 7rem);
@@ -95,9 +89,8 @@
 .feature-card img {
     width: 100%;
     height: clamp(70px, 15vh, 190px);
-    /* Cards are a uniform size but the screenshots run 1.13:1 to 5.82:1, so
-       fill the box rather than letterbox it. Anchoring left keeps each
-       heading in frame and crops the trailing body text instead. */
+    /* Screenshots run 1.13:1 to 5.82:1 in a fixed box. Anchor left so the
+       heading stays in frame. */
     object-fit: cover;
     object-position: left center;
     display: block;
@@ -147,8 +140,7 @@
     box-sizing: border-box;
     background: var(--color-surface-alt);
     border-radius: 1rem;
-    /* Plain border first as a fallback, then a teal-tinted one so the card
-       reads as a distinct panel against the page. */
+    /* Plain border as a fallback, then the teal-tinted one */
     border: 1px solid var(--color-border);
     border: 1px solid color-mix(in srgb, var(--color-primary) 32%, var(--color-border));
     box-shadow: 0 12px 28px rgba(31, 42, 46, 0.14);

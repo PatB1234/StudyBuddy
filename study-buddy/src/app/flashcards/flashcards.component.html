@@ -2,29 +2,33 @@
     <h2>Flashcards</h2>
 
     <div class="tp-wrapper">
-        <div class="tp-box" (click)="toggleFlip()" (keyup.enter)="toggleFlip()" [@flipState]="flip" tabindex="0">
+        <div id="flashcard" class="tp-box" (click)="toggleFlip()" (keyup.enter)="toggleFlip()" [@flipState]="flip"
+            tabindex="0">
             <div class="tp-box__side tp-box__front">{{front}}</div>
             <div class="tp-box__side tp-box__back">{{back}}</div>
 
         </div>
         <div align="center">
 
-            <p>{{card_num}}</p>
-            <button mat-icon-button matTooltip="Previous Card" aria-label="Previous Card" (click)="flashcardBack()">
+            <p id="cardCount">{{card_num}}</p>
+            <button id="prevCard" mat-icon-button matTooltip="Previous Card" aria-label="Previous Card"
+                (click)="flashcardBack()">
                 <mat-icon>arrow_back</mat-icon>
             </button>
-            <button mat-icon-button matTooltip="Next Card" aria-label="Next Card" (click)="flashcardNext()">
+            <button id="nextCard" mat-icon-button matTooltip="Next Card" aria-label="Next Card"
+                (click)="flashcardNext()">
                 <mat-icon>arrow_forward</mat-icon>
             </button>
             <br />
-            <button id="Export Cards for Quizlet" class='icon-button' mat-icon-button
-                matTooltip="Export Cards for Quizlet" aria-label="Export Cards" (click)="exportCardsQuizlet()"><mat-icon
-                    class="large_buttons" svgIcon="quizlet-logo"></mat-icon></button>
-            <button id="Export Cards as Excel" class='icon-button' mat-icon-button matTooltip="Export Cards as Excel"
-                aria-label="Export Cards as Excel" (click)="exportCardsXlsx()"><mat-icon
+            <button id="exportQuizlet" class='icon-button' mat-icon-button
+                matTooltip="Export Cards for Quizlet" aria-label="Export cards for Quizlet"
+                (click)="exportCardsQuizlet()"><mat-icon class="large_buttons"
+                    svgIcon="quizlet-logo"></mat-icon></button>
+            <button id="exportExcel" class='icon-button' mat-icon-button matTooltip="Export Cards as Excel"
+                aria-label="Export cards as a spreadsheet" (click)="exportCardsXlsx()"><mat-icon
                     class="large_buttons">download</mat-icon></button>
             <br />
-            <button mat-icon-button matTooltip="{{iconMessage}}" [attr.aria-label]="iconMessage"
+            <button id="generateCards" mat-icon-button matTooltip="{{iconMessage}}" [attr.aria-label]="iconMessage"
                 (click)="refreshCards()">
                 <mat-icon>{{iconType}}</mat-icon>
             </button>

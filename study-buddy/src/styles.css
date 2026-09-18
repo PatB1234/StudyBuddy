@@ -49,3 +49,55 @@ a:hover {
 .markdown-output {
     color: var(--color-text);
 }
+
+/* intro.js tour fixes.
+
+   Material's sidenav sets z-index on .mat-drawer-container and .mat-drawer,
+   which traps the highlight below the intro.js overlay. Only while a tour
+   runs. */
+
+body.introjs-active .mat-drawer-container,
+body.introjs-active .mat-drawer,
+body.introjs-active .mat-drawer-content,
+body.introjs-active .mat-drawer-inner-container {
+    z-index: auto !important;
+}
+
+body.introjs-active .mat-drawer-container,
+body.introjs-active .mat-drawer-inner-container {
+    overflow: visible !important;
+}
+
+body.introjs-active .mat-toolbar {
+    z-index: auto !important;
+}
+
+.introjs-showElement {
+    position: relative !important;
+    z-index: 9999999 !important;
+}
+
+.introjs-tooltip {
+    max-width: 340px;
+}
+
+.introjs-tooltip-title {
+    color: var(--color-header);
+}
+
+.introjs-button {
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    text-shadow: none;
+}
+
+.introjs-button:hover:not(.introjs-disabled) {
+    background-color: var(--color-surface-alt);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.introjs-progressbar {
+    background-color: var(--color-primary);
+}

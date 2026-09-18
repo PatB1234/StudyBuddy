@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Component, OnInit, inject } from '@angular/core';
+import { AfterViewInit, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -10,6 +10,9 @@ import { HttpClient } from '@angular/common/http';
 import { MatCardModule } from '@angular/material/card';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AppComponent } from '../app.component';
+import { IntrojsService } from '../introjs/introjs.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
 import { LoadingService } from '../loading.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -51,10 +54,10 @@ import { finalize } from 'rxjs/operators';
         ])
     ]
 })
-export class FlashcardsComponent implements OnInit {
+export class FlashcardsComponent implements OnInit, AfterViewInit {
 
 
-    constructor(private http: HttpClient, private domSanitizer: DomSanitizer, private matIconRegistry: MatIconRegistry, private loadingService: LoadingService) {
+    constructor(private http: HttpClient, private domSanitizer: DomSanitizer, private matIconRegistry: MatIconRegistry, private loadingService: LoadingService, private introService: IntrojsService) {
 
         this.matIconRegistry.addSvgIcon(
             'quizlet-logo', // The unique name for your icon
@@ -64,11 +67,17 @@ export class FlashcardsComponent implements OnInit {
 
     URL: any = AppComponent.URL;
     private _snackBar = inject(MatSnackBar);
+    private dialog = inject(MatDialog);
     openSnackBar(message: string, action: string) {
         this._snackBar.open(message, action);
     }
     ngOnInit(): void {
 
+    }
+
+    ngAfterViewInit(): void {
+
+        this.introService.flashcardsFeature();
     }
 
     //Flaschard Functions
@@ -155,20 +164,58 @@ export class FlashcardsComponent implements OnInit {
 
     exportCardsQuizlet(): void {
 
-        this.http.get(this.URL + "/export_flashcards/1").subscribe((res: any) => {
-            console.log(res)
-            navigator.clipboard.writeText(res).then(
-                () => console.log("Res copied"),
-                (err) => console.log("ERROR:", err)
-            );
-            alert("When importing to quizlet, select Comma & Semicolon under the 'Between term and definition' & 'Between cards' field respectively. The text is in your clipboard, just go to quizlet 'import' and paste it");
-        })
+        this.http.get(this.URL + "/export_flashcards/1").subscribe(
+            (res: any) => {
+                // Missing on an insecure origin, rejects if refused
+                if (!navigator.clipboard?.writeText) {
+                    this.showQuizletInstructions(false);
+                    return;
+                }
+                navigator.clipboard.writeText(res).then(
+                    () => this.showQuizletInstructions(true),
+                    (err) => {
+                        console.log("ERROR:", err);
+                        this.showQuizletInstructions(false);
+                    }
+                );
+            },
+            (error: any) => {
+                console.error("Error exporting flashcards:", error);
+                this._snackBar.open("We could not export your cards. Please try again.", "Dismiss");
+            }
+        )
+    }
+
+    private showQuizletInstructions(copied: boolean): void {
+
+        const lines = copied
+            ? ['Your cards are on the clipboard, ready to paste.']
+            : ['We could not reach your clipboard, so nothing was copied. Try the spreadsheet export instead.'];
+
+        lines.push(
+            'In Quizlet, open Import.',
+            'Set "Between term and definition" to Comma.',
+            'Set "Between cards" to Semicolon.'
+        );
+
+        if (copied) {
+            lines.push('Paste your cards into the box and import.');
+        }
+
+        const data: ConfirmDialogData = {
+            title: copied ? 'Importing into Quizlet' : 'Nothing was copied',
+            lines,
+            variant: copied ? 'info' : 'danger',
+            confirmLabel: 'Got it'
+        };
+
+        this.dialog.open(ConfirmDialogComponent, { data, width: '440px' });
     }
 
     exportCardsXlsx(): void {
 
         this.http.get(this.URL + "/export_flashcards/2", { responseType: 'blob' }).subscribe((res: Blob) => {
-            alert("A download window will pop up after you press 'Ok'")
+            this._snackBar.open("Your download is starting", "Dismiss")
             saveAs(res, 'Flashcards.csv')
             this.http.get(this.URL + "/delete_flashcard_request", {}).subscribe((res: any) => {
 

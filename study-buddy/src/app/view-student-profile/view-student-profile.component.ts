@@ -1,15 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpClient } from '@angular/common/http';
 import { AppComponent } from '../app.component';
 import { take } from 'rxjs/operators';
 import { IntrojsService } from '../introjs/introjs.service';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
+import { clearTokenCookie } from '../auth-cookie';
 
 @Component({
     selector: 'app-view-student-profile',
@@ -20,18 +26,28 @@ import { IntrojsService } from '../introjs/introjs.service';
         MatFormFieldModule,
         MatInputModule,
         MatCardModule,
+        MatIconModule,
+        MatTooltipModule,
     ],
     templateUrl: './view-student-profile.component.html',
     styleUrl: './view-student-profile.component.css'
 })
-export class ViewStudentProfileComponent implements OnInit {
+export class ViewStudentProfileComponent implements OnInit, AfterViewInit {
     constructor(private http: HttpClient, private router: Router, private introService: IntrojsService) { }
     URL: any = AppComponent.URL
+    private dialog = inject(MatDialog);
+    private _snackBar = inject(MatSnackBar);
+    deleting = false;
 
     ngOnInit(): void {
 
         this.getStudent();
-        this.introService.editUserFeature()
+    }
+
+    // Needs the form rendered, so not ngOnInit
+    ngAfterViewInit(): void {
+
+        this.introService.editUserFeature();
     }
 
     nameView = 'name';
@@ -71,4 +87,49 @@ export class ViewStudentProfileComponent implements OnInit {
             });
     }
 
+    delete_user(): void {
+
+        const data: ConfirmDialogData = {
+            title: 'Delete your account?',
+            lines: [
+                'This permanently deletes your account and every note you have created.',
+                'It cannot be undone, and we cannot recover your notes afterwards.'
+            ],
+            confirmLabel: 'Delete my account',
+            cancelLabel: 'Keep my account',
+            requirePhrase: 'DELETE',
+            holdSeconds: 5
+        };
+
+        this.dialog
+            .open(ConfirmDialogComponent, { data, width: '440px', disableClose: true })
+            .afterClosed()
+            .pipe(take(1))
+            .subscribe(confirmed => {
+                if (!confirmed) {
+                    this._snackBar.open('Account deletion cancelled', 'Dismiss');
+                    return;
+                }
+                this.performDelete();
+            });
+    }
+
+    // Only sign out once the server confirms
+    private performDelete(): void {
+
+        this.deleting = true;
+        this.http.post(this.URL + "/delete_user", {}).subscribe(
+            (response: any) => {
+                console.log("Account deletion response:", response);
+                clearTokenCookie();
+                this._snackBar.open("Account deleted", "Dismiss");
+                setTimeout(() => location.assign('/login'), 900);
+            },
+            (error: any) => {
+                console.error("Error deleting account:", error);
+                this.deleting = false;
+                this._snackBar.open("We could not delete your account. Please try again.", "Dismiss");
+            }
+        );
+    }
 }

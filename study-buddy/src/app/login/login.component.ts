@@ -61,8 +61,8 @@ export class LoginComponent {
         }
         this.http.post(this.URL + "/check_student_login", this.loginForm.value).subscribe(
             (res: any) => {
-                // The server now replies { token, created }; a bare string is
-                // the older shape and is still accepted.
+                // Server replies { token, created }. A bare string is the
+                // older shape, still accepted.
                 const token = typeof res === 'string' ? res : res?.token;
 
                 if (!token) {
@@ -74,8 +74,8 @@ export class LoginComponent {
                 localStorage.setItem('buttonExplanationCompleted', 'false');
                 localStorage.setItem('editUserExplanation', 'false');
 
-                // Spell out which of the two things just happened, so a
-                // mistyped email cannot look like a normal sign-in.
+                // Say which one happened, so a mistyped email doesn't look
+                // like a normal sign-in.
                 if (res?.created) {
                     this._snackBar.open(`No account existed for ${this.loginForm.value.email}, so we created a new one for you.`, "Dismiss");
                 } else {

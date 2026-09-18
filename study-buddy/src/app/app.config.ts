@@ -28,8 +28,8 @@ export const appConfig: ApplicationConfig = {
             useClass: ErrorInterceptor,
             multi: true
         },
-        // The maths extension has to be registered here: it must claim LaTeX
-        // during tokenising, before marked's emphasis rules reach it.
+        // Registered here so it claims LaTeX during tokenising, before
+        // marked's emphasis rules reach it.
         provideMarkdown({ markedExtensions: [MATH_EXTENSION] })
     ]
 };

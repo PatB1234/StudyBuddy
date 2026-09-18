@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Component, inject, ViewChild, ElementRef } from '@angular/core';
+import { AfterViewInit, Component, inject, ViewChild, ElementRef } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { HttpClient } from '@angular/common/http';
 import { MatCardModule } from '@angular/material/card';
 import { AppComponent } from '../app.component';
+import { IntrojsService } from '../introjs/introjs.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MarkdownModule } from 'ngx-markdown';
 import { KATEX_OPTIONS } from '../katex-options';
@@ -39,10 +40,15 @@ import jsPDF from 'jspdf';
     templateUrl: './summariser.component.html',
     styleUrl: './summariser.component.css'
 })
-export class SummariserComponent {
+export class SummariserComponent implements AfterViewInit {
 
 
-    constructor(private http: HttpClient, private loadingService: LoadingService) { }
+    constructor(private http: HttpClient, private loadingService: LoadingService, private introService: IntrojsService) { }
+
+    ngAfterViewInit(): void {
+
+        this.introService.summariserFeature();
+    }
 
     // Shared so maths renders the same way on every page.
     katexOptions = KATEX_OPTIONS;
