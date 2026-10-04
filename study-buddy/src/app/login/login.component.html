@@ -28,6 +28,9 @@
 
                             <button mat-flat-button color="primary" type="submit"
                                 [disabled]="loginForm.invalid || submitting">Log in</button>
+                            <p class="legal-note">By logging in, you agree to our <a [href]="termsUrl" target="_blank"
+                                    rel="noopener">Terms of Service</a> and <a [href]="privacyUrl" target="_blank"
+                                    rel="noopener">Privacy Policy</a>.</p>
                             <p class="switch-hint">New here? <a href="" (click)="$event.preventDefault(); tabIndex = 1">Create an
                                     account</a></p>
                         </form>
@@ -64,6 +67,9 @@
 
                             <button mat-flat-button color="primary" type="submit"
                                 [disabled]="signUpForm.invalid || submitting">Create account</button>
+                            <p class="legal-note">By creating an account, you agree to our <a [href]="termsUrl" target="_blank"
+                                    rel="noopener">Terms of Service</a> and <a [href]="privacyUrl" target="_blank"
+                                    rel="noopener">Privacy Policy</a>.</p>
                             <p class="switch-hint">Already have an account? <a href=""
                                     (click)="$event.preventDefault(); tabIndex = 0">Log in</a></p>
                         </form>
@@ -73,4 +79,6 @@
             </mat-card-content>
         </mat-card>
     </div>
+
+    <app-legal-footer></app-legal-footer>
 </div>

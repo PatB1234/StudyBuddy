@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { hasTokenCookie } from '../auth-cookie';
+import { LegalFooterComponent } from '../legal-footer/legal-footer.component';
 
 interface Testimonial {
     quote: string;
@@ -13,7 +14,7 @@ const ROTATE_INTERVAL_MS = 7000;
 @Component({
     selector: 'app-intro-page',
     standalone: true,
-    imports: [],
+    imports: [LegalFooterComponent],
     templateUrl: './intro-page.component.html',
     styleUrl: './intro-page.component.css'
 })

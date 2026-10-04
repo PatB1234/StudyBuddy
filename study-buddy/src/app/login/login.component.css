@@ -1,13 +1,15 @@
 .login-body {
+    display: flex;
+    flex-direction: column;
     min-height: 100vh;
     background-color: var(--color-bg);
 }
 
 .login-content {
     display: flex;
+    flex: 1;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
     padding: 16px;
     box-sizing: border-box;
 }
@@ -43,4 +45,15 @@
     margin: 12px 0 0;
     text-align: center;
     color: var(--color-text-muted);
+}
+
+.legal-note {
+    margin: 8px 0 0;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.legal-note a {
+    color: var(--color-primary);
 }

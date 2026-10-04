@@ -11,6 +11,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { setTokenCookie } from '../auth-cookie';
+import { LegalFooterComponent } from '../legal-footer/legal-footer.component';
+import { PRIVACY_URL, TERMS_URL } from '../legal-footer/legal-links';
 
 @Component({
     selector: 'app-login',
@@ -21,7 +23,8 @@ import { setTokenCookie } from '../auth-cookie';
         MatFormFieldModule,
         MatInputModule,
         MatCardModule,
-        MatTabsModule
+        MatTabsModule,
+        LegalFooterComponent
     ],
     templateUrl: './login.component.html',
     styleUrl: './login.component.css',
@@ -33,6 +36,8 @@ export class LoginComponent {
 
     URL: any = AppComponent.URL;
     tabIndex = 0;
+    privacyUrl = PRIVACY_URL;
+    termsUrl = TERMS_URL;
     submitting = false;
 
     private _snackBar = inject(MatSnackBar);
