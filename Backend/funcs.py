@@ -265,7 +265,59 @@ def regenerate_flashcards(note_id):
 
         return NO_NOTES_SELECTED_DECK
 
+    # The old cards are gone, so their progress is meaningless
+    delete_progress(note_id)
     return _generate_deck(note_id)
+
+
+# Flashcard progress: which cards a student knows, kept per note as JSON.
+# Cards are identified by their front, which is stable until regeneration.
+
+def _progress_path(note_id) -> str:
+
+    return os.path.join("progress", str(note_id) + ".json")
+
+
+def get_progress(note_id):
+    """Return the saved progress for this note, or an empty one."""
+    empty = {"known": []}
+    if str(note_id) == "-1":
+
+        return empty
+
+    try:
+        with open(_progress_path(note_id), "r") as file:
+            data = json.load(file)
+    except (OSError, ValueError):
+
+        return empty
+
+    known = data.get("known") if isinstance(data, dict) else None
+    return {"known": known if isinstance(known, list) else []}
+
+
+def save_progress(note_id, known):
+    """Replace the saved progress for this note."""
+    if str(note_id) == "-1":
+
+        return False
+
+    os.makedirs("progress", exist_ok=True)
+    file_path = _progress_path(note_id)
+    temp_path = file_path + ".tmp"
+    # Write then swap, so a crash mid-write can't leave a corrupt file
+    with open(temp_path, "w") as f:
+        json.dump({"known": known}, f)
+    os.replace(temp_path, file_path)
+    return True
+
+
+def delete_progress(note_id):
+
+    try:
+        os.remove(_progress_path(note_id))
+    except FileNotFoundError:
+        pass
 
 
 def summariser(note_id):  # Done

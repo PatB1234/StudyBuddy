@@ -1,0 +1,34 @@
+<section class="pick-note">
+    @if (notes.ready$ | async) {
+    @if ((notes.tree$ | async)?.length) {
+    <h2 class="pick-heading">{{ heading }}</h2>
+    <p class="pick-hint">{{ hint }}</p>
+
+    @for (section of notes.tree$ | async; track section.name) {
+    <h3 class="section-name">{{ section.name }}</h3>
+    <div class="note-grid">
+        @for (note of section.children ?? []; track note.name) {
+        <button type="button" class="note-card" [class.is-selected]="note.name === (notes.selected$ | async)"
+            [attr.aria-pressed]="note.name === (notes.selected$ | async)" (click)="choose(note.name)">
+            <mat-icon aria-hidden="true">
+                {{ note.name === (notes.selected$ | async) ? 'check_circle' : 'description' }}
+            </mat-icon>
+            <span>{{ note.name }}</span>
+        </button>
+        }
+    </div>
+    }
+    } @else {
+    <div class="empty">
+        <mat-icon class="empty-icon" aria-hidden="true">upload_file</mat-icon>
+        <h2 class="pick-heading">Upload your first notes</h2>
+        <p class="pick-hint">Add a PDF or a photo of your notes, and StuddyBuddy will turn it into flashcards,
+            practice questions and summaries.</p>
+        <a mat-flat-button color="primary" routerLink="/add-section">
+            <mat-icon aria-hidden="true">note_add</mat-icon>
+            Upload notes
+        </a>
+    </div>
+    }
+    }
+</section>

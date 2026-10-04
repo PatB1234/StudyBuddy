@@ -1,6 +1,32 @@
 .summariser {
+    max-width: 820px;
+}
 
-    margin: 10px;
+.page-title {
+    margin: 0 0 12px;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.summary-card {
+    padding: 8px 24px;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-surface);
     white-space: pre-wrap;
+}
 
+.summary-card.is-empty {
+    padding: 24px;
+    border-style: dashed;
+}
+
+.empty-text {
+    margin: 0;
+    color: var(--color-text-muted);
 }

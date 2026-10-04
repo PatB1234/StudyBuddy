@@ -51,38 +51,34 @@ export class IntrojsService {
     }
 
     buttonExplanationFeature(): void {
-        this.run('buttonExplanationCompleted', [
+        // V2 so students who saw the old layout get a tour of the new one
+        this.run('buttonExplanationCompletedV2', [
             {
-                selector: '#home',
-                title: 'Home',
-                intro: 'Click here to return to your home page.'
+                selector: '#noteSwitcher',
+                title: 'What you are studying',
+                intro: 'This shows the notes you are studying. Click it to switch to a different set at any time.'
             },
             {
                 selector: '#add',
                 title: 'Add notes',
-                intro: 'Click here to add new notes.'
-            },
-            {
-                selector: '#account',
-                title: 'Your account',
-                intro: 'Click here to view your account details and edit them. Account deletion lives in here too.'
-            },
-            {
-                selector: '#logout',
-                title: 'Log out',
-                intro: 'Click here to log out of your account.'
+                intro: 'Upload a PDF or a photo of your notes here.'
             },
             {
                 // Only there once the tree has loaded and has subsections
                 selector: '#expandIcon',
                 title: 'Your notes',
-                intro: 'Click the arrow on the left hand side to expand a subsection of your notes. To select a note, click its name. To delete it, click the bin next to it.',
+                intro: 'Your notes are grouped into sections. Open a section and click a note to study it, or click the bin next to it to delete it.',
                 optional: true
             },
             {
                 selector: '#featureTabs',
                 title: 'Ways to study',
-                intro: 'These tabs are the four ways to work through whichever notes you have selected: write your own prompt, revise with flashcards, test yourself with questions, or read a summary.'
+                intro: 'Revise with flashcards, test yourself with practice questions, read a summary, or ask your notes anything.'
+            },
+            {
+                selector: '#account',
+                title: 'Your account',
+                intro: 'Change your name or password, or log out, from here.'
             }
         ]);
     }
@@ -117,17 +113,17 @@ export class IntrojsService {
             {
                 selector: '#promptField',
                 title: 'Ask anything',
-                intro: 'Type whatever you want to ask about the notes you currently have selected. Asking it to explain a topic, or to compare two ideas, both work well.'
+                intro: 'Type whatever you want to ask about the notes you are studying. Asking it to explain a topic, or to compare two ideas, both work well.'
             },
             {
                 selector: '#promptSubmit',
-                title: 'Send your prompt',
-                intro: 'Click here to send your prompt. It runs against your selected notes, so change the selection on the left if you meant a different set.'
+                title: 'Send your question',
+                intro: 'Click here to send your question. It is answered from the notes you are studying, so switch notes at the top if you meant a different set.'
             },
             {
                 selector: '#promptResult',
                 title: 'Your answer',
-                intro: 'The answer appears here. Anything mathematical is laid out properly, so formulae stay readable.'
+                intro: 'Your questions and answers build up here as a conversation. Anything mathematical is laid out properly, so formulae stay readable.'
             }
         ]);
     }
@@ -136,8 +132,8 @@ export class IntrojsService {
         this.run('flashcardsExplanation', [
             {
                 selector: '#generateCards',
-                title: 'Generate your cards',
-                intro: 'Start here. This button builds a set of flashcards from your selected notes, which can take a while for a long set. Press it again later to regenerate a fresh set.'
+                title: 'A fresh deck',
+                intro: 'Your cards load by themselves. Press this whenever you want a fresh deck made from the same notes.'
             },
             {
                 selector: '#flashcard',
@@ -145,9 +141,14 @@ export class IntrojsService {
                 intro: 'Click the card to flip it over and check your answer. Try to recall the answer before you flip: that is what makes the revision stick.'
             },
             {
+                selector: '#markCard',
+                title: 'Did you know it?',
+                intro: 'After flipping a card, tell us whether you knew it. "Review weak cards" then shows only the ones you are still learning.'
+            },
+            {
                 selector: '#nextCard',
                 title: 'Moving through the pack',
-                intro: 'Step forwards and backwards through your cards with these arrows. The counter above shows where you are in the pack.'
+                intro: 'Step forwards and backwards through your cards with these buttons. The counter above shows where you are in the pack.'
             },
             {
                 selector: '#exportQuizlet',
@@ -157,7 +158,7 @@ export class IntrojsService {
             {
                 selector: '#exportExcel',
                 title: 'Export as a spreadsheet',
-                intro: 'Downloads your cards as a spreadsheet, handy if you would rather revise away from the app or share them with someone.'
+                intro: 'Downloads your cards as a CSV file, which opens in Excel or Google Sheets. Handy if you would rather revise away from the app or share them.'
             }
         ]);
     }
@@ -167,12 +168,12 @@ export class IntrojsService {
             {
                 selector: '#nextQuestion',
                 title: 'Get a question',
-                intro: 'Start here. This draws a question from your selected notes. Press it again whenever you want a new one.'
+                intro: 'A question is ready when you arrive. Press this whenever you want a new one.'
             },
             {
                 selector: '#questionBox',
                 title: 'The question',
-                intro: 'Your question appears here. It is written from the notes you have selected on the left.'
+                intro: 'Your question appears here. It is written from the notes you are studying.'
             },
             {
                 selector: '#answerField',
@@ -202,7 +203,7 @@ export class IntrojsService {
             {
                 selector: '#summaryOutput',
                 title: 'Your summary',
-                intro: 'The summary appears here, with any formulae laid out properly. Select a different set of notes on the left and summarise again to compare topics.'
+                intro: 'The summary appears here, with any formulae laid out properly. It stays here while you use the other tabs.'
             },
             {
                 selector: '#downloadSummary',

@@ -1,0 +1,86 @@
+.pick-note {
+    max-width: 880px;
+}
+
+.pick-heading {
+    margin: 0 0 4px;
+    color: var(--color-text);
+}
+
+.pick-hint {
+    margin: 0 0 16px;
+    color: var(--color-text-muted);
+}
+
+.section-name {
+    margin: 16px 0 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+}
+
+.note-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.note-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.note-card:hover {
+    border-color: var(--color-primary);
+}
+
+.note-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.note-card mat-icon {
+    flex: 0 0 auto;
+    color: var(--color-primary);
+}
+
+.note-card.is-selected {
+    border-color: var(--color-primary);
+    background: var(--color-surface-alt);
+    font-weight: 500;
+}
+
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 32px 16px;
+    border: 1px dashed var(--color-border);
+    border-radius: 16px;
+    background: var(--color-surface);
+}
+
+.empty .pick-hint {
+    max-width: 440px;
+}
+
+.empty-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+    color: var(--color-primary);
+}

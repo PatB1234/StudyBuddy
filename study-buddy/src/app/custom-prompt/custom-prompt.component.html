@@ -1,16 +1,43 @@
 <div class="custom-prompt">
-    <h2>Result</h2>
-    <markdown id="promptResult" katex [katexOptions]="katexOptions" [data]="result"
-        class="markdown-output"></markdown>
+    @if (selected) {
+    <h2 class="page-title">Ask your notes</h2>
 
-    <form class="custom-prompt-form" [formGroup]="customPromptForm" (ngSubmit)="onSubmit()">
-        <mat-form-field id="promptField" appearance="outline" class="prompt-field">
-            <mat-label>Type your prompt here</mat-label>
-            <textarea matInput formControlName="customPrompt" class="textarea-input" rows="5"></textarea>
-        </mat-form-field>
-        <button id="promptSubmit" mat-raised-button type="submit" color="primary" class="submit-button"
-            [disabled]="isSubmitting">
-            {{ isSubmitting ? 'Working...' : 'Submit' }}
-        </button>
-    </form>
+    <section id="promptResult" class="conversation" aria-live="polite">
+        @for (exchange of conversation; track $index) {
+        <div class="bubble bubble-question">{{ exchange.question }}</div>
+        <div class="bubble bubble-answer">
+            <markdown katex [katexOptions]="katexOptions" [data]="exchange.answer" class="markdown-output"></markdown>
+        </div>
+        } @empty {
+        <p class="empty-text">Ask anything about <strong>{{ selected }}</strong>. Answers come from your notes, so
+            you can ask it to explain a topic, compare two ideas or test you on a section.</p>
+        }
+        <div #conversationEnd></div>
+    </section>
+
+    <div class="composer">
+        @if (loadingMessage) {
+        <app-inline-loader [message]="loadingMessage" (cancel)="cancelLoading()" />
+        }
+        <div class="suggestions" aria-label="Suggested questions">
+            @for (suggestion of suggestions; track suggestion) {
+            <button type="button" class="suggestion" (click)="useSuggestion(suggestion)">{{ suggestion }}</button>
+            }
+        </div>
+        <form class="custom-prompt-form" [formGroup]="customPromptForm" (ngSubmit)="onSubmit()">
+            <mat-form-field id="promptField" appearance="outline" class="prompt-field" subscriptSizing="dynamic">
+                <mat-label>Ask a question about your notes</mat-label>
+                <textarea #promptInput matInput formControlName="customPrompt" rows="3"
+                    (keydown.control.enter)="onSubmit()" (keydown.meta.enter)="onSubmit()"></textarea>
+                <mat-hint>Ctrl or Cmd + Enter to send</mat-hint>
+            </mat-form-field>
+            <button id="promptSubmit" mat-flat-button type="submit" color="primary" [disabled]="isSubmitting">
+                <mat-icon aria-hidden="true">send</mat-icon>
+                {{ isSubmitting ? 'Working...' : 'Ask' }}
+            </button>
+        </form>
+    </div>
+    } @else {
+    <app-pick-note />
+    }
 </div>

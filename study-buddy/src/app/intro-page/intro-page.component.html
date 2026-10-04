@@ -1,44 +1,42 @@
 <div class="intro-body">
-    <div class="intro-page">
+    <header class="topbar">
+        <span class="brand">StuddyBuddy</span>
+        <button type="button" class="topbar-login" (click)="login()">Log in</button>
+    </header>
 
-        <div class="intro-header">
-            <h1 class="intro-title">Welcome to StuddyBuddy!</h1>
-            <div class="header-spacer"></div>
-            <div class="cta-buttons">
-                <button (click)="home()" class="btn primary">Go to Dashboard</button>
-                <button (click)="login()" class="btn secondary">Create an account</button>
-            </div>
-        </div>
-        <p>We're thrilled to have you on board!</p>
-        <p>StuddyBuddy is your ultimate study companion. It's a powerful app that transforms your notes into interactive
-            learning tools like flashcards, summaries, quizzes, and even lets you ask an intelligent assistant about
-            your
-            material. And the best part? It’s completely free!</p>
+    <main class="intro-page">
+
+        <section class="hero">
+            <h1 class="hero-title">Turn your notes into revision</h1>
+            <p class="hero-text">Upload a PDF or a photo of your notes and get flashcards, practice questions,
+                summaries and answers to your questions, all made from your own material. Free to use.</p>
+            <button type="button" class="btn-primary" (click)="login()">Get started</button>
+        </section>
 
         <div class="features-section">
             <div class="feature-card">
-                <img src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/2nd%20Set/FlashcardGifDashboard.gif"
-                    alt="Flashcards">
+                <div class="shot"><img src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/2nd%20Set/FlashcardGifDashboard.gif"
+                    alt="A flashcard made from a set of notes"></div>
                 <h3>Flashcards</h3>
-                <p>Turn your notes into powerful flashcards to test your memory and learn faster.</p>
+                <p>A deck made from your notes, to test your memory one card at a time.</p>
             </div>
             <div class="feature-card">
-                <img src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/2nd%20Set/SummaryDashboard.png"
-                    alt="AI Summariser">
-                <h3>Smart Summaries</h3>
-                <p>AI-powered summaries that help you digest complex topics in seconds.</p>
+                <div class="shot"><img src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/2nd%20Set/SummaryDashboard.png"
+                    alt="A summary of a set of notes"></div>
+                <h3>Summary</h3>
+                <p>A shorter version of your notes, with any maths laid out properly.</p>
             </div>
             <div class="feature-card">
-                <img src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/2nd%20Set/QA%20Example%20Dashboard.png"
-                    alt="Practice Questions">
-                <h3>Practice Questions</h3>
-                <p>Auto-generated questions based on your notes to reinforce your understanding.</p>
+                <div class="shot"><img src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/2nd%20Set/QA%20Example%20Dashboard.png"
+                    alt="A practice question with marked feedback"></div>
+                <h3>Practice questions</h3>
+                <p>Answer a question from your notes and get told what you missed.</p>
             </div>
             <div class="feature-card">
-                <img src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/2nd%20Set/Custom-PromptDashboard.png"
-                    alt="Ask AI">
-                <h3>Ask AI</h3>
-                <p>Stuck on something? Ask our AI assistant anything about your notes.</p>
+                <div class="shot"><img src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/2nd%20Set/Custom-PromptDashboard.png"
+                    alt="A question asked about a set of notes"></div>
+                <h3>Ask your notes</h3>
+                <p>Stuck on something? Ask about it and get an answer from your own notes.</p>
             </div>
         </div>
 
@@ -78,5 +76,5 @@
             </div>
         </section>
 
-    </div>
+    </main>
 </div>

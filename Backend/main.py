@@ -24,6 +24,8 @@ app = FastAPI()
 
 # Serialises note-ID allocation so concurrent uploads can't collide
 UPLOAD_LOCK = anyio.Lock()
+MAX_PROGRESS_CARDS = 500
+MAX_CARD_FRONT_LENGTH = 2000
 
 def _remove_file(path: str) -> None:
     """Delete a temporary export once its response has been sent."""
@@ -128,6 +130,40 @@ async def get_regenerate_flashcards(request: Request):
         funcs.regenerate_flashcards,
         db.get_current_notes_by_token(request.headers.get("token")),
     )
+
+
+@app.get("/api/get_flashcard_progress")
+async def get_flashcard_progress(request: Request):
+
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
+
+    return funcs.get_progress(
+        db.get_current_notes_by_token(request.headers.get("token"))
+    )
+
+
+@app.post("/api/set_flashcard_progress")
+async def set_flashcard_progress(
+    progress: classes.PostFlashcardProgressModel, request: Request
+):
+
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
+
+    # A deck is a few dozen cards, so anything far bigger is a bad request
+    if len(progress.known) > MAX_PROGRESS_CARDS or any(
+        len(front) > MAX_CARD_FRONT_LENGTH for front in progress.known
+    ):
+        return JSONResponse(status_code=400, content={"message": "Progress is too large"})
+
+    saved = funcs.save_progress(
+        db.get_current_notes_by_token(request.headers.get("token")),
+        list(dict.fromkeys(progress.known)),
+    )
+    return {"saved": saved}
 
 
 @app.post("/api/create_student")

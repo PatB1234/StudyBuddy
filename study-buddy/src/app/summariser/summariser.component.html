@@ -1,14 +1,35 @@
 <div class="summariser">
+    @if (curr_selected) {
+    <h2 class="page-title">Summary</h2>
 
-    <h2>Summariser</h2>
-    <button id="summariseButton" mat-raised-button (click)="summariseButton()"
-        style="margin-right: 10px;">Summarise</button>
-    <button id="downloadSummary" mat-raised-button (click)="downloadPdf()"
-        style="margin-left: 10px;">Download your summary</button>
-    <markdown id="summaryOutput" katex [katexOptions]="katexOptions" [data]="summary"
-        class="markdown-output"></markdown>
+    <div class="actions">
+        <button id="summariseButton" mat-flat-button color="primary" (click)="summariseButton()"
+            [disabled]="!!loadingMessage">
+            <mat-icon aria-hidden="true">auto_awesome</mat-icon>
+            {{ summary ? 'Summarise again' : 'Summarise these notes' }}
+        </button>
+        <button id="downloadSummary" mat-stroked-button (click)="downloadPdf()" [disabled]="!summary">
+            <mat-icon aria-hidden="true">download</mat-icon>
+            Download as PDF
+        </button>
+    </div>
+
+    @if (loadingMessage) {
+    <app-inline-loader [message]="loadingMessage" (cancel)="cancelLoading()" />
+    }
+
+    <section id="summaryOutput" class="summary-card" [class.is-empty]="!summary">
+        @if (summary) {
+        <markdown katex [katexOptions]="katexOptions" [data]="summary" class="markdown-output"></markdown>
+        } @else {
+        <p class="empty-text">Press "Summarise these notes" to get a shorter version of {{ curr_selected }}.</p>
+        }
+    </section>
 
     <div #pdfContent style="position:absolute; left:-9999px; top:0; width:800px; padding:40px; background:white;">
         <markdown katex [katexOptions]="katexOptions" [data]="summary"></markdown>
     </div>
+    } @else {
+    <app-pick-note />
+    }
 </div>

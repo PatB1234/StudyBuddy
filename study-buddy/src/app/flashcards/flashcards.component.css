@@ -1,104 +1,153 @@
-@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
-
 .flashcards {
+    max-width: 720px;
+}
 
-    margin: 10px;
-    white-space: pre-wrap;
-    position: relative;
-
+.page-title {
+    margin: 0 0 12px;
 }
 
 .tp-wrapper {
-    -webkit-perspective: 800px;
     perspective: 800px;
 }
 
+/* Both sides share one grid cell, so the card grows to fit the longer side */
 .tp-box {
-
-    position: relative;
-    width: 400px;
-    height: 200px;
-    margin: 3rem auto;
-
-    -webkit-transform-style: preserve-3d;
+    display: grid;
+    width: min(560px, 100%);
+    margin: 0 auto;
     transform-style: preserve-3d;
-    -webkit-transform: transform 1s;
-    -ms-transform: transform 1s;
-    transform: transform 1s;
+    cursor: pointer;
+}
 
+.tp-box:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 4px;
+    border-radius: 14px;
 }
 
 .tp-box__side {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-
-    color: var(--color-text);
-    text-align: center;
-
+    grid-area: 1 / 1;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-
-    /* line-height: 200px; */
-    /*font-size: 24px;*/
-    font-weight: 700;
-    cursor: pointer;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+    gap: 8px;
+    min-height: 240px;
+    padding: 24px;
+    box-sizing: border-box;
+    border-radius: 14px;
+    border: 1px solid var(--color-border);
+    backface-visibility: hidden;
+    color: var(--color-text);
+    text-align: center;
     user-select: none;
-
-
 }
 
 .tp-box__front {
-    border-radius: 10px;
-    /* Optional for rounded corners */
-
-    background: var(--color-surface-alt);
-    -webkit-transform: rotateY(0deg);
-    -ms-transform: rotateY(0deg);
+    background: var(--color-surface);
     transform: rotateY(0deg);
-
-
 }
 
 .tp-box__back {
-    border-radius: 10px;
-    /* Optional for rounded corners */
-
     background: var(--color-nav);
-    -webkit-transform: rotateY(-180deg);
-    -ms-transform: rotateY(-180deg);
     transform: rotateY(-180deg);
-
 }
 
-section {
+.side-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+}
+
+.side-text {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.card-count {
+    min-height: 20px;
+    margin: 12px 0 8px;
+    text-align: center;
+    color: var(--color-text-muted);
+}
+
+.card-controls,
+.deck-actions {
     display: flex;
-    align-items: center;
-}
-
-.example-label {
-    font-size: 14px;
-    margin: 0 16px 0 8px;
-    min-width: 120px;
-}
-
-.example-button-row {
-    max-width: 600px;
-}
-
-.example-button-row .mat-mdc-button-base {
-    margin: 8px 8px 8px 0;
-}
-
-.example-flex-container {
-    display: flex;
-    justify-content: space-between;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.deck-actions {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+}
+
+.progress-row {
+    margin-bottom: 16px;
+}
+
+.progress-text {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--color-text-muted);
+}
+
+.known-badge {
+    margin-left: 6px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    letter-spacing: 0.04em;
+}
+
+/* Fixed height so the buttons appearing doesn't shift the page */
+.mark-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    min-height: 52px;
+    margin-top: 12px;
+}
+
+.mark-hint {
+    margin: 0;
+    color: var(--color-text-muted);
+}
+
+.shortcut-hint {
+    margin: 12px 0 0;
+    text-align: center;
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+kbd {
+    padding: 1px 6px;
+    border: 1px solid var(--color-border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--color-surface);
+    font-family: inherit;
+    font-size: 12px;
+}
+
+.progress-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
 }

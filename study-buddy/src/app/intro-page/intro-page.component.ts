@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
+import { hasTokenCookie } from '../auth-cookie';
 
 interface Testimonial {
     quote: string;
@@ -53,6 +54,11 @@ export class IntroPageComponent implements OnInit, OnDestroy {
     activeIndex = 0;
 
     ngOnInit(): void {
+        // Signed-in students go straight to their notes
+        if (isPlatformBrowser(this.platformId) && hasTokenCookie()) {
+            this.router.navigate(['/home']);
+            return;
+        }
         this.startRotating();
     }
 

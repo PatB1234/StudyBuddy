@@ -1,32 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Component, OnInit, HostListener, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
-import { MatSidenavContent, MatSidenavContainer, MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
-import { Router } from '@angular/router';
-import { MatTabNavPanel, MatTabsModule } from '@angular/material/tabs';
-import { HttpClient } from '@angular/common/http';
+import { RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd, Router } from '@angular/router';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { AppComponent } from '../app.component';
 import { LoadingService } from '../loading.service';
-import { MatToolbar, MatToolbarModule } from "@angular/material/toolbar";
-import { MatTree, MatTreeModule, MatTreeNode } from "@angular/material/tree";
+import { MatToolbarModule } from "@angular/material/toolbar";
+import { MatTree, MatTreeModule } from "@angular/material/tree";
 import { IntrojsService } from '../introjs/introjs.service';
-import { MatIcon } from '@angular/material/icon';
-import { MatButtonModule, MatIconButton } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { clearTokenCookie } from '../auth-cookie';
 import { MatDialog } from '@angular/material/dialog';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
+import { NoteNode, NotesService } from '../notes.service';
 
 interface ILink {
     path: string;
     label: string;
-}
-interface TreeNode {
-    name: string;
-    children?: TreeNode[];
 }
 
 @Component({
@@ -34,63 +30,79 @@ interface TreeNode {
     standalone: true,
     imports: [
         CommonModule,
-        MatSidenavContent,
         RouterOutlet,
-        MatTabNavPanel,
-        MatTabsModule,
-        MatToolbar,
-        MatSidenavContainer,
-        MatSidenav,
-        MatIcon,
-        MatTree,
-        MatTreeNode,
         RouterLink,
-        MatIconButton,
-        MatButtonModule,
-        RouterOutlet,
+        RouterLinkActive,
+        MatTabsModule,
         MatSidenavModule,
         MatToolbarModule,
         MatTreeModule,
-        MatTooltipModule
+        MatIconModule,
+        MatButtonModule,
+        MatTooltipModule,
+        MatMenuModule
     ],
     templateUrl: './base-page.component.html',
     styleUrl: './base-page.component.css'
 })
 export class BasePageComponent implements OnInit {
 
+    constructor(private router: Router, private introService: IntrojsService, private loadingService: LoadingService) { }
 
-    constructor(private router: Router, private http: HttpClient, private introService: IntrojsService, private loadingService: LoadingService) { }
-    curr_selected = "None";
-    isLoading = false;
-    loadingMessage = '';
+    @ViewChild('notesTree') treeRef?: MatTree<NoteNode>;
+    @ViewChild('sidenav') sidenav?: MatSidenav;
+
+    notes = inject(NotesService);
     private _snackBar = inject(MatSnackBar);
     private dialog = inject(MatDialog);
-    links: ILink[] = [
-        { path: 'custom-prompt', label: 'Custom Prompt' },
-        { path: 'flashcards', label: 'Flashcards' },
-        { path: 'question-answer', label: 'Question & Answer' },
-        { path: 'summariser', label: 'Summariser' },
-    ];
-    activePath = this.links[0].path;
+    private breakpoints = inject(BreakpointObserver);
+    private destroyRef = inject(DestroyRef);
 
-    @HostListener('document:keydown.enter', ['$event'])
-    handleEnterKey(event: Event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
+    isLoading = false;
+    loadingMessage = '';
+    isHandset = false;
+
+    tree: NoteNode[] = [];
+    selected: string | null = null;
+    treeLoaded = false;
+
+    links: ILink[] = [
+        { path: 'flashcards', label: 'Flashcards' },
+        { path: 'question-answer', label: 'Practice questions' },
+        { path: 'summariser', label: 'Summary' },
+        { path: 'custom-prompt', label: 'Ask your notes' },
+    ];
 
     ngOnInit(): void {
-        this.loadingService.isLoading$.subscribe(v => this.isLoading = v);
-        this.loadingService.message$.subscribe(v => this.loadingMessage = v);
-        this.getTree();
-        this.get_curr_notes()
-        this.router.events.subscribe((event) => {
+        this.loadingService.isLoading$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(v => this.isLoading = v);
+        this.loadingService.message$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(v => this.loadingMessage = v);
+
+        // Phones get a drawer that slides over the page
+        this.breakpoints.observe('(max-width: 767px)')
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(state => this.isHandset = state.matches);
+
+        this.notes.tree$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(tree => {
+            this.tree = tree;
+            this.expandSelectedSection();
+        });
+        this.notes.selected$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(selected => {
+            this.selected = selected;
+            this.expandSelectedSection();
+        });
+        this.notes.refresh().subscribe(() => {
+            this.treeLoaded = true;
+            this.maybeStartTour();
+        });
+
+        this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
             if (event instanceof NavigationEnd) {
                 if (event.urlAfterRedirects === '/home') {
                     this.maybeStartTour();
                 }
+                // The drawer covers the page on phones, so close it once they've moved
+                this.closeIfHandset();
             }
-
         });
         // Whichever of route and tree lands last starts the tour
         this.onHome = this.router.url.split('?')[0] === '/home';
@@ -98,7 +110,6 @@ export class BasePageComponent implements OnInit {
     }
 
     private onHome = false;
-    private treeLoaded = false;
 
     // #expandIcon lives in the tree, so both must be ready
     private maybeStartTour(): void {
@@ -110,74 +121,27 @@ export class BasePageComponent implements OnInit {
         }
     }
 
-    get_curr_notes(): void {
-
-        this.http.post(AppComponent.URL + "/get_currently_selected_note", {}).subscribe(
-            (res: any) => {
-                if (res != "-1.txt") {
-
-                    this.curr_selected = res;
-                }
-            },
-            (error: any) => {
-                console.error("Error fetching currently selected notes:", error);
-            }
-        );
+    // Opens the section holding the selected note, so it is visible straight away
+    private expandSelectedSection(): void {
+        const section = this.tree.find(s => s.children?.some(n => n.name === this.selected));
+        if (!section) {
+            return;
+        }
+        // Wait a tick so the tree has drawn the new data
+        setTimeout(() => this.treeRef?.expand(section));
     }
 
-    dash() {
+    childrenAccessor = (node: NoteNode) => node.children ?? [];
+    hasChild = (_: number, node: NoteNode) => !!node.children && node.children.length > 0;
 
-        this.router.navigate(['/']);
-    }
-
-    openSnackBar(message: string, action: string) {
-        this._snackBar.open(message, action);
-    }
-
-    home(): void {
-
-        this.router.navigate(['/home'])
-    }
-
-    childrenAccessor = (node: TreeNode) => node.children ?? [];
-    hasChild = (_: number, node: TreeNode) => !!node.children && node.children.length > 0;
-    dataSource: any = [];
-    getTree(): void {
-        this.http.post(AppComponent.URL + "/get_all_user_notes_tree", {}).subscribe(
-            (res: any) => {
-                this.dataSource = res;
-                this.treeLoaded = true;
-                this.maybeStartTour();
-            },
-            (error: any) => {
-                console.error("Error fetching tree data:", error);
-                this.treeLoaded = true;
-                this.maybeStartTour();
-            }
-        );
-    }
-
-    nodePress(nodeName: string): void {
-        console.log("Node clicked:", nodeName);
-        this.http.post(AppComponent.URL + "/change_current_notes", { newNoteName: nodeName }).subscribe(
-            (res: any) => {
-                console.log("Node press action completed successfully:", res);
-                this._snackBar.open(`Selected notes: ${nodeName}`, "Dismiss")
-                this.http.post(AppComponent.URL + "/get_currently_selected_note", {}).subscribe((res: any) => {
-
-                    if (res == -1 || res == "-1.txt") {
-
-                        this.curr_selected = "Unselected"
-                    } else {
-
-                        this.curr_selected = res
-                    }
-                })
-            },
-            (error: any) => {
+    selectNote(nodeName: string): void {
+        this.notes.select(nodeName).subscribe({
+            next: () => this.closeIfHandset(),
+            error: (error: unknown) => {
                 console.error("Error updating current notes:", error);
+                this._snackBar.open("We could not select those notes. Please try again.", "Dismiss");
             }
-        );
+        });
     }
 
     deleteNode(nodeName: string): void {
@@ -185,13 +149,11 @@ export class BasePageComponent implements OnInit {
         const data: ConfirmDialogData = {
             title: 'Delete these notes?',
             lines: [
-                `"${nodeName}" will be deleted permanently.`,
-                'This cannot be undone, and anything generated from these notes goes with them.'
+                `"${nodeName}" will be deleted permanently, along with anything generated from it.`
             ],
             confirmLabel: 'Delete',
             cancelLabel: 'Cancel',
-            confirmIcon: 'delete_forever',
-            holdSeconds: 5
+            confirmIcon: 'delete_forever'
         };
 
         this.dialog
@@ -200,17 +162,19 @@ export class BasePageComponent implements OnInit {
             .pipe(take(1))
             .subscribe(confirmed => {
                 if (!confirmed) {
-                    this._snackBar.open("Note deletion cancelled", "Dismiss");
                     return;
                 }
-                this.http.post(AppComponent.URL + "/delete_note_by_name", { noteName: nodeName }).subscribe(
-                    (res: any) => {
-                        console.log("Note delete action completed successfully:", res);
-                        this._snackBar.open(res)
-                        setTimeout(() => location.reload(), 1500)
-                    }
-                );
+                this.notes.delete(nodeName).subscribe({
+                    next: () => this._snackBar.open(`Deleted "${nodeName}"`, "Dismiss"),
+                    error: () => this._snackBar.open("We could not delete those notes. Please try again.", "Dismiss")
+                });
             });
+    }
+
+    closeIfHandset(): void {
+        if (this.isHandset) {
+            this.sidenav?.close();
+        }
     }
 
     accountsMenu(): void {
@@ -218,14 +182,6 @@ export class BasePageComponent implements OnInit {
         this.router.navigate(['/student-profile']);
     }
 
-    addSection(): void {
-
-        this.router.navigate(['/add-section'])
-    }
-
-    onActivate(path: string) {
-        this.activePath = path;
-    }
     logout(): void {
 
         clearTokenCookie();

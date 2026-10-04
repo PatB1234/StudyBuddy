@@ -11,7 +11,7 @@
                 <br />
                 <mat-label id="changeName">Change Name (Optional)</mat-label>
                 <mat-form-field class="form-field" appearance="outline">
-                    <input type="name" matInput formControlName="name">
+                    <input type="text" matInput formControlName="name" autocomplete="name">
 
                 </mat-form-field>
                 <br />
@@ -22,7 +22,7 @@
                 <br />
                 <mat-label id="enterCurrPwd">Current password </mat-label>
                 <mat-form-field class="form-field" appearance="outline">
-                    <input type="oldPassword" matInput formControlName="oldPassword">
+                    <input type="password" matInput formControlName="oldPassword" autocomplete="current-password">
                     @if (studentProfileForm.get('oldPassword')?.hasError('required')) {
                     <mat-error>Old Password is required</mat-error>
                     }
@@ -30,13 +30,15 @@
                 <br />
                 <mat-label id="enterNewPwd">New password (Optional) </mat-label>
                 <mat-form-field class="form-field" appearance="outline">
-                    <input type="newPassword" matInput formControlName="newPassword">
+                    <input type="password" matInput formControlName="newPassword" autocomplete="new-password">
                 </mat-form-field>
                 <br />
+                @if (error) {
                 <p class="error-text">{{error}}</p>
-                <br />
-                <br />
-                <br />
+                }
+                @if (success) {
+                <p class="success-text" role="status">{{success}}</p>
+                }
                 <button id="submitChanges" class="save-button" mat-flat-button color="primary" (click)="submit()"
                     [disabled]="studentProfileForm.invalid"
                     matTooltip="Save the changes you have made above">
@@ -48,6 +50,17 @@
                 }
 
             </form>
+        </mat-card-content>
+    </mat-card>
+
+    <mat-card class="display-card">
+        <mat-card-content class="display-card-content">
+            <h2 class="display-heading">Display</h2>
+            <mat-slide-toggle id="darkModeToggle" [checked]="darkMode"
+                (change)="setDisplay('darkMode', $event.checked)">Dark mode</mat-slide-toggle>
+            <mat-slide-toggle id="dyslexiaToggle" [checked]="dyslexiaFont"
+                (change)="setDisplay('dyslexiaFont', $event.checked)">Dyslexia-friendly font</mat-slide-toggle>
+            <p class="display-hint">These are saved on this device only.</p>
         </mat-card-content>
     </mat-card>
 

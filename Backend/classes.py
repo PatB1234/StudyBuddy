@@ -53,6 +53,11 @@ class PostDeleteNoteModel(BaseModel):
     noteName: str
 
 
+class PostFlashcardProgressModel(BaseModel):
+
+    known: list[str] = []
+
+
 class GetExportModel(BaseModel):
 
     type: int = 2

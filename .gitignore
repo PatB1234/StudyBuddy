@@ -23,6 +23,7 @@ ssh/*
 
 # Generated flashcard caches
 Backend/card_decks/
+Backend/progress/
 
 # OS / tooling artefacts
 .DS_Store

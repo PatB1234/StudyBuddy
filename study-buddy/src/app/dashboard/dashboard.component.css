@@ -1,4 +1,57 @@
-div {
+.home {
+    max-width: 880px;
+}
 
-    padding: 10px
+.welcome {
+    margin: 0 0 4px;
+    font-size: 28px;
+}
+
+.studying {
+    margin: 0 0 16px;
+    color: var(--color-text-muted);
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.feature-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    text-decoration: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.feature-card:hover,
+.feature-card:focus-visible {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-soft);
+    color: var(--color-text);
+}
+
+.feature-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 32px;
+    color: var(--color-primary);
+}
+
+.feature-title {
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.feature-description {
+    font-size: 14px;
+    color: var(--color-text-muted);
 }

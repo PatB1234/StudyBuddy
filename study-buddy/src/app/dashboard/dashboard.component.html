@@ -1,5 +1,23 @@
-<div class="content">
-    <h1>Study Buddy</h1>
-    <h3>Welcome {{name}}</h3>
+<div class="home">
+    <h1 class="welcome">{{ name ? 'Welcome back, ' + name : 'Welcome back' }}</h1>
 
+    @if (notes.ready$ | async) {
+    @if (notes.selected$ | async; as selected) {
+    <p class="studying">You are studying <strong>{{ selected }}</strong>. What would you like to do?</p>
+
+    <div class="feature-grid">
+        @for (feature of features; track feature.path) {
+        <a class="feature-card" [routerLink]="feature.path">
+            <mat-icon class="feature-icon" aria-hidden="true">{{ feature.icon }}</mat-icon>
+            <span class="feature-title">{{ feature.title }}</span>
+            <span class="feature-description">{{ feature.description }}</span>
+        </a>
+        }
+    </div>
+
+    <app-pick-note heading="Switch to different notes" hint="Pick another set and everything above will use it instead." />
+    } @else {
+    <app-pick-note />
+    }
+    }
 </div>

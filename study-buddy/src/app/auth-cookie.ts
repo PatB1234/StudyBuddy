@@ -36,3 +36,11 @@ export function clearTokenCookie(): void {
     });
 }
 
+
+// Doesn't check the token is valid. An expired one gets bounced to login
+export function hasTokenCookie(): boolean {
+    if (typeof document === 'undefined') {
+        return false;
+    }
+    return document.cookie.split(';').some(part => part.trim().startsWith(`${TOKEN_COOKIE}=`) && part.trim().length > TOKEN_COOKIE.length + 1);
+}

@@ -1,21 +1,47 @@
-<div align="center">
+<div class="upload-page">
     <mat-card appearance="outlined" class="card">
         <mat-card-content class="card-content">
-            <h1>Upload a new set of notes (PDF ONLY) </h1>
-            <br />
+            <h1>Upload notes</h1>
+            <p class="intro">A PDF or a photo (JPG or PNG) of your notes.</p>
 
-            <input id="chooseFile" type="file" (change)="onFileSelected($event)"
-                accept="application/pdf,image/png,image/jpg" mat-button="elevated" />
-            <br />
-            <mat-label id="sectionNameLabel">Section Name: </mat-label>
-            <input id="sectionName" type="text" [(ngModel)]="sectionName" placeholder="Enter Section Name" />
-            <br />
-            <mat-checkbox id="handwrittenCheck" class="example-margin"
-                (change)="onChange($event.checked)">Check this box if your notes
-                are handwritten</mat-checkbox>
-            <br />
-            <button id="uploadNotes" (click)="onUpload()" [disabled]="!selectedFile"
-                mat-button="elevated">Upload</button>
+            <input #fileInput id="fileInput" class="visually-hidden" type="file" (change)="onFileSelected($event)"
+                accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg" />
+            <div id="chooseFile" class="drop-zone" [class.is-dragging]="dragging" [class.has-file]="selectedFile"
+                role="button" tabindex="0" aria-label="Choose a file to upload, or drop one here"
+                (click)="fileInput.click()" (keydown.enter)="fileInput.click()" (keydown.space)="$event.preventDefault(); fileInput.click()"
+                (dragover)="onDragOver($event)" (dragleave)="dragging = false" (drop)="onDrop($event)">
+                <mat-icon class="drop-icon" aria-hidden="true">{{ selectedFile ? 'description' : 'upload_file' }}</mat-icon>
+                @if (selectedFile) {
+                <span class="file-name">{{ selectedFile.name }}</span>
+                <span class="drop-hint">Click to choose a different file</span>
+                } @else {
+                <span class="drop-title">Drop your file here</span>
+                <span class="drop-hint">or click to choose one</span>
+                }
+            </div>
+
+            <label class="field-label" id="sectionNameLabel" for="sectionName">Section name</label>
+            <input id="sectionName" type="text" [(ngModel)]="sectionName" placeholder="For example, Biology"
+                [matAutocomplete]="sectionOptions" autocomplete="off" />
+            <mat-autocomplete #sectionOptions="matAutocomplete">
+                @for (section of matchingSections(); track section) {
+                <mat-option [value]="section">{{ section }}</mat-option>
+                }
+            </mat-autocomplete>
+
+            @if (!isImage) {
+            <mat-checkbox id="handwrittenCheck" [checked]="isNoteHandwritten === 1"
+                (change)="onChange($event.checked)">My notes are handwritten</mat-checkbox>
+            } @else {
+            <p class="image-note">Photos are always read as handwriting, so there's nothing else to set.</p>
+            }
+
+            <button id="uploadNotes" (click)="onUpload()" [disabled]="!selectedFile || !sectionName.trim() || uploading">
+                {{ uploading ? 'Uploading...' : 'Upload' }}
+            </button>
+            @if (!selectedFile || !sectionName.trim()) {
+            <p class="hint">Choose a file and name its section to upload.</p>
+            }
         </mat-card-content>
     </mat-card>
 </div>

@@ -4,85 +4,119 @@
 </div>
 <mat-toolbar class="mat-header">
 
-    <a (click)="dash()">StuddyBuddy</a>
+    @if (isHandset) {
+    <button mat-icon-button class="toolbar-icon" (click)="sidenav.toggle()" aria-label="Show your notes">
+        <mat-icon aria-hidden="true">menu</mat-icon>
+    </button>
+    }
 
-    <div style="flex: 1 1 auto;" align="center" class="beta-notice">
+    <a class="brand" routerLink="/home">StuddyBuddy</a>
+    <span class="beta-chip">BETA V2.1.1</span>
 
-        <span>BETA V2.1.1</span>
-    </div>
+    <span class="toolbar-spacer"></span>
+
+    <button id="noteSwitcher" class="note-switcher" type="button" [matMenuTriggerFor]="noteMenu"
+        [attr.aria-label]="selected ? 'Studying ' + selected + '. Change notes' : 'Choose notes to study'">
+        <mat-icon aria-hidden="true">menu_book</mat-icon>
+        <span class="note-switcher-label">{{ selected ? selected : 'Choose notes' }}</span>
+        <mat-icon aria-hidden="true">expand_more</mat-icon>
+    </button>
+    <mat-menu #noteMenu="matMenu" class="note-menu">
+        @for (section of tree; track section.name) {
+        <div class="note-menu-section" (click)="$event.stopPropagation()">{{ section.name }}</div>
+        @for (note of section.children ?? []; track note.name) {
+        <button mat-menu-item (click)="selectNote(note.name)">
+            <mat-icon aria-hidden="true">{{ note.name === selected ? 'check_circle' : 'description' }}</mat-icon>
+            <span>{{ note.name }}</span>
+        </button>
+        }
+        } @empty {
+        <button mat-menu-item routerLink="/add-section">
+            <mat-icon aria-hidden="true">note_add</mat-icon>
+            <span>Upload your first notes</span>
+        </button>
+        }
+    </mat-menu>
+
+    <span class="toolbar-spacer"></span>
+
+    <button id="account" mat-icon-button class="toolbar-icon" [matMenuTriggerFor]="accountMenu"
+        matTooltip="Your account" aria-label="Your account">
+        <mat-icon aria-hidden="true">account_circle</mat-icon>
+    </button>
+    <mat-menu #accountMenu="matMenu">
+        <button mat-menu-item (click)="accountsMenu()">
+            <mat-icon aria-hidden="true">manage_accounts</mat-icon>
+            <span>Account settings</span>
+        </button>
+        <button mat-menu-item (click)="logout()">
+            <mat-icon aria-hidden="true">logout</mat-icon>
+            <span>Log out</span>
+        </button>
+    </mat-menu>
 
 </mat-toolbar>
 <mat-sidenav-container class="sidenav-main">
-    <mat-sidenav mode="side" opened class="sidenav-drawer">
+    <mat-sidenav #sidenav [mode]="isHandset ? 'over' : 'side'" [opened]="!isHandset" class="sidenav-drawer">
 
-        <h1 class="sidenav-title">Notes</h1>
-
-        <nav class="sidenav-actions" aria-label="Account actions">
-            <button id="home" class="action-button" mat-button (click)="home()"
-                matTooltip="Go back to your home page" aria-label="Home">
+        <div class="sidenav-actions">
+            <a id="home" mat-stroked-button routerLink="/home">
                 <mat-icon aria-hidden="true">home</mat-icon>
-                <span class="action-label">Home</span>
-            </button>
-            <button id="add" class="action-button" mat-button (click)="addSection()"
-                matTooltip="Add a new set of notes" aria-label="Add notes">
+                Home
+            </a>
+            <a id="add" mat-flat-button color="primary" routerLink="/add-section">
                 <mat-icon aria-hidden="true">note_add</mat-icon>
-                <span class="action-label">Add notes</span>
-            </button>
-            <button id="account" class="action-button" mat-button (click)="accountsMenu()"
-                matTooltip="Edit your name and password, or delete your account"
-                aria-label="Account settings">
-                <mat-icon aria-hidden="true">manage_accounts</mat-icon>
-                <span class="action-label">Account</span>
-            </button>
-            <button id="logout" class="action-button" mat-button (click)="logout()"
-                matTooltip="Sign out of this device" aria-label="Log out">
-                <mat-icon aria-hidden="true">logout</mat-icon>
-                <span class="action-label">Log out</span>
-            </button>
-        </nav>
-        <p class="sidenav-hint">Pick the notes you want to study by expanding a section below.</p>
-        <p class="sidenav-selected">Currently studying: <strong>{{curr_selected}}</strong></p>
+                Add notes
+            </a>
+        </div>
 
-        <mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor"
-            style="background-color: var(--color-nav);">
-            <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
-                <button mat-icon-button disabled></button>
-                <a (click)="nodePress(node.name)" style="cursor: pointer;" id="baseNode">{{node.name}}</a>
+        <h2 class="sidenav-title">Your notes</h2>
+        @if (treeLoaded && tree.length === 0) {
+        <p class="sidenav-hint">No notes yet. Use Add notes to upload your first set.</p>
+        } @else {
+        <p class="sidenav-hint">Open a section, then pick a note to study.</p>
+        }
+
+        <mat-tree #notesTree [dataSource]="tree" [childrenAccessor]="childrenAccessor" class="notes-tree">
+            <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding class="note-node"
+                [class.is-selected]="node.name === selected">
+                <button type="button" class="note-link" (click)="selectNote(node.name)"
+                    [attr.aria-current]="node.name === selected ? 'true' : null">
+                    <mat-icon aria-hidden="true">{{ node.name === selected ? 'check_circle' : 'description' }}</mat-icon>
+                    <span class="note-name">{{node.name}}</span>
+                </button>
                 <button class='delete-notes-icon' mat-icon-button (click)="deleteNode(node.name)"
                     [matTooltip]="'Delete the note &quot;' + node.name + '&quot;'"
                     [attr.aria-label]="'Delete the note ' + node.name"><mat-icon
                         aria-hidden="true">delete_outline</mat-icon></button>
             </mat-tree-node>
             <mat-tree-node id="expandIcon" *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding
-                matTreeNodeToggle>
+                matTreeNodeToggle class="section-node">
                 <button id="expandIcon-icon" mat-icon-button matTreeNodeToggle
-                    [matTooltip]="(tree.isExpanded(node) ? 'Hide the notes in ' : 'Show the notes in ') + node.name"
-                    [attr.aria-expanded]="tree.isExpanded(node)"
-                    [attr.aria-label]="(tree.isExpanded(node) ? 'Collapse ' : 'Expand ') + node.name">
+                    [matTooltip]="(notesTree.isExpanded(node) ? 'Hide the notes in ' : 'Show the notes in ') + node.name"
+                    [attr.aria-expanded]="notesTree.isExpanded(node)"
+                    [attr.aria-label]="(notesTree.isExpanded(node) ? 'Collapse ' : 'Expand ') + node.name">
                     <mat-icon id="expand-icon" class="mat-icon-rtl-mirror" aria-hidden="true">
-                        {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+                        {{notesTree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
                     </mat-icon>
                 </button>
-                {{node.name}}
+                <span class="section-label">{{node.name}}</span>
             </mat-tree-node>
         </mat-tree>
-        <br />
     </mat-sidenav>
-    <mat-sidenav-content>
+    <mat-sidenav-content class="main-content">
 
-        <nav id="featureTabs" mat-tab-nav-bar mat-stretch-tabs="true" mat-align-tabs="start" [tabPanel]="tabPanel">
-            @for (link of links; track link) {
-            <a mat-tab-link (click)="activePath = link.path" [active]="link.path == activePath"
-                [routerLink]="link.path">
+        <nav id="featureTabs" mat-tab-nav-bar mat-stretch-tabs="false" mat-align-tabs="start" [tabPanel]="tabPanel">
+            @for (link of links; track link.path) {
+            <a mat-tab-link [routerLink]="link.path" routerLinkActive #rla="routerLinkActive"
+                [active]="rla.isActive">
                 {{ link.label }}
             </a>
             }
         </nav>
-        <mat-tab-nav-panel #tabPanel>
-            <router-outlet (activate)="onActivate($event.path)"></router-outlet>
+        <mat-tab-nav-panel #tabPanel class="page-panel">
+            <router-outlet></router-outlet>
         </mat-tab-nav-panel>
-
-        <router-outlet name="base-page"></router-outlet>
 
     </mat-sidenav-content>
 </mat-sidenav-container>

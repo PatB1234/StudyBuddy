@@ -1,23 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AfterViewInit, Component, inject, ViewChild, ElementRef } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
+import { AfterViewInit, Component, DestroyRef, OnInit, inject, ViewChild, ElementRef } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { HttpClient } from '@angular/common/http';
-import { MatCardModule } from '@angular/material/card';
 import { AppComponent } from '../app.component';
 import { IntrojsService } from '../introjs/introjs.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MarkdownModule } from 'ngx-markdown';
 import { KATEX_OPTIONS } from '../katex-options';
 import { LoadingService } from '../loading.service';
-import { finalize } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
+import { Subscription } from 'rxjs';
+import { distinctUntilChanged, finalize } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NotesService } from '../notes.service';
+import { PickNoteComponent } from '../pick-note/pick-note.component';
+import { InlineLoaderComponent } from '../inline-loader/inline-loader.component';
 
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -26,24 +23,31 @@ import jsPDF from 'jspdf';
     selector: 'app-summariser',
     standalone: true,
     imports: [
-        RouterOutlet,
-        MatSidenavModule,
-        MatToolbarModule,
         MatIconModule,
-        MatFormFieldModule,
-        MatInputModule,
-        ReactiveFormsModule,
         MatButtonModule,
-        MatCardModule,
-        MarkdownModule
+        MarkdownModule,
+        PickNoteComponent,
+        InlineLoaderComponent
     ],
     templateUrl: './summariser.component.html',
     styleUrl: './summariser.component.css'
 })
-export class SummariserComponent implements AfterViewInit {
-
+export class SummariserComponent implements OnInit, AfterViewInit {
 
     constructor(private http: HttpClient, private loadingService: LoadingService, private introService: IntrojsService) { }
+
+    notes = inject(NotesService);
+    private destroyRef = inject(DestroyRef);
+
+    ngOnInit(): void {
+        this.notes.selected$
+            .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+            .subscribe(selected => {
+                this.cancelLoading();
+                this.curr_selected = selected;
+                this.summary = selected ? this.notes.getCached<string>('summary', selected) ?? '' : '';
+            });
+    }
 
     ngAfterViewInit(): void {
 
@@ -55,49 +59,45 @@ export class SummariserComponent implements AfterViewInit {
 
     URL: any = AppComponent.URL;
     private _snackBar = inject(MatSnackBar);
-    openSnackBar(message: string, action: string) {
-        this._snackBar.open(message, action);
-    }
-    //Summariser Funcs
+
     summary: any = '';
-    curr_selected: any = ''
+    curr_selected: string | null = null;
+    loadingMessage = '';
+    private pending?: Subscription;
+
     summariseButton(): void {
-        this._snackBar.open("Please wait while we summarise your notes", "Dismiss")
-        this.startLoading("Making your summary...")
-        this.http.get(this.URL + "/summarise")
-            .pipe(finalize(() => this.stopLoading()))
-            .subscribe((res: any) => {
-
-                this.summary = res
-            })
+        const note = this.curr_selected;
+        if (!note) {
+            return;
+        }
+        this.loadingMessage = "Making your summary...";
+        this.pending = this.http.get(this.URL + "/summarise")
+            .pipe(finalize(() => this.loadingMessage = ''))
+            .subscribe(
+                (res: any) => {
+                    this.summary = res;
+                    this.notes.setCached('summary', note, res);
+                },
+                () => this._snackBar.open("We could not summarise these notes right now. Please try again.", "Dismiss")
+            )
     }
 
-    // Commands to trigger the loading animation
-    startLoading(message: string): void {
-        this.loadingService.start(message);
+    cancelLoading(): void {
+        this.pending?.unsubscribe();
+        this.loadingMessage = '';
     }
-
-    stopLoading(): void {
-        this.loadingService.stop();
-    }
-
 
     @ViewChild('pdfContent') pdfContent!: ElementRef;
 
     async downloadPdf() {
-        this.startLoading("Converting your notes into a downloadable format...");
+        if (!this.summary) {
+            return;
+        }
+        this.loadingService.start("Converting your summary into a PDF...");
 
         await new Promise(resolve => setTimeout(resolve, 50));
 
         try {
-            const filenameRes: any = await firstValueFrom(
-                this.http.post(AppComponent.URL + "/get_currently_selected_note", {})
-            ).catch(() => null);
-
-            if (filenameRes && filenameRes !== "-1.txt") {
-                this.curr_selected = filenameRes;
-            }
-
             const element = this.pdfContent.nativeElement;
             const canvas = await html2canvas(element, {
                 scale: 2,
@@ -126,9 +126,9 @@ export class SummariserComponent implements AfterViewInit {
                 heightLeft -= pageHeight;
             }
 
-            pdf.save(`${this.curr_selected} - StudyBuddy Summary.pdf`);
+            pdf.save(`${this.curr_selected} - StuddyBuddy Summary.pdf`);
         } finally {
-            this.stopLoading();
+            this.loadingService.stop();
         }
     }
 }

@@ -1,52 +1,74 @@
 <div class="login-body">
-    <div class="login-content" align="center">
+    <div class="login-content">
         <mat-card class="login-card">
-            <mat-card-content class="login-card-content">
+            <mat-card-content>
+                <h1 class="login-title">StuddyBuddy</h1>
 
+                <mat-tab-group mat-stretch-tabs="true" [(selectedIndex)]="tabIndex" animationDuration="0ms">
+                    <mat-tab label="Log in">
+                        <form class="login-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+                            <mat-form-field class="form-field" appearance="outline">
+                                <mat-label>Email</mat-label>
+                                <input type="email" matInput formControlName="email" autocomplete="email">
+                                @if (loginForm.get('email')?.hasError('required')) {
+                                <mat-error>Email is required</mat-error>
+                                }
+                                @if (loginForm.get('email')?.hasError('email')) {
+                                <mat-error>Invalid email</mat-error>
+                                }
+                            </mat-form-field>
 
-                <form class="form flex flex-center" [formGroup]="loginForm">
-                    <h3>Log in/Sign up</h3>
-                    <br />
-                    <mat-form-field class="form-field" appearance="outline">
-                        <mat-label>Name</mat-label>
-                        <input type="name" matInput formControlName="name">
-                        @if (loginForm.get('name')?.hasError('required')) {
-                        <mat-error>Name is required</mat-error>
-                        }
+                            <mat-form-field class="form-field" appearance="outline">
+                                <mat-label>Password</mat-label>
+                                <input type="password" matInput formControlName="password" autocomplete="current-password">
+                                @if (loginForm.get('password')?.hasError('required')) {
+                                <mat-error>Password is required</mat-error>
+                                }
+                            </mat-form-field>
 
-                    </mat-form-field>
-                    <br />
+                            <button mat-flat-button color="primary" type="submit"
+                                [disabled]="loginForm.invalid || submitting">Log in</button>
+                            <p class="switch-hint">New here? <a href="" (click)="$event.preventDefault(); tabIndex = 1">Create an
+                                    account</a></p>
+                        </form>
+                    </mat-tab>
 
-                    <mat-form-field class="form-field" appearance="outline">
-                        <mat-label>Email</mat-label>
-                        <input type="email" matInput formControlName="email">
-                        @if (loginForm.get('email')?.hasError('required')) {
-                        <mat-error>Email is required</mat-error>
-                        }
-                        @if (loginForm.get('email')?.hasError('email')) {
-                        <mat-error>Invalid email</mat-error>
-                        }
-                    </mat-form-field>
-                    <br />
+                    <mat-tab label="Create account">
+                        <form class="login-form" [formGroup]="signUpForm" (ngSubmit)="submitSignUp()">
+                            <mat-form-field class="form-field" appearance="outline">
+                                <mat-label>Name</mat-label>
+                                <input type="text" matInput formControlName="name" autocomplete="name">
+                                @if (signUpForm.get('name')?.hasError('required')) {
+                                <mat-error>Name is required</mat-error>
+                                }
+                            </mat-form-field>
 
-                    <mat-form-field class="form-field" appearance="outline">
-                        <mat-label>Password</mat-label>
-                        <input type="password" matInput formControlName="password">
-                        @if (loginForm.get('password')?.hasError('required')) {
-                        <mat-error>Password is required</mat-error>
-                        }
-                    </mat-form-field>
-                    <br />
-                    <p class="error-text">{{error}}</p>
-                    <br />
-                    <button mat-stroked-button (click)="submit()" [disabled]="loginForm.invalid">Log In/Sign Up</button>
-                    <p>If you do not have an account, we will make a new one for you!</p>
-                    <br />
-                    <br />
-                    <!-- <a (click)="changeView()" style="cursor:default; color: blue;"><u>{{account_message}}</u></a> -->
-                    <!-- <label>Don't have an account? Click here to sign up:</label>
-                <mat-checkbox  [checked]="task().completed" (change)="update($event.checked)"></mat-checkbox> -->
-                </form>
+                            <mat-form-field class="form-field" appearance="outline">
+                                <mat-label>Email</mat-label>
+                                <input type="email" matInput formControlName="email" autocomplete="email">
+                                @if (signUpForm.get('email')?.hasError('required')) {
+                                <mat-error>Email is required</mat-error>
+                                }
+                                @if (signUpForm.get('email')?.hasError('email')) {
+                                <mat-error>Invalid email</mat-error>
+                                }
+                            </mat-form-field>
+
+                            <mat-form-field class="form-field" appearance="outline">
+                                <mat-label>Password</mat-label>
+                                <input type="password" matInput formControlName="password" autocomplete="new-password">
+                                @if (signUpForm.get('password')?.hasError('required')) {
+                                <mat-error>Password is required</mat-error>
+                                }
+                            </mat-form-field>
+
+                            <button mat-flat-button color="primary" type="submit"
+                                [disabled]="signUpForm.invalid || submitting">Create account</button>
+                            <p class="switch-hint">Already have an account? <a href=""
+                                    (click)="$event.preventDefault(); tabIndex = 0">Log in</a></p>
+                        </form>
+                    </mat-tab>
+                </mat-tab-group>
 
             </mat-card-content>
         </mat-card>

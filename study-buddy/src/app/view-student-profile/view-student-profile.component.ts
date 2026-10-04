@@ -16,6 +16,8 @@ import { take } from 'rxjs/operators';
 import { IntrojsService } from '../introjs/introjs.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
 import { clearTokenCookie } from '../auth-cookie';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { DisplaySettingsService } from '../display-settings.service';
 
 @Component({
     selector: 'app-view-student-profile',
@@ -28,6 +30,7 @@ import { clearTokenCookie } from '../auth-cookie';
         MatCardModule,
         MatIconModule,
         MatTooltipModule,
+        MatSlideToggleModule,
     ],
     templateUrl: './view-student-profile.component.html',
     styleUrl: './view-student-profile.component.css'
@@ -38,6 +41,14 @@ export class ViewStudentProfileComponent implements OnInit, AfterViewInit {
     private dialog = inject(MatDialog);
     private _snackBar = inject(MatSnackBar);
     deleting = false;
+    private display = inject(DisplaySettingsService);
+    darkMode = this.display.get('darkMode');
+    dyslexiaFont = this.display.get('dyslexiaFont');
+
+    setDisplay(setting: 'darkMode' | 'dyslexiaFont', on: boolean): void {
+        this.display.set(setting, on);
+        this[setting] = on;
+    }
 
     ngOnInit(): void {
 
@@ -53,6 +64,7 @@ export class ViewStudentProfileComponent implements OnInit, AfterViewInit {
     nameView = 'name';
     emailView = 'email';
     error = '';
+    success = '';
 
     studentProfileForm = new FormGroup({
         name: new FormControl(''),
@@ -69,10 +81,15 @@ export class ViewStudentProfileComponent implements OnInit, AfterViewInit {
                 // RES = 0 Either the user was not found or the details entered did not match
                 if (res == 0) {
 
-                    this.error = "Details incorrect, try again"
+                    this.success = ''
+                    this.error = "Your current password is incorrect, so nothing was changed. Please try again."
                 } else if (res == 1) {
 
-                    this.error = "Successful"
+                    this.error = ''
+                    this.success = "Your changes have been saved."
+                    // Clear the passwords so they aren't left on screen
+                    this.studentProfileForm.reset();
+                    this.getStudent();
                 }
             })
         }

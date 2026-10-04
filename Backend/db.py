@@ -461,6 +461,7 @@ def delete_notes_by_id(fid: int):
         if os.path.exists(file_path):
 
             os.remove(file_path)
+        funcs.delete_progress(fid)
         with funcs.CACHED_QUESTIONS_LOCK:
             for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
 
@@ -491,6 +492,7 @@ def delete_note_by_name(note_name: str, token: str):
     if os.path.exists(file_path):
 
         os.remove(file_path)
+    funcs.delete_progress(fid)
     with funcs.CACHED_QUESTIONS_LOCK:
         for i, curr_qs in enumerate(funcs.CACHED_QUESTIONS):
 

@@ -1,37 +1,97 @@
 <div class="flashcards">
-    <h2>Flashcards</h2>
+    @if (selected) {
+    <h2 class="page-title">Flashcards</h2>
+
+    @if (flashcards.length > 0) {
+    <div class="progress-row">
+        <div class="progress-text">
+            <span id="knownCount">{{ knownCount }} of {{ flashcards.length }} known</span>
+            <div class="progress-actions">
+                <mat-slide-toggle id="reviewWeak" [checked]="reviewWeak" (change)="toggleReviewWeak($event.checked)">
+                    Review weak cards
+                </mat-slide-toggle>
+                <button id="resetProgress" mat-button (click)="resetProgress()" [disabled]="knownCount === 0">
+                    <mat-icon aria-hidden="true">restart_alt</mat-icon>
+                    Reset progress
+                </button>
+            </div>
+        </div>
+        <mat-progress-bar mode="determinate" [value]="knownCount / flashcards.length * 100"
+            aria-label="Cards you know"></mat-progress-bar>
+    </div>
+    }
+
+    @if (loadingMessage) {
+    <app-inline-loader [message]="loadingMessage" (cancel)="cancelLoading()" />
+    }
 
     <div class="tp-wrapper">
-        <div id="flashcard" class="tp-box" (click)="toggleFlip()" (keyup.enter)="toggleFlip()" [@flipState]="flip"
-            tabindex="0">
-            <div class="tp-box__side tp-box__front">{{front}}</div>
-            <div class="tp-box__side tp-box__back">{{back}}</div>
-
-        </div>
-        <div align="center">
-
-            <p id="cardCount">{{card_num}}</p>
-            <button id="prevCard" mat-icon-button matTooltip="Previous Card" aria-label="Previous Card"
-                (click)="flashcardBack()">
-                <mat-icon>arrow_back</mat-icon>
-            </button>
-            <button id="nextCard" mat-icon-button matTooltip="Next Card" aria-label="Next Card"
-                (click)="flashcardNext()">
-                <mat-icon>arrow_forward</mat-icon>
-            </button>
-            <br />
-            <button id="exportQuizlet" class='icon-button' mat-icon-button
-                matTooltip="Export Cards for Quizlet" aria-label="Export cards for Quizlet"
-                (click)="exportCardsQuizlet()"><mat-icon class="large_buttons"
-                    svgIcon="quizlet-logo"></mat-icon></button>
-            <button id="exportExcel" class='icon-button' mat-icon-button matTooltip="Export Cards as Excel"
-                aria-label="Export cards as a spreadsheet" (click)="exportCardsXlsx()"><mat-icon
-                    class="large_buttons">download</mat-icon></button>
-            <br />
-            <button id="generateCards" mat-icon-button matTooltip="{{iconMessage}}" [attr.aria-label]="iconMessage"
-                (click)="refreshCards()">
-                <mat-icon>{{iconType}}</mat-icon>
-            </button>
+        <div id="flashcard" class="tp-box" role="button" tabindex="0"
+            [attr.aria-label]="flip === 'active' ? 'Answer side. Press to show the question' : 'Question side. Press to show the answer'"
+            (click)="toggleFlip()" (keyup.enter)="toggleFlip()" [@flipState]="flip">
+            <div class="tp-box__side tp-box__front">
+                <span class="side-label">Question @if (currentKnown) { <span class="known-badge">Known</span> }</span>
+                <span class="side-text">{{front}}</span>
+            </div>
+            <div class="tp-box__side tp-box__back">
+                <span class="side-label">Answer</span>
+                <span class="side-text">{{back}}</span>
+            </div>
         </div>
     </div>
+
+    <div id="markCard" class="mark-row">
+        @if (revealed) {
+        <button mat-stroked-button class="still-learning" (click)="markCard(false)">
+            <mat-icon aria-hidden="true">replay</mat-icon>
+            Still learning
+        </button>
+        <button mat-flat-button color="primary" (click)="markCard(true)">
+            <mat-icon aria-hidden="true">check</mat-icon>
+            Got it
+        </button>
+        } @else if (total_card > 0) {
+        <p class="mark-hint">Try to remember the answer, then flip the card.</p>
+        }
+    </div>
+
+    <p id="cardCount" class="card-count">
+        @if (total_card > 0) { Card {{curr_card + 1}} of {{total_card}} }
+    </p>
+
+    <div class="card-controls">
+        <button id="prevCard" mat-stroked-button (click)="flashcardBack()" [disabled]="curr_card === 0 || total_card === 0">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Previous
+        </button>
+        <button mat-flat-button color="primary" (click)="toggleFlip()" [disabled]="total_card === 0">
+            <mat-icon aria-hidden="true">flip</mat-icon>
+            Flip
+        </button>
+        <button id="nextCard" mat-stroked-button (click)="flashcardNext()"
+            [disabled]="curr_card >= total_card - 1">
+            Next
+            <mat-icon iconPositionEnd aria-hidden="true">arrow_forward</mat-icon>
+        </button>
+    </div>
+
+    <p class="shortcut-hint">Shortcuts: <kbd>Space</kbd> flips, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> move between cards</p>
+
+    <div class="deck-actions">
+        <button id="generateCards" mat-button (click)="newDeck()" [disabled]="!!loadingMessage">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            New deck
+        </button>
+        <button id="exportQuizlet" mat-button (click)="exportCardsQuizlet()" [disabled]="total_card === 0">
+            <mat-icon svgIcon="quizlet-logo" aria-hidden="true"></mat-icon>
+            Copy for Quizlet
+        </button>
+        <button id="exportExcel" mat-button (click)="exportCardsCsv()" [disabled]="total_card === 0">
+            <mat-icon aria-hidden="true">download</mat-icon>
+            Download CSV
+        </button>
+    </div>
+    } @else {
+    <app-pick-note />
+    }
 </div>

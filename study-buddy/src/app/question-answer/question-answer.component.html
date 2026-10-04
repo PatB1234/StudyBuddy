@@ -1,21 +1,70 @@
 <div class="question_and_answer">
+    @if (selected) {
+    <div class="title-row">
+        <h2 class="page-title">Practice questions</h2>
+        @if (answered > 0) {
+        <span id="sessionScore" class="score">{{ right }} / {{ answered }} this session</span>
+        }
+    </div>
 
-    <h2>Question &amp; Answer</h2>
+    @if (loadingMessage) {
+    <app-inline-loader [message]="loadingMessage" (cancel)="cancelLoading()" />
+    }
+
     <form class="question-answer-form" [formGroup]="questionAnswerForm" (ngSubmit)="onQuestionSubmit()">
-        <h6 id="questionBox">{{ questionBox || 'Press "Next Question" to generate a question from your selected notes.' }}</h6>
-        <mat-form-field id="answerField" class="example-full-width">
-            <textarea matInput placeholder="Type your answer here" formControlName="questionAnswer"></textarea>
+        <div id="questionBox" class="question-card">
+            <span class="card-label">Question</span>
+            <p class="question-text">{{ question || 'Your question will appear here.' }}</p>
+        </div>
+
+        <mat-form-field id="answerField" class="answer-field" appearance="outline">
+            <mat-label>Your answer</mat-label>
+            <textarea matInput rows="5" placeholder="Write down everything you can remember"
+                formControlName="questionAnswer" (keydown.control.enter)="onQuestionSubmit()"
+                (keydown.meta.enter)="onQuestionSubmit()"></textarea>
+            <mat-hint>Ctrl or Cmd + Enter to check</mat-hint>
         </mat-form-field>
-        <br />
+
+        <div class="actions">
+            <button id="submitAnswer" mat-flat-button color="primary" type="submit" [disabled]="isChecking || !question">
+                {{ isChecking ? 'Checking...' : 'Check my answer' }}
+            </button>
+            <button id="showAnswer" mat-stroked-button type="button" (click)="showAnswer()"
+                [disabled]="isChecking || !question || !!correctOrNot">
+                <mat-icon aria-hidden="true">lightbulb</mat-icon>
+                Show me the answer
+            </button>
+            <button id="nextQuestion" mat-stroked-button type="button" (click)="nextQuestion()"
+                [disabled]="isFetchingQuestion">
+                <mat-icon aria-hidden="true">skip_next</mat-icon>
+                {{ isFetchingQuestion ? 'Loading...' : 'Next question' }}
+            </button>
+        </div>
+    </form>
+
+    @if (correctOrNot) {
+    <section class="feedback-card" aria-live="polite">
+        <span class="card-label">Feedback</span>
         <markdown id="answerFeedback" katex [katexOptions]="katexOptions" [data]="correctOrNot"
             class="markdown-output"></markdown>
-        <button id="submitAnswer" mat-raised-button type="submit" [disabled]="isChecking || !question">
-            {{ isChecking ? 'Checking...' : 'Submit' }}
-        </button>
-
-    </form>
-    <br />
-    <button id="nextQuestion" mat-raised-button (click)="nextQuestion()" [disabled]="isFetchingQuestion">
-        {{ isFetchingQuestion ? 'Loading...' : 'Next Question' }}
-    </button>
+        @if (!marked) {
+        <div class="mark-row">
+            <span class="mark-question">How did you do?</span>
+            <button mat-flat-button color="primary" type="button" (click)="markAnswer(true)">
+                <mat-icon aria-hidden="true">check</mat-icon>
+                I got it right
+            </button>
+            <button mat-stroked-button type="button" (click)="markAnswer(false)">
+                <mat-icon aria-hidden="true">close</mat-icon>
+                I got it wrong
+            </button>
+        </div>
+        } @else if (!gaveUp) {
+        <p class="marked-note">Marked. Press "Next question" when you're ready.</p>
+        }
+    </section>
+    }
+    } @else {
+    <app-pick-note />
+    }
 </div>

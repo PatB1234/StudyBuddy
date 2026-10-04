@@ -1,0 +1,13 @@
+// Built from the app's teal and coral. Palettes live in m3-theme.scss
+@use '@angular/material' as mat;
+@use './m3-theme' as theme;
+
+@include mat.core();
+
+html {
+    @include mat.all-component-themes(theme.$light-theme);
+}
+
+html.dark-mode {
+    @include mat.all-component-colors(theme.$dark-theme);
+}

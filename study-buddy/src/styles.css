@@ -21,17 +21,58 @@ body {
 
 :root {
     --color-bg: #f4f1ea;
-    --color-surface: #ffffff;
-    --color-surface-alt: #eef2ef;
-    --color-nav: #e3ebe6;
+    --color-surface: #fffdf9;
+    --color-surface-alt: #f8f5ef;
+    --color-nav: #ece6da;
     --color-header: #1f5f5b;
+    --color-on-header: #ffffff;
+    --color-on-primary: #ffffff;
+    --color-overlay: rgba(244, 241, 234, 0.85);
     --color-primary: #1f5f5b;
     --color-primary-hover: #184b47;
     --color-accent: #e07a5f;
-    --color-border: #cfd8d2;
+    --color-border: #ddd5c8;
     --color-text: #1f2a2e;
     --color-text-muted: #4a5a5f;
     --color-danger: #9b3b2f;
+    /* One shadow for every card */
+    --shadow-soft: 0 2px 10px rgba(31, 42, 46, 0.08);
+
+    /* Material surfaces follow the warm palette instead of the theme's cool tint */
+    --mat-app-background-color: var(--color-bg);
+    --mat-sidenav-content-background-color: var(--color-bg);
+    --mat-sidenav-container-background-color: var(--color-nav);
+    --mat-tree-container-background-color: var(--color-nav);
+    --mdc-elevated-card-container-color: var(--color-surface);
+    --mdc-outlined-card-container-color: var(--color-surface);
+    --mdc-outlined-card-outline-color: var(--color-border);
+    --mdc-dialog-container-color: var(--color-surface);
+    --mat-menu-container-color: var(--color-surface);
+    --mat-select-panel-background-color: var(--color-surface);
+    --mat-tab-header-divider-color: var(--color-border);
+}
+
+/* Set by DisplaySettingsService from the Account page */
+html.dark-mode {
+    --color-bg: #191a18;
+    --color-surface: #232421;
+    --color-surface-alt: #2a2b28;
+    --color-nav: #1f201d;
+    --color-primary: #7ab6b1;
+    --color-primary-hover: #95d2cc;
+    --color-on-primary: #00201e;
+    --color-accent: #e8937b;
+    --color-border: #3a3b37;
+    --color-text: #ece8e1;
+    --color-text-muted: #b5b0a6;
+    --color-danger: #f0a090;
+    --color-overlay: rgba(25, 26, 24, 0.85);
+    --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Icons and maths keep their own fonts */
+html.dyslexia-font *:not(.mat-icon):not(.material-icons):not(.katex):not(.katex *) {
+    font-family: 'OpenDyslexic', Roboto, sans-serif !important;
 }
 
 a {
@@ -100,4 +141,9 @@ body.introjs-active .mat-toolbar {
 
 .introjs-progressbar {
     background-color: var(--color-primary);
+}
+
+.success-text {
+    color: var(--color-primary);
+    font-weight: 500;
 }
