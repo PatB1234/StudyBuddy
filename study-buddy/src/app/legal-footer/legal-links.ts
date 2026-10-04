@@ -1,2 +1,2 @@
-export const PRIVACY_URL = 'https://legal.studdybuddy.app/privacy';
-export const TERMS_URL = 'https://legal.studdybuddy.app/terms';
+export const PRIVACY_URL = 'https://legal.studdybuddy.app/privacy.html';
+export const TERMS_URL = 'https://legal.studdybuddy.app/terms.html';
