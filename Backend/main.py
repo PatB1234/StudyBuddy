@@ -286,6 +286,13 @@ async def post_add_notes(
                 res = await anyio.to_thread.run_sync(
                     funcs.convert_handwritten_to_pdf, file_path, int(file_id)
                 )
+                # The unconverted scan has no usable text, so don't save it
+                if res != funcs.HANDWRITING_CONVERTED_MESSAGE:
+
+                    if os.path.exists(file_path):
+
+                        os.remove(file_path)
+                    return {"message": res}
 
             # None means the notes are usable; anything else is a message
             # explaining what actually went wrong.
@@ -324,6 +331,13 @@ async def post_add_notes(
             res = await anyio.to_thread.run_sync(
                 funcs.convert_handwritten_to_pdf, file_path, int(file_id)
             )
+            # Without a PDF the note would point at nothing
+            if res != funcs.HANDWRITING_CONVERTED_MESSAGE:
+
+                if os.path.exists(file_path):
+
+                    os.remove(file_path)
+                return {"message": res}
             db.add_notes(
                 request.headers.get("token"),
                 title,

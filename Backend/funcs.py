@@ -1,5 +1,6 @@
 # Imports
 import ast
+import io
 import logging
 import os
 import re
@@ -12,6 +13,7 @@ from google.genai import types as genai_types
 from google.cloud import vision
 from dotenv import load_dotenv
 from fpdf import FPDF
+from PyPDF2 import PdfReader
 import classes
 
 load_dotenv()
@@ -478,25 +480,128 @@ def to_pdf_safe_text(data: str) -> str:
     return data.encode("latin-1", errors="replace").decode("latin-1")
 
 
+SCRIPT_LETTERS = {
+    "Arabic": re.compile(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]"),
+    "Hindi": re.compile(r"[\u0900-\u097F]"),
+}
+LATIN_LETTERS = re.compile(r"[A-Za-z]")
+MIME_TYPES = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".pdf": "application/pdf",
+}
+HANDWRITING_CONVERTED_MESSAGE = "Successfully converted your handwritten PDF to text, " \
+    + "please proceed with the app as normal"
+NOT_TRANSLATED_MESSAGE = "These notes could not be translated into English. Please try again with a clearer photo"
+NO_TEXT_MESSAGE = "No text could be extracted from this image. Please try again with a new image or better handwriting :)"
+
+# Translation only, so keep the prompt tiny to save tokens
+translation_config = genai_types.GenerateContentConfig(
+    temperature=0,
+    max_output_tokens=8192,
+    response_mime_type="text/plain",
+)
+# Named fields stop Gemini replying with only the language or only the original text
+handwriting_config = translation_config.model_copy(update={
+    "response_mime_type": "application/json",
+    "response_schema": {
+        "type": "OBJECT",
+        "properties": {"language": {"type": "STRING"}, "english": {"type": "STRING"}},
+        "required": ["language", "english"],
+    },
+})
+
+
+def dominant_language(text):
+    """Return Arabic or Hindi when that script outnumbers English letters."""
+    counts = {name: len(p.findall(text)) for name, p in SCRIPT_LETTERS.items()}
+    language = max(counts, key=counts.get)
+    return language if counts[language] > len(LATIN_LETTERS.findall(text)) else None
+
+
+def read_handwriting(content, mime_type):
+    if mime_type != "application/pdf":
+        res = visionClient.document_text_detection(
+            image=vision.Image(content=content))
+        if res.error.message:
+            raise RuntimeError(f"Error from Vision API: {res.error.message}")
+        return res.full_text_annotation.text
+
+    # The images endpoint rejects PDFs, and the file endpoint reads five pages per request
+    page_count = len(PdfReader(io.BytesIO(content)).pages)
+    texts = []
+    for first in range(1, page_count + 1, 5):
+        request = vision.AnnotateFileRequest(
+            input_config=vision.InputConfig(
+                content=content, mime_type=mime_type),
+            features=[vision.Feature(
+                type_=vision.Feature.Type.DOCUMENT_TEXT_DETECTION)],
+            pages=list(range(first, min(first + 5, page_count + 1))),
+        )
+        response = visionClient.batch_annotate_files(requests=[request])
+        for page in response.responses[0].responses:
+            if page.error.message:
+                raise RuntimeError(
+                    f"Error from Vision API: {page.error.message}")
+            texts.append(page.full_text_annotation.text)
+    return "\n".join(texts)
+
+
+def translate_to_english(text):
+    response = client.models.generate_content(
+        model=MODEL_NAME,
+        contents=f"Translate to English. Output only the translation.\n\n{text}",
+        config=translation_config,
+    )
+    return _extract_response_text(response, "translate_to_english")
+
+
+def translate_handwriting_file(content, mime_type):
+    """Have Gemini read handwriting Vision cannot, returning (language, English text)."""
+    response = client.models.generate_content(
+        model=MODEL_NAME,
+        contents=[
+            genai_types.Part.from_bytes(data=content, mime_type=mime_type),
+            "Give the handwriting's language, and its full English translation "
+            "(the text itself if already English). Leave english empty if there is no text.",
+        ],
+        config=handwriting_config,
+    )
+    reply = json.loads(_extract_response_text(response, "translate_handwriting_file"))
+    return reply["language"].strip(), reply["english"].strip()
+
+
+def translation_note(language):
+    return (
+        f"Note: These notes were handwritten in {language} "
+        "and have been translated into English.\n\n"
+    )
+
+
 def convert_handwritten_to_pdf(file_path, file_id):
 
     try:
 
         with open(file_path, "rb") as image_file:
             content = image_file.read()
-        client = vision.ImageAnnotatorClient()
-        image = vision.Image(content=content)
-        res = client.document_text_detection(image=image)
+        mime_type = MIME_TYPES[os.path.splitext(file_path)[1].lower()]
+        data = read_handwriting(content, mime_type)
+        language = dominant_language(data)
 
-        if res.error.message:
+        # Vision cannot read Arabic handwriting, so Gemini reads the page itself
+        if language == "Arabic" or not data.strip():
+            language, data = translate_handwriting_file(content, mime_type)
+            if not data:
+                return NO_TEXT_MESSAGE
+            if language.lower() != "english":
+                data = translation_note(language) + data
+        elif language == "Hindi":
+            data = translation_note(language) + translate_to_english(data)
 
-            raise RuntimeError(f"Error from Vision API: {res.error.message}")
-
-        data = res.full_text_annotation.text
-
-        if not data.strip():
-
-            return "No text could be extracted from this image. Please try again with a new image or better handwriting :)"
+        # Leftover Arabic or Hindi would print as question marks in the latin-1 PDF
+        if any(p.search(data) for p in SCRIPT_LETTERS.values()):
+            return NOT_TRANSLATED_MESSAGE
 
         os.remove(file_path)
         pdf = FPDF()
@@ -507,8 +612,7 @@ def convert_handwritten_to_pdf(file_path, file_id):
         pdf.multi_cell(0, 10, txt=safe_data)
         os.makedirs("Data", exist_ok=True)
         pdf.output(f"Data/{file_id}.pdf")
-        return "Successfully converted your handwritten PDF to text, " \
-            + "please proceed with the app as normal"
+        return HANDWRITING_CONVERTED_MESSAGE
     except FileNotFoundError:
         return "Could not find the uploaded image file"
     except RuntimeError as e:
