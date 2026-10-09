@@ -2,12 +2,18 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { AppComponent } from './app.component';
 
 export interface NoteNode {
     name: string;
+    id?: number; // The note's fileID. Sections have none
     children?: NoteNode[];
+}
+
+export interface SelectedNote {
+    id: number;
+    name: string;
 }
 
 // One source of truth for the notes tree and the selected note, so the
@@ -18,18 +24,24 @@ export class NotesService {
     private http = inject(HttpClient);
 
     private _tree = new BehaviorSubject<NoteNode[]>([]);
-    private _selected = new BehaviorSubject<string | null>(null);
+    private _selection = new BehaviorSubject<SelectedNote | null>(null);
     private _ready = new BehaviorSubject<boolean>(false);
 
     tree$ = this._tree.asObservable();
-    selected$ = this._selected.asObservable();
+    // Compared by fileID, since two notes can share a name
+    selection$ = this._selection.pipe(distinctUntilChanged((a, b) => a?.id === b?.id));
+    selected$ = this._selection.pipe(map(note => note?.name ?? null));
     ready$ = this._ready.asObservable(); // False until the first refresh lands
 
     // Per-note results kept for the session, so switching tabs costs nothing
     private cache = new Map<string, any>();
 
     get selected(): string | null {
-        return this._selected.value;
+        return this._selection.value?.name ?? null;
+    }
+
+    get selectedId(): number | null {
+        return this._selection.value?.id ?? null;
     }
 
     get tree(): NoteNode[] {
@@ -41,58 +53,60 @@ export class NotesService {
         return forkJoin({
             tree: this.http.post<NoteNode[]>(AppComponent.URL + '/get_all_user_notes_tree', {})
                 .pipe(catchError(() => of([] as NoteNode[]))),
-            selected: this.http.post<any>(AppComponent.URL + '/get_currently_selected_note', {})
-                .pipe(catchError(() => of(null)))
+            selectedId: this.http.post<number>(AppComponent.URL + '/get_currently_selected_note_id', {})
+                .pipe(catchError(() => of(-1)))
         }).pipe(
-            tap(({ tree, selected }) => {
-                this._tree.next(Array.isArray(tree) ? tree : []);
-                this._selected.next(this.normalise(selected));
+            tap(({ tree, selectedId }) => {
+                const safeTree = Array.isArray(tree) ? tree : [];
+                const note = safeTree.flatMap(section => section.children ?? [])
+                    .find(n => n.id !== undefined && n.id === Number(selectedId));
+                this._tree.next(safeTree);
+                this._selection.next(note ? { id: note.id!, name: note.name } : null);
                 this._ready.next(true);
             }),
             map(() => undefined)
         );
     }
 
-    select(name: string): Observable<void> {
-        return this.http.post(AppComponent.URL + '/change_current_notes', { newNoteName: name }).pipe(
-            tap(() => this._selected.next(name)),
+    select(note: NoteNode): Observable<void> {
+        return this.http.post(AppComponent.URL + '/change_current_notes', { newNoteName: note.name, fileID: note.id }).pipe(
+            tap(() => this._selection.next({ id: note.id ?? -1, name: note.name })),
             map(() => undefined)
         );
     }
 
-    delete(name: string): Observable<string> {
-        return this.http.post<string>(AppComponent.URL + '/delete_note_by_name', { noteName: name }).pipe(
-            tap(() => this.clearCacheFor(name)),
+    delete(note: NoteNode): Observable<string> {
+        return this.http.post<string>(AppComponent.URL + '/delete_note_by_name', { noteName: note.name, fileID: note.id }).pipe(
+            tap(() => this.clearCacheFor(note.id ?? -1)),
             // Refresh after, since deleting the selected note unselects it on the server
             switchMap(res => this.refresh().pipe(map(() => res)))
         );
+    }
+
+    // The latest upload with this name, as a new upload takes the highest fileID
+    newestNote(name: string): NoteNode | undefined {
+        return this._tree.value.flatMap(section => section.children ?? [])
+            .filter(note => note.name === name)
+            .sort((a, b) => (b.id ?? -1) - (a.id ?? -1))[0];
     }
 
     sectionNames(): string[] {
         return this._tree.value.map(section => section.name);
     }
 
-    getCached<T>(kind: string, note: string): T | undefined {
-        return this.cache.get(`${kind}:${note}`);
+    getCached<T>(kind: string, noteId: number): T | undefined {
+        return this.cache.get(`${kind}:${noteId}`);
     }
 
-    setCached<T>(kind: string, note: string, value: T): void {
-        this.cache.set(`${kind}:${note}`, value);
+    setCached<T>(kind: string, noteId: number, value: T): void {
+        this.cache.set(`${kind}:${noteId}`, value);
     }
 
-    private clearCacheFor(note: string): void {
+    private clearCacheFor(noteId: number): void {
         for (const key of [...this.cache.keys()]) {
-            if (key.endsWith(`:${note}`)) {
+            if (key.endsWith(`:${noteId}`)) {
                 this.cache.delete(key);
             }
         }
-    }
-
-    // The backend reports "no note" as -1 or "-1.txt"
-    private normalise(res: any): string | null {
-        if (res === null || res === undefined || res === -1 || res === '-1' || res === '-1.txt' || res === '') {
-            return null;
-        }
-        return String(res);
     }
 }

@@ -214,7 +214,7 @@ async def check_student_login_post(user: classes.PostLoginCheckStudentModel):
     token = db.create_student_with_token(
         db.Student(name=user.name, email=user.email, password=user.password)
     )
-    return {"token": token, "created": True}
+    return {"token": token, "created": token is not None}
 
 
 @app.get("/api/get_student_credentials")
@@ -264,7 +264,7 @@ async def change_current_notes(
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     db.change_current_notes(request.headers.get(
-        "token"), new_note_name.newNoteName)
+        "token"), new_note_name.newNoteName, new_note_name.fileID)
 
 
 @app.post("/api/add_notes")
@@ -396,6 +396,18 @@ async def get_currently_selected_notes_by_token(request: Request):
     ).fileName
 
 
+# The same, as a fileID, since two notes can share a name. -1 if none.
+@app.post("/api/get_currently_selected_note_id")
+async def get_currently_selected_note_id(request: Request):
+
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
+
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
+
+    return db.get_current_notes_by_token(request.headers.get("token"))
+
+
 # Usage totals for the owner, locked behind STATS_KEY in .env
 @app.get("/api/stats")
 async def get_stats(request: Request):
@@ -424,7 +436,7 @@ async def post_delete_user(request: Request):
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     db.reset_selected_note_by_token(request.headers.get("token"))
-    return db.delete_user_id(token_res[2])
+    return db.delete_user_id(token_res[2], token_res[1])
 
 
 @app.post("/api/delete_note_by_name")
@@ -438,7 +450,8 @@ async def post_delete_note_by_name(
         return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
 
     db.reset_selected_note_by_token(request.headers.get("token"))
-    return db.delete_note_by_name(note_name.noteName, request.headers.get("token"))
+    return db.delete_note_by_name(
+        note_name.noteName, request.headers.get("token"), note_name.fileID)
 
 
 @app.get("/api/export_flashcards/{res_type}")

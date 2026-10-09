@@ -45,12 +45,15 @@ class Notes(BaseModel):
 
 class PostChangeNotes(BaseModel):
 
-    newNoteName: str
+    newNoteName: str = ""
+    # Optional so older app builds that only send the name keep working
+    fileID: int = -1
 
 
 class PostDeleteNoteModel(BaseModel):
 
-    noteName: str
+    noteName: str = ""
+    fileID: int = -1
 
 
 class PostFlashcardProgressModel(BaseModel):

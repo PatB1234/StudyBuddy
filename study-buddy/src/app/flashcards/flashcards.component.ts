@@ -15,7 +15,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
 import { saveAs } from 'file-saver';
 import { Subject, Subscription, of } from 'rxjs';
-import { catchError, concatMap, distinctUntilChanged, filter, finalize, map, switchMap } from 'rxjs/operators';
+import { catchError, concatMap, filter, finalize, map, switchMap } from 'rxjs/operators';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -82,7 +82,7 @@ export class FlashcardsComponent implements OnInit, AfterViewInit {
     known = new Set<string>(); // Fronts of the cards the student knows
     reviewWeak = false;
     revealed = false; // Got it / Still learning wait until the answer has been seen
-    private saves = new Subject<{ note: string, known: string[] }>();
+    private saves = new Subject<{ note: number, known: string[] }>();
 
     // The cards being studied right now: all of them, or only the weak ones
     get deck(): Flashcard[] {
@@ -115,9 +115,10 @@ export class FlashcardsComponent implements OnInit, AfterViewInit {
 
     ngOnInit(): void {
         // Load the deck as soon as there is a note, and again if it changes
-        this.notes.selected$
-            .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-            .subscribe(selected => {
+        this.notes.selection$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(note => {
+                const selected = note?.name ?? null;
                 this.selected = selected;
                 this.flashcards = [];
                 this.known = new Set();
@@ -129,7 +130,7 @@ export class FlashcardsComponent implements OnInit, AfterViewInit {
         // One save at a time, in order, so an older list never lands last.
         // Skipped if the student has since switched notes, as the server saves to the active one
         this.saves.pipe(
-            filter(save => save.note === this.notes.selected),
+            filter(save => save.note === this.notes.selectedId),
             concatMap(save => this.http.post(this.URL + "/set_flashcard_progress", { known: save.known }).pipe(
                 catchError(() => {
                     this._snackBar.open("We could not save your progress. It will try again on your next card.", "Dismiss");
@@ -230,7 +231,8 @@ export class FlashcardsComponent implements OnInit, AfterViewInit {
 
     markCard(knowIt: boolean): void {
         const card = this.deck[this.curr_card];
-        if (!card || !this.selected) {
+        const note = this.notes.selectedId;
+        if (!card || note === null) {
             return;
         }
         const index = this.curr_card;
@@ -241,7 +243,7 @@ export class FlashcardsComponent implements OnInit, AfterViewInit {
             known.delete(card.Front);
         }
         this.known = known;
-        this.saves.next({ note: this.selected, known: [...known] });
+        this.saves.next({ note, known: [...known] });
 
         // In review mode a known card drops out, so the same index is already the next card
         const leftDeck = this.reviewWeak && knowIt;
@@ -249,9 +251,9 @@ export class FlashcardsComponent implements OnInit, AfterViewInit {
     }
 
     resetProgress(): void {
-        const note = this.selected;
+        const note = this.notes.selectedId;
         const count = this.knownCount;
-        if (!note || count === 0) {
+        if (note === null || count === 0) {
             return;
         }
 
@@ -267,7 +269,7 @@ export class FlashcardsComponent implements OnInit, AfterViewInit {
             .afterClosed()
             .subscribe(confirmed => {
                 // The note may have changed while the dialog was open
-                if (!confirmed || this.selected !== note) {
+                if (!confirmed || this.notes.selectedId !== note) {
                     return;
                 }
                 this.known = new Set();

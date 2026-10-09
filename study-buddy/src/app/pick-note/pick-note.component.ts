@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { NotesService } from '../notes.service';
+import { NoteNode, NotesService } from '../notes.service';
 
 // Shown wherever a page needs a note and none is selected yet
 @Component({
@@ -22,8 +22,8 @@ export class PickNoteComponent {
     notes = inject(NotesService);
     private snackBar = inject(MatSnackBar);
 
-    choose(name: string): void {
-        this.notes.select(name).subscribe({
+    choose(note: NoteNode): void {
+        this.notes.select(note).subscribe({
             error: () => this.snackBar.open('We could not select those notes. Please try again.', 'Dismiss')
         });
     }

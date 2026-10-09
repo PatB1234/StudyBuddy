@@ -12,7 +12,7 @@ import { MarkdownModule } from 'ngx-markdown';
 import { KATEX_OPTIONS } from '../katex-options';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subscription } from 'rxjs';
-import { distinctUntilChanged, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotesService } from '../notes.service';
 import { PickNoteComponent } from '../pick-note/pick-note.component';
@@ -48,12 +48,12 @@ export class CustomPromptComponent implements OnInit, AfterViewInit {
 
     ngOnInit(): void {
         // Each note keeps its own conversation for the session
-        this.notes.selected$
-            .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-            .subscribe(selected => {
+        this.notes.selection$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(note => {
                 this.cancelLoading();
-                this.selected = selected;
-                this.conversation = selected ? this.notes.getCached<Exchange[]>('conversation', selected) ?? [] : [];
+                this.selected = note?.name ?? null;
+                this.conversation = note ? this.notes.getCached<Exchange[]>('conversation', note.id) ?? [] : [];
             });
     }
 
@@ -97,9 +97,9 @@ export class CustomPromptComponent implements OnInit, AfterViewInit {
     isSubmitting = false;
 
     onSubmit() {
-        const note = this.selected;
+        const note = this.notes.selectedId;
         const question = this.customPromptForm.value.customPrompt?.trim();
-        if (this.isSubmitting || !note) {
+        if (this.isSubmitting || note === null) {
             return;
         }
         if (!question) {

@@ -64,6 +64,7 @@ export class BasePageComponent implements OnInit {
 
     tree: NoteNode[] = [];
     selected: string | null = null;
+    selectedId: number | null = null;
     treeLoaded = false;
 
     links: ILink[] = [
@@ -86,8 +87,9 @@ export class BasePageComponent implements OnInit {
             this.tree = tree;
             this.expandSelectedSection();
         });
-        this.notes.selected$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(selected => {
-            this.selected = selected;
+        this.notes.selection$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(note => {
+            this.selected = note?.name ?? null;
+            this.selectedId = note?.id ?? null;
             this.expandSelectedSection();
         });
         this.notes.refresh().subscribe(() => {
@@ -123,7 +125,7 @@ export class BasePageComponent implements OnInit {
 
     // Opens the section holding the selected note, so it is visible straight away
     private expandSelectedSection(): void {
-        const section = this.tree.find(s => s.children?.some(n => n.name === this.selected));
+        const section = this.tree.find(s => s.children?.some(n => n.id === this.selectedId));
         if (!section) {
             return;
         }
@@ -134,8 +136,8 @@ export class BasePageComponent implements OnInit {
     childrenAccessor = (node: NoteNode) => node.children ?? [];
     hasChild = (_: number, node: NoteNode) => !!node.children && node.children.length > 0;
 
-    selectNote(nodeName: string): void {
-        this.notes.select(nodeName).subscribe({
+    selectNote(node: NoteNode): void {
+        this.notes.select(node).subscribe({
             next: () => this.closeIfHandset(),
             error: (error: unknown) => {
                 console.error("Error updating current notes:", error);
@@ -144,8 +146,9 @@ export class BasePageComponent implements OnInit {
         });
     }
 
-    deleteNode(nodeName: string): void {
+    deleteNode(node: NoteNode): void {
 
+        const nodeName = node.name;
         const data: ConfirmDialogData = {
             title: 'Delete these notes?',
             lines: [
@@ -164,7 +167,7 @@ export class BasePageComponent implements OnInit {
                 if (!confirmed) {
                     return;
                 }
-                this.notes.delete(nodeName).subscribe({
+                this.notes.delete(node).subscribe({
                     next: () => this._snackBar.open(`Deleted "${nodeName}"`, "Dismiss"),
                     error: () => this._snackBar.open("We could not delete those notes. Please try again.", "Dismiss")
                 });

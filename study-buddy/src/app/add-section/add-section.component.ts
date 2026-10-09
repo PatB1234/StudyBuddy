@@ -128,7 +128,7 @@ export class AddSectionComponent implements AfterViewInit {
                     }
                     // Select the new notes straight away, then show what can be done with them
                     this.notes.refresh()
-                        .pipe(switchMap(() => this.notes.select(noteName)))
+                        .pipe(switchMap(() => this.notes.select(this.notes.newestNote(noteName) ?? { name: noteName })))
                         .subscribe({
                             next: () => {
                                 this._snackBar.open(`"${noteName}" is ready to study`, "Dismiss");

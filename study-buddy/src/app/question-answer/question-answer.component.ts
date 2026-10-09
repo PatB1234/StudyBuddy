@@ -12,7 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MarkdownModule } from 'ngx-markdown';
 import { KATEX_OPTIONS } from '../katex-options';
 import { Subscription } from 'rxjs';
-import { distinctUntilChanged, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotesService } from '../notes.service';
 import { PickNoteComponent } from '../pick-note/pick-note.component';
@@ -43,11 +43,12 @@ export class QuestionAnswerComponent implements OnInit, AfterViewInit {
 
     ngOnInit(): void {
         // A question is ready on arrival, and a new one comes with new notes
-        this.notes.selected$
-            .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-            .subscribe(selected => {
+        this.notes.selection$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(note => {
                 // A question about the old notes shouldn't show under the new ones
                 this.cancelLoading();
+                const selected = note?.name ?? null;
                 this.selected = selected;
                 this.question = '';
                 this.correctOrNot = '';

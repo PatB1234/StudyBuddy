@@ -7,11 +7,11 @@
     @for (section of notes.tree$ | async; track section.name) {
     <h3 class="section-name">{{ section.name }}</h3>
     <div class="note-grid">
-        @for (note of section.children ?? []; track note.name) {
-        <button type="button" class="note-card" [class.is-selected]="note.name === (notes.selected$ | async)"
-            [attr.aria-pressed]="note.name === (notes.selected$ | async)" (click)="choose(note.name)">
+        @for (note of section.children ?? []; track note.id) {
+        <button type="button" class="note-card" [class.is-selected]="note.id === (notes.selection$ | async)?.id"
+            [attr.aria-pressed]="note.id === (notes.selection$ | async)?.id" (click)="choose(note)">
             <mat-icon aria-hidden="true">
-                {{ note.name === (notes.selected$ | async) ? 'check_circle' : 'description' }}
+                {{ note.id === (notes.selection$ | async)?.id ? 'check_circle' : 'description' }}
             </mat-icon>
             <span>{{ note.name }}</span>
         </button>

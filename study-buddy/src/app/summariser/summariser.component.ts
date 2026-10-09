@@ -10,7 +10,7 @@ import { MarkdownModule } from 'ngx-markdown';
 import { KATEX_OPTIONS } from '../katex-options';
 import { LoadingService } from '../loading.service';
 import { Subscription } from 'rxjs';
-import { distinctUntilChanged, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotesService } from '../notes.service';
 import { PickNoteComponent } from '../pick-note/pick-note.component';
@@ -40,12 +40,12 @@ export class SummariserComponent implements OnInit, AfterViewInit {
     private destroyRef = inject(DestroyRef);
 
     ngOnInit(): void {
-        this.notes.selected$
-            .pipe(distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-            .subscribe(selected => {
+        this.notes.selection$
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(note => {
                 this.cancelLoading();
-                this.curr_selected = selected;
-                this.summary = selected ? this.notes.getCached<string>('summary', selected) ?? '' : '';
+                this.curr_selected = note?.name ?? null;
+                this.summary = note ? this.notes.getCached<string>('summary', note.id) ?? '' : '';
             });
     }
 
@@ -66,8 +66,8 @@ export class SummariserComponent implements OnInit, AfterViewInit {
     private pending?: Subscription;
 
     summariseButton(): void {
-        const note = this.curr_selected;
-        if (!note) {
+        const note = this.notes.selectedId;
+        if (note === null) {
             return;
         }
         this.loadingMessage = "Making your summary...";

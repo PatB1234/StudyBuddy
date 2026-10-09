@@ -116,23 +116,28 @@ def get_last_id_students():
     return -1
 
 
+# "Alice@x.com " and "alice@x.com" are one person. Only used for comparing
+# and for storing new signups, so older rows keep the email their notes use.
+def normalise_email(email: str) -> str:
+
+    return email.strip().lower()
+
+
 # CRUD Functions
 # Create
 
 
 def create_user(student: Student):
 
-    students = get_all_students()
-    for studen in students:
+    if get_user_by_email(student.email) != "":  # Checks if the user already exists
 
-        if studen.email == student.email:  # Checks if the user already exists
-
-            return "User with this email already exists, please login instead"
+        return "User with this email already exists, please login instead"
 
     uid = get_last_id_students() + 1
     cursor_func_with_values(
         "INSERT INTO STUDENTS (name, email, password, id) VALUES (?, ?, ?, ?);",
-        (student.name, student.email, hash_password(student.password), uid),
+        (student.name, normalise_email(student.email),
+         hash_password(student.password), uid),
         False,
     )
     stats.record("users_signed_up")
@@ -143,15 +148,21 @@ def create_user(student: Student):
 # is not found and we want to create an account,
 # this simplifies the login process for the user
 def create_student_with_token(student: Student):
+    # Callers check first, but this must never add a second account for an email
+    if get_user_by_email(student.email) != "":
+
+        return None
+
     uid = get_last_id_students() + 1
+    email = normalise_email(student.email)
     cursor_func_with_values(
         "INSERT INTO STUDENTS (name, email, password, id) VALUES (?, ?, ?, ?);",
-        (student.name, student.email, hash_password(student.password), uid),
+        (student.name, email, hash_password(student.password), uid),
         False,
     )
     stats.record("users_signed_up")
     student = Student(
-        name=student.name, email=student.email, password=student.password, id=uid
+        name=student.name, email=email, password=student.password, id=uid
     )
     token = get_user_token(student)
     return token
@@ -196,9 +207,16 @@ def get_user_by_name(name):
 def get_user_by_email(email):
 
     students = get_all_students()
+    # Exact first: some older accounts differ only by case
     for student in students:
 
         if student.email == email:
+
+            return student
+
+    for student in students:
+
+        if normalise_email(student.email) == normalise_email(email):
 
             return student
 
@@ -218,8 +236,12 @@ def does_student_exist(student: Student):
 def check_student_login(email: str, password: str):
 
     students = get_all_students()
-    for student in students:
-        if student.email == email and verify_password(password, student.password):
+    # Exact first, so case-only duplicates each reach their own account
+    exact = [s for s in students if s.email == email]
+    similar = [s for s in students if s.email != email
+               and normalise_email(s.email) == normalise_email(email)]
+    for student in exact + similar:
+        if verify_password(password, student.password):
 
             # Create JWT Token
             token = get_user_token(student)
@@ -268,12 +290,14 @@ def edit_user(new_name, email, old_pwd: str, new_pwd: str):
 # Delete
 
 
-def delete_user_id(uid):
+# Matched on id and email together: ids can be reused or shared by older
+# accounts, so an id alone could reach somebody else's account.
+def delete_user_id(uid, email):
 
     try:
-        delete_all_notes_by_user_id(uid)
+        delete_all_notes_by_user_id(uid, email)
         cursor_func_with_values(
-            "DELETE FROM STUDENTS WHERE id=?", (uid,), False)
+            "DELETE FROM STUDENTS WHERE id=? AND email=?", (uid, email), False)
     except (driver.Error, OSError):
         logging.exception("Error deleting user %s", uid)
         return "Error deleting user"
@@ -393,9 +417,37 @@ def get_current_notes_by_token(token):
     for (i) in (current_notes):
         if i[0] == token:
 
-            return i[1]
+            # A fileID can be reused after a delete, so only hand it back
+            # while it still belongs to whoever holds this token
+            return get_owned_note_id(token, i[1])
 
     return -1
+
+
+# The fileID if this token's account owns it, otherwise -1
+def get_owned_note_id(token: str, file_id: int):
+
+    student = validate_student(token)
+    # SQLite integers are 64-bit, so a bigger id can't be a note
+    if not student or not 0 <= int(file_id) < 2 ** 63:
+
+        return -1
+
+    res = cursor_func_with_values(
+        "SELECT fileID FROM NOTES WHERE fileID=? AND ownerEmail=?;",
+        (int(file_id), student[1]),
+        True,
+    )
+    return int(res[0][0]) if res else -1
+
+
+# Drops every session's selection of a deleted note, not just the deleter's
+def unselect_note_everywhere(fid: int):
+
+    for current_note in current_notes:
+        if current_note[1] == fid:
+
+            current_note[1] = -1
 
 
 # Get the noteID based on the token and the note's name
@@ -418,8 +470,14 @@ def get_note_id_by_note_name(token: str, note_name: str):
 
 
 # Change currently examined notes
-def change_current_notes(token: str, note_name: str):
-    new_note_id = get_note_id_by_note_name(token, note_name)
+# Names can repeat, so the fileID is used when the client sends one
+def change_current_notes(token: str, note_name: str, file_id: int = -1):
+    if file_id >= 0:
+
+        new_note_id = get_owned_note_id(token, file_id)
+    else:
+
+        new_note_id = get_note_id_by_note_name(token, note_name)
     found = False
     for current_note in current_notes:
 
@@ -441,11 +499,11 @@ def change_current_notes(token: str, note_name: str):
 # Delete all notes for a specific user
 
 
-def delete_all_notes_by_user_id(nid: int):
+def delete_all_notes_by_user_id(nid: int, email: str):
     res = cursor_func_with_values(
         "SELECT fileID FROM NOTES WHERE ownerEmail="
-        "(SELECT email FROM STUDENTS WHERE id=?)",
-        (nid,),
+        "(SELECT email FROM STUDENTS WHERE id=? AND email=?)",
+        (nid, email),
         True,
     )
     for ids in res:
@@ -460,6 +518,7 @@ def delete_notes_by_id(fid: int):
     try:
         cursor_func_with_values(
             "DELETE FROM NOTES WHERE fileID=?", (fid,), False)
+        unselect_note_everywhere(fid)
         file_path = os.path.join("card_decks", str(fid) + ".json")
         if os.path.exists(file_path):
 
@@ -481,16 +540,23 @@ def delete_notes_by_id(fid: int):
 # Delete a user's notes by the name & user token
 
 
-def delete_note_by_name(note_name: str, token: str):
+# Names can repeat, so the fileID is used when the client sends one
+def delete_note_by_name(note_name: str, token: str, file_id: int = -1):
 
     email = validate_student(token)[1]
-    fid = get_note_id_by_note_name(token, note_name)
+    if file_id >= 0:
+
+        fid = get_owned_note_id(token, file_id)
+    else:
+
+        fid = get_note_id_by_note_name(token, note_name)
 
     if fid == -1:
         return "Note not found"
 
     cursor_func_with_values(
         "DELETE FROM NOTES WHERE fileID=? AND ownerEmail=?", (fid, email), False)
+    unselect_note_everywhere(fid)
     file_path = os.path.join("card_decks", str(fid) + ".json")
     if os.path.exists(file_path):
 
@@ -542,7 +608,8 @@ def get_all_notes_tree(owner_email: str):
             {
                 "name": section_name,
                 # Add notes as children
-                "children": [{"name": note[1]} for note in notes],
+                # The id tells apart notes that share a name
+                "children": [{"name": note[1], "id": note[0]} for note in notes],
             }
         )
 

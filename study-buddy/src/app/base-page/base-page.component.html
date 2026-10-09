@@ -24,9 +24,9 @@
     <mat-menu #noteMenu="matMenu" class="note-menu">
         @for (section of tree; track section.name) {
         <div class="note-menu-section" (click)="$event.stopPropagation()">{{ section.name }}</div>
-        @for (note of section.children ?? []; track note.name) {
-        <button mat-menu-item (click)="selectNote(note.name)">
-            <mat-icon aria-hidden="true">{{ note.name === selected ? 'check_circle' : 'description' }}</mat-icon>
+        @for (note of section.children ?? []; track note.id) {
+        <button mat-menu-item (click)="selectNote(note)">
+            <mat-icon aria-hidden="true">{{ note.id === selectedId ? 'check_circle' : 'description' }}</mat-icon>
             <span>{{ note.name }}</span>
         </button>
         }
@@ -79,13 +79,13 @@
 
         <mat-tree #notesTree [dataSource]="tree" [childrenAccessor]="childrenAccessor" class="notes-tree">
             <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding class="note-node"
-                [class.is-selected]="node.name === selected">
-                <button type="button" class="note-link" (click)="selectNote(node.name)"
-                    [attr.aria-current]="node.name === selected ? 'true' : null">
-                    <mat-icon aria-hidden="true">{{ node.name === selected ? 'check_circle' : 'description' }}</mat-icon>
+                [class.is-selected]="node.id === selectedId">
+                <button type="button" class="note-link" (click)="selectNote(node)"
+                    [attr.aria-current]="node.id === selectedId ? 'true' : null">
+                    <mat-icon aria-hidden="true">{{ node.id === selectedId ? 'check_circle' : 'description' }}</mat-icon>
                     <span class="note-name">{{node.name}}</span>
                 </button>
-                <button class='delete-notes-icon' mat-icon-button (click)="deleteNode(node.name)"
+                <button class='delete-notes-icon' mat-icon-button (click)="deleteNode(node)"
                     [matTooltip]="'Delete the note &quot;' + node.name + '&quot;'"
                     [attr.aria-label]="'Delete the note ' + node.name"><mat-icon
                         aria-hidden="true">delete_outline</mat-icon></button>
