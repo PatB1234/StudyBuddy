@@ -6,6 +6,7 @@ If not, a False is returned by the token validator, resulting in a 401 error in 
 
 import functools
 import os
+import secrets
 import tempfile
 import anyio
 import shutil
@@ -19,6 +20,7 @@ from starlette.background import BackgroundTask
 import classes
 import db
 import funcs
+import stats
 
 app = FastAPI()
 
@@ -54,6 +56,23 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["Content-Disposition"],
 )
+
+# Health checks and reading the stats aren't someone using the app
+UNCOUNTED_PATHS = {"/api/cloud_check", "/api/stats"}
+
+
+@app.middleware("http")
+async def count_interactions(request: Request, call_next):
+
+    path = request.url.path
+    # OPTIONS is the browser's CORS preflight, not a separate interaction
+    if (
+        path.startswith("/api/")
+        and path not in UNCOUNTED_PATHS
+        and request.method != "OPTIONS"
+    ):
+        await anyio.to_thread.run_sync(stats.record, "total_interactions")
+    return await call_next(request)
 
 
 @app.post("/api/custom_prompt")
@@ -375,6 +394,18 @@ async def get_currently_selected_notes_by_token(request: Request):
     return db.get_note_by_id(
         db.get_current_notes_by_token(request.headers.get("token"))
     ).fileName
+
+
+# Usage totals for the owner, locked behind STATS_KEY in .env
+@app.get("/api/stats")
+async def get_stats(request: Request):
+
+    expected = os.getenv("STATS_KEY")
+    given = request.headers.get("stats-key", "")
+    if not expected or not secrets.compare_digest(given.encode(), expected.encode()):
+
+        return JSONResponse(status_code=401, content={"message": "Invalid stats key"})
+    return await anyio.to_thread.run_sync(stats.get_all)
 
 
 # Cloud hoster calls this to ensure the server is responding

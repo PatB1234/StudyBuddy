@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from fpdf import FPDF
 from PyPDF2 import PdfReader
 import classes
+import stats
 
 load_dotenv()
 CACHED_QUESTIONS = []  # [FILEID, CACHEDATA]
@@ -178,11 +179,14 @@ def upload_notes(note_id: int):
     return file_payload
 
 
-def run_prompt(files, prompt):  # Base Function
+def run_prompt(files, prompt, metric=None):  # Base Function
     try:
-        return generate([files, prompt], "prompt")
+        reply = generate([files, prompt], "prompt")
     except MODEL_ERRORS as e:
         return str(e)
+    if metric:
+        stats.record(metric)
+    return reply
 
 
 NO_NOTES_SELECTED_DECK = [
@@ -243,6 +247,10 @@ def _generate_deck(note_id):
     os.makedirs("card_decks", exist_ok=True)
     with open(_deck_path(note_id), "w") as f:
         f.write(json.dumps(generated_flashcards, indent=4))
+
+    stats.record("flashcard_decks_made")
+    if isinstance(generated_flashcards, list):
+        stats.record("flashcards_made", len(generated_flashcards))
 
     return generated_flashcards
 
@@ -325,14 +333,14 @@ def delete_progress(note_id):
 def summariser(note_id):  # Done
 
     uploaded_notes = upload_notes(note_id)
-    return run_prompt(uploaded_notes, "Summarise the notes")
+    return run_prompt(uploaded_notes, "Summarise the notes", "summaries_made")
 
 
 def custom_prompt(prompt, note_id):  # Done
 
     uploaded_notes = upload_notes(note_id)
     print(note_id)
-    return run_prompt(uploaded_notes, prompt)
+    return run_prompt(uploaded_notes, prompt, "custom_prompts_asked")
 
 
 def _cached_questions_for(note_id):
@@ -378,6 +386,7 @@ def make_questions(note_id):  # Done
         res = data_cleaner(res, True, True)
         if not res:
             return "Error generating questions, please try again in a few minutes"
+        stats.record("questions_generated", len(res))
         with CACHED_QUESTIONS_LOCK:
             cached = _cached_questions_for(note_id)
             cached[:] = res
@@ -391,7 +400,7 @@ def check_question(question, answer, note_id):  # Done
 
     uploaded_notes = upload_notes(note_id)
     try:
-        return generate(
+        reply = generate(
             [
                 uploaded_notes,
                 f"is the answer {answer} correct for the question {question}",
@@ -400,6 +409,8 @@ def check_question(question, answer, note_id):  # Done
         )
     except MODEL_ERRORS as e:
         return str(e)
+    stats.record("questions_answered")
+    return reply
 
 
 def return_flashcard_exported_format(note_id, note_type):
@@ -453,7 +464,7 @@ def return_flashcard_exported_format(note_id, note_type):
 
 
 # fpdf 1.7.2 writes latin-1 only. That covers Western European accents
-# (cafe, naive, resume survive), but silently turns typographic punctuation,
+# (cafe, naive, resume survive), but turns typographic punctuation,
 # Greek letters and maths symbols into "?" - exactly what science notes are
 # full of. Map those to readable ASCII before encoding.
 PDF_CHARACTER_REPLACEMENTS = {
@@ -568,7 +579,8 @@ def translate_handwriting_file(content, mime_type):
         ],
         config=handwriting_config,
     )
-    reply = json.loads(_extract_response_text(response, "translate_handwriting_file"))
+    reply = json.loads(_extract_response_text(
+        response, "translate_handwriting_file"))
     return reply["language"].strip(), reply["english"].strip()
 
 

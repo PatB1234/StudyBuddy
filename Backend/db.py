@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 import classes
 import funcs
+import stats
 
 # Basemodel
 
@@ -134,6 +135,7 @@ def create_user(student: Student):
         (student.name, student.email, hash_password(student.password), uid),
         False,
     )
+    stats.record("users_signed_up")
     return "New user created, please login with your account"
 
 
@@ -147,6 +149,7 @@ def create_student_with_token(student: Student):
         (student.name, student.email, hash_password(student.password), uid),
         False,
     )
+    stats.record("users_signed_up")
     student = Student(
         name=student.name, email=student.email, password=student.password, id=uid
     )
