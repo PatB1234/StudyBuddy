@@ -115,6 +115,26 @@ parsing.
 Blocking, empty responses and API errors are converted into readable messages rather than raw
 exceptions, so a student sees why something failed instead of a 500.
 
+## Usage stats
+
+Cumulative counters are kept in `Backend/db/stats.json`, which survives restarts and deploys. They
+only ever go up, so deleting a user or a note doesn't reduce them. Failed model calls aren't counted.
+
+| Metric | What it counts |
+| --- | --- |
+| `users_signed_up` | Accounts created, through either the signup form or auto-signup at login |
+| `users_current` | Accounts that exist right now, read live from `STUDENTS` rather than stored |
+| `questions_generated` | Questions the model produces, usually ten per batch. Serving one from the bank doesn't count again |
+| `questions_answered` | Answers successfully marked by the model |
+| `flashcards_made` | Cards in each newly generated deck, regenerations included. Reopening a cached deck doesn't count |
+| `flashcard_decks_made` | Newly generated decks |
+| `summaries_made` | Summaries successfully generated |
+| `custom_prompts_asked` | Custom prompts that got an answer |
+| `total_interactions` | Every `/api/` request apart from `/cloud_check`, `/stats` and CORS preflights. One page load can make several |
+
+To read them, run `python stats.py` from inside `Backend/`, or call `GET /api/stats` with a `stats-key`
+header matching `STATS_KEY` in `Backend/.env`. The endpoint returns 401 until `STATS_KEY` is set.
+
 ## Project layout
 
 ```
