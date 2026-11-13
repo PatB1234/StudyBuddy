@@ -34,7 +34,11 @@ ALGORITHM = "HS256"
 DATABASE_URL = "db/users.db"
 ACCESS_TOKEN_EXPIRE_MINUTES = 2880  # 2 Days
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# 10 rounds hashes about four times faster than 12. The cap marks older
+# 12-round hashes as due an upgrade at the next login.
+pwd_context = CryptContext(
+    schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=10, bcrypt__max_rounds=10
+)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # BIG VOLATILE ARRAY that stores all of the currently used notes by a user based on a token.
 current_notes = []
@@ -204,23 +208,43 @@ def get_user_by_name(name):
     return ""
 
 
+# Matches Python's strip(), which SQLite's plain TRIM does not
+SQL_WHITESPACE = " \t\n\r\x0b\x0c"
+STUDENT_COLUMNS = "name, email, password, id"
+
+
+def _students_from_rows(rows):
+
+    return [Student(name=i[0], email=i[1], password=i[2], id=i[3]) for i in rows]
+
+
+# Accounts for an email, exact matches first, without loading every student
+def get_students_by_email(email):
+
+    # SQLite only lowercases ASCII, so other emails take the slow path
+    if not email.isascii():
+
+        students = get_all_students()
+        exact = [s for s in students if s.email == email]
+        similar = [s for s in students if s.email != email
+                   and normalise_email(s.email) == normalise_email(email)]
+        return exact + similar
+
+    exact = cursor_func_with_values(
+        f"SELECT {STUDENT_COLUMNS} FROM STUDENTS WHERE email=? ORDER BY rowid",
+        (email,), True)
+    similar = cursor_func_with_values(
+        f"SELECT {STUDENT_COLUMNS} FROM STUDENTS WHERE email!=? "
+        "AND LOWER(TRIM(email, ?))=? ORDER BY rowid",
+        (email, SQL_WHITESPACE, normalise_email(email)), True)
+    return _students_from_rows(exact + similar)
+
+
 def get_user_by_email(email):
 
-    students = get_all_students()
     # Exact first: some older accounts differ only by case
-    for student in students:
-
-        if student.email == email:
-
-            return student
-
-    for student in students:
-
-        if normalise_email(student.email) == normalise_email(email):
-
-            return student
-
-    return ""
+    students = get_students_by_email(email)
+    return students[0] if students else ""
 
 
 def does_student_exist(student: Student):
@@ -235,14 +259,18 @@ def does_student_exist(student: Student):
 
 def check_student_login(email: str, password: str):
 
-    students = get_all_students()
     # Exact first, so case-only duplicates each reach their own account
-    exact = [s for s in students if s.email == email]
-    similar = [s for s in students if s.email != email
-               and normalise_email(s.email) == normalise_email(email)]
-    for student in exact + similar:
-        if verify_password(password, student.password):
+    for student in get_students_by_email(email):
+        valid, new_hash = pwd_context.verify_and_update(
+            password, student.password)
+        if valid:
 
+            # Older, slower hashes are swapped for a faster one here
+            if new_hash:
+
+                cursor_func_with_values(
+                    "UPDATE STUDENTS SET password=? WHERE email=? AND password=?",
+                    (new_hash, student.email, student.password))
             # Create JWT Token
             token = get_user_token(student)
             return token
@@ -579,14 +607,11 @@ def delete_note_by_name(note_name: str, token: str, file_id: int = -1):
 # Get Last note ID:
 def get_last_note_id():
 
-    curr_largest = -1
-    notes = cursor_func("SELECT * FROM NOTES", True)
-    for note in notes:
-        if note[0] > curr_largest:
+    rows = cursor_func("SELECT MAX(fileID) FROM NOTES", True)
+    if rows and rows[0][0] is not None:
 
-            curr_largest = note[0]
-
-    return curr_largest
+        return rows[0][0]
+    return -1
 
 
 # Get all the notes in an acceptable tree fashion for a specific user

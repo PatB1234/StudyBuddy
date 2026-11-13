@@ -3,9 +3,11 @@ import ast
 import io
 import logging
 import os
+import random
 import re
 import json
 import threading
+import time
 
 from google import genai
 from google.genai import errors as genai_errors
@@ -56,16 +58,83 @@ generation_config = genai_types.GenerateContentConfig(
     response_mime_type="text/plain",
 )
 
+# Questions only lift facts from the notes, so skipping the model's
+# thinking step makes them faster. Decks keep it, as accuracy matters more.
+extraction_config = generation_config.model_copy(update={
+    "thinking_config": genai_types.ThinkingConfig(thinking_budget=0),
+})
+
 MODEL_ERRORS = (classes.GenericException, genai_errors.APIError)
 
 
-def generate(contents, context: str):
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=contents,
-        config=generation_config,
-    )
+# Rate limits and brief outages usually clear within a few seconds
+RETRYABLE_CODES = (429, 503)
+MAX_ATTEMPTS = 3
+
+
+# Notes with a model call on a retry, so the app can tell the student
+_RETRYING = {}
+_RETRYING_LOCK = threading.Lock()
+
+
+def _mark_retrying(note_id, change: int):
+    with _RETRYING_LOCK:
+        count = _RETRYING.get(str(note_id), 0) + change
+        if count > 0:
+            _RETRYING[str(note_id)] = count
+        else:
+            _RETRYING.pop(str(note_id), None)
+
+
+def is_retrying(note_id) -> bool:
+    with _RETRYING_LOCK:
+        return str(note_id) in _RETRYING
+
+
+def generate(contents, context: str, config=generation_config, note_id=None):
+    marked = False
+    try:
+        for attempt in range(MAX_ATTEMPTS):
+            try:
+                response = client.models.generate_content(
+                    model=MODEL_NAME,
+                    contents=contents,
+                    config=config,
+                )
+                break
+            except genai_errors.APIError as e:
+                code = getattr(e, "code", None) or getattr(e, "status_code", None)
+                if code not in RETRYABLE_CODES or attempt == MAX_ATTEMPTS - 1:
+                    raise
+                logging.warning(
+                    "Retrying %s after a %s from the model", context, code)
+                if note_id is not None and not marked:
+                    _mark_retrying(note_id, 1)
+                    marked = True
+                # Jitter stops a burst of requests all retrying at the same instant
+                time.sleep(1.5 * 2 ** attempt + random.random())
+    finally:
+        if marked:
+            _mark_retrying(note_id, -1)
     return _extract_response_text(response, context)
+
+
+# One lock per note, so requests arriving together share a single model call
+_NOTE_LOCKS = {}
+_NOTE_LOCKS_GUARD = threading.Lock()
+
+
+def _note_lock(kind: str, note_id):
+    with _NOTE_LOCKS_GUARD:
+        return _NOTE_LOCKS.setdefault((kind, str(note_id)), threading.Lock())
+
+
+def _notes_stamp(note_id):
+    """When the note's PDF was last written, or None if it is gone."""
+    try:
+        return os.stat(f"Data/{note_id}.pdf").st_mtime_ns
+    except OSError:
+        return None
 
 
 def _extract_response_text(response, context: str):
@@ -179,9 +248,9 @@ def upload_notes(note_id: int):
     return file_payload
 
 
-def run_prompt(files, prompt, metric=None):  # Base Function
+def run_prompt(files, prompt, metric=None, note_id=None):  # Base Function
     try:
-        reply = generate([files, prompt], "prompt")
+        reply = generate([files, prompt], "prompt", note_id=note_id)
     except MODEL_ERRORS as e:
         return str(e)
     if metric:
@@ -232,8 +301,10 @@ def _read_cached_deck(note_id):
 def _generate_deck(note_id):
     """Ask the model for a fresh deck and cache it, replacing any existing one."""
     uploaded_notes = upload_notes(note_id)
+    stamp = _notes_stamp(note_id)
     try:
-        cards = generate([uploaded_notes, FLASHCARD_PROMPT], "flashcard")
+        cards = generate(
+            [uploaded_notes, FLASHCARD_PROMPT], "flashcard", note_id=note_id)
     except MODEL_ERRORS as e:
         return [
             {
@@ -243,6 +314,11 @@ def _generate_deck(note_id):
         ]
 
     generated_flashcards = data_cleaner(cards, False, True)
+
+    # The note was deleted or replaced meanwhile, so the deck must not be kept
+    if _notes_stamp(note_id) != stamp:
+
+        return generated_flashcards
 
     os.makedirs("card_decks", exist_ok=True)
     with open(_deck_path(note_id), "w") as f:
@@ -266,7 +342,21 @@ def flashcards(note_id):
 
         return cached
 
-    return _generate_deck(note_id)
+    with _note_lock("deck", note_id):
+        # Another request may have built the deck while this one waited
+        cached = _read_cached_deck(note_id)
+        if cached is not None:
+
+            return cached
+        return _generate_deck(note_id)
+
+
+def prebuild_deck(note_id):
+    """Build the deck straight after an upload. Runs in the background."""
+    try:
+        flashcards(note_id)
+    except Exception:  # pylint: disable=broad-exception-caught
+        logging.exception("Could not prebuild the deck for note %s", note_id)
 
 
 def regenerate_flashcards(note_id):
@@ -275,9 +365,10 @@ def regenerate_flashcards(note_id):
 
         return NO_NOTES_SELECTED_DECK
 
-    # The old cards are gone, so their progress is meaningless
-    delete_progress(note_id)
-    return _generate_deck(note_id)
+    with _note_lock("deck", note_id):
+        # The old cards are gone, so their progress is meaningless
+        delete_progress(note_id)
+        return _generate_deck(note_id)
 
 
 # Flashcard progress: which cards a student knows, kept per note as JSON.
@@ -333,14 +424,15 @@ def delete_progress(note_id):
 def summariser(note_id):  # Done
 
     uploaded_notes = upload_notes(note_id)
-    return run_prompt(uploaded_notes, "Summarise the notes", "summaries_made")
+    return run_prompt(
+        uploaded_notes, "Summarise the notes", "summaries_made", note_id)
 
 
 def custom_prompt(prompt, note_id):  # Done
 
     uploaded_notes = upload_notes(note_id)
     print(note_id)
-    return run_prompt(uploaded_notes, prompt, "custom_prompts_asked")
+    return run_prompt(uploaded_notes, prompt, "custom_prompts_asked", note_id)
 
 
 def _cached_questions_for(note_id):
@@ -366,6 +458,17 @@ def make_questions(note_id):  # Done
         if cached:
             return cached.pop(0)
 
+    with _note_lock("questions", note_id):
+        return _refill_questions(note_id)
+
+
+def _refill_questions(note_id):
+    with CACHED_QUESTIONS_LOCK:
+        cached = _cached_questions_for(note_id)
+        # Another request may have refilled the bank while this one waited
+        if cached:
+            return cached.pop(0)
+
     # The Gemini call happens outside the lock so that concurrent requests
     # for *different* notes aren't serialised behind a single network call.
     uploaded_notes = upload_notes(note_id)
@@ -380,6 +483,8 @@ def make_questions(note_id):  # Done
                 + "DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION",
             ],
             "question generation",
+            extraction_config,
+            note_id,
         )
         # data_cleaner slices out the first [...] array, so a stray markdown
         # fence or lead-in sentence around the list doesn't break parsing.
@@ -406,6 +511,7 @@ def check_question(question, answer, note_id):  # Done
                 f"is the answer {answer} correct for the question {question}",
             ],
             "answer check",
+            note_id=note_id,
         )
     except MODEL_ERRORS as e:
         return str(e)

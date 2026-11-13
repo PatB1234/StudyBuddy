@@ -11,7 +11,9 @@ from .. import stats
 def temp_files(tmp_path, monkeypatch):
     monkeypatch.setattr(stats, "STATS_PATH", str(tmp_path / "db" / "stats.json"))
     monkeypatch.setattr(stats, "USERS_DATABASE", str(tmp_path / "users.db"))
-    return tmp_path
+    yield tmp_path
+    # Waiting counts must not reach the real stats file after the test
+    stats.flush()
 
 
 def test_missing_file_reads_as_zero():
@@ -54,6 +56,7 @@ def test_corrupt_file_is_not_overwritten(temp_files):
     path.write_text("{not json", encoding="utf-8")
 
     stats.record("summaries_made")
+    stats.flush()
     assert path.read_text(encoding="utf-8") == "{not json"
 
 

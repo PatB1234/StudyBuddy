@@ -4,6 +4,7 @@ If a token is valid, the function will return data as normal.
 If not, a False is returned by the token validator, resulting in a 401 error in the frontend
 """
 
+import contextlib
 import functools
 import os
 import secrets
@@ -12,7 +13,7 @@ import anyio
 import shutil
 
 import pandas as pd
-from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from starlette.background import BackgroundTask
@@ -22,7 +23,21 @@ import db
 import funcs
 import stats
 
-app = FastAPI()
+# The default of 40 made AI calls queue once a class used the app together.
+# 100 matches the connection pool of the Gemini client.
+MAX_WORKER_THREADS = 100
+
+
+@contextlib.asynccontextmanager
+async def lifespan(_app: FastAPI):
+
+    anyio.to_thread.current_default_thread_limiter().total_tokens = MAX_WORKER_THREADS
+    yield
+    # Counts still waiting would be lost when the server stops
+    stats.flush()
+
+
+app = FastAPI(lifespan=lifespan)
 
 # Serialises note-ID allocation so concurrent uploads can't collide
 UPLOAD_LOCK = anyio.Lock()
@@ -58,7 +73,7 @@ app.add_middleware(
 )
 
 # Health checks and reading the stats aren't someone using the app
-UNCOUNTED_PATHS = {"/api/cloud_check", "/api/stats"}
+UNCOUNTED_PATHS = {"/api/cloud_check", "/api/stats", "/api/ai_status"}
 
 
 @app.middleware("http")
@@ -71,7 +86,7 @@ async def count_interactions(request: Request, call_next):
         and path not in UNCOUNTED_PATHS
         and request.method != "OPTIONS"
     ):
-        await anyio.to_thread.run_sync(stats.record, "total_interactions")
+        stats.record("total_interactions")
     return await call_next(request)
 
 
@@ -149,6 +164,21 @@ async def get_regenerate_flashcards(request: Request):
         funcs.regenerate_flashcards,
         db.get_current_notes_by_token(request.headers.get("token")),
     )
+
+
+# Polled by the loading banner, to say when the AI is being tried again
+@app.get("/api/ai_status")
+async def get_ai_status(request: Request):
+
+    token_res = db.validate_student(request.headers.get("token"))
+    if not token_res:
+        return JSONResponse(status_code=401, content={"message": TOKEN_MESSAGE})
+
+    return {
+        "retrying": funcs.is_retrying(
+            db.get_current_notes_by_token(request.headers.get("token"))
+        )
+    }
 
 
 @app.get("/api/get_flashcard_progress")
@@ -270,6 +300,7 @@ async def change_current_notes(
 @app.post("/api/add_notes")
 async def post_add_notes(
     request: Request,
+    background_tasks: BackgroundTasks,
     section_name: str = Form(...),
     file: UploadFile = File(...),
     handwritten: str = Form(...),
@@ -326,6 +357,8 @@ async def post_add_notes(
                     file_id,
                     section_name,
                 )
+                # Built now so the deck is ready when flashcards are opened
+                background_tasks.add_task(funcs.prebuild_deck, file_id)
                 return {"message": UPLOAD_SUCCSESFUL + res}
 
             if os.path.exists(file_path):
@@ -363,6 +396,7 @@ async def post_add_notes(
                 file_id,
                 section_name,
             )
+            background_tasks.add_task(funcs.prebuild_deck, file_id)
             return {"message": UPLOAD_SUCCSESFUL + res}
 
         # If they are neither PDF, JPG/JPEG nor PNG, they are rejected
