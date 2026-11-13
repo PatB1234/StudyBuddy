@@ -28,7 +28,7 @@ CACHED_QUESTIONS_LOCK = threading.Lock()
 # This represents the client link for the Google cloud vision API.
 visionClient = vision.ImageAnnotatorClient()
 
-MODEL_NAME = "gemini-3.5-flash"
+MODEL_NAME = "gemini-3.8-flash"
 
 # Set GOOGLE_GENAI_USE_VERTEXAI=true to talk to Vertex AI (using the service
 # account in GOOGLE_APPLICATION_CREDENTIALS) instead of the Gemini API key.
@@ -103,7 +103,8 @@ def generate(contents, context: str, config=generation_config, note_id=None):
                 )
                 break
             except genai_errors.APIError as e:
-                code = getattr(e, "code", None) or getattr(e, "status_code", None)
+                code = getattr(e, "code", None) or getattr(
+                    e, "status_code", None)
                 if code not in RETRYABLE_CODES or attempt == MAX_ATTEMPTS - 1:
                     raise
                 logging.warning(
