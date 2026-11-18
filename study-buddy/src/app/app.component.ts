@@ -12,6 +12,6 @@ import { RouterOutlet } from '@angular/router';
 export class AppComponent {
 
     title = 'study-buddy';
-    // Global URL Path Prod Path: https://studdybuddy.app/api Dev Path: http://localhost:8000/api
-    static URL = 'https://studdybuddy.app/api';
+    // Global URL Path Prod Path: https://studdybuddy.pratyushbindal.com/api Dev Path: http://localhost:8000/api
+    static URL = 'https://studdybuddy.pratyushbindal.com/api';
 }

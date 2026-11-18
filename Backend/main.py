@@ -59,8 +59,9 @@ origins = [
     "http://localhost:4200",
     "http://34.88.99.24:4200",
     "http://34.88.99.24:8000",
-    "https://studdybuddy.app/",
-    "http://studdybuddy.app/",
+    "https://studdybuddy.app",
+    "http://studdybuddy.app",
+    "https://studdybuddy.pratyushbindal.com",
 ]
 
 app.add_middleware(

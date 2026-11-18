@@ -5,7 +5,7 @@ notes, and the app generates flashcards, practice questions, summaries, or the a
 ask about them. Everything is scoped to the notes you selected, so the output is about your syllabus
 rather than the model's general knowledge.
 
-Live at [studdybuddy.app](https://studdybuddy.app). Documentation: [docs.studdybuddy.app](https://docs.studdybuddy.app). Privacy policy and ToS at [legal.studdybuddy.app](https://legal.studdybuddy.app)
+Live at [studdybuddy.pratyushbindal.com](https://studdybuddy.pratyushbindal.com) and [studdybuddy.app](https://studdybuddy.app). Documentation: [docs.studdybuddy.app](https://docs.studdybuddy.app). Privacy policy and ToS at [legal.studdybuddy.app](https://legal.studdybuddy.app)
 
 ## Features
 

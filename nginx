@@ -1,22 +1,16 @@
 server {
     listen 80;
-    server_name studdybuddy.app;
+    server_name studdybuddy.app studdybuddy.pratyushbindal.com;
     client_max_body_size 100M;
-    
+
     location / {
     return 301 https://$host$request_uri;
-    }
-
-
-    location /api/ {
-
-            return 301 https://127.0.0.1:8000;
     }
 }
 
 server {
     listen 443 ssl;
-    server_name studdybuddy.app;
+    server_name studdybuddy.app studdybuddy.pratyushbindal.com;
     client_max_body_size 100M;
 
     ssl_certificate /etc/letsencrypt/live/studdybuddy.app/fullchain.pem;
